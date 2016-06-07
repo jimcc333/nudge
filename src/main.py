@@ -42,14 +42,14 @@ def main(args):
 			
 			for line in doc.readlines():
 				items = line.split()
-				print items[0]
+				#print items[0]
 				#if items[0] == 
-				
 		break
 	
 	print "Total libraries: ", libraries
 	
-	Library lib1
+	lib1 = objects.Library()
+	print "blabla"
 	print lib1.enrichment
 	
 	return 0
