@@ -30,7 +30,16 @@ class Library:
 	k_cycles      = 130		# Number of kcode cycles to run
 	k_cycles_skip = 30		# Number of kcode cycles to run but skip
 	group_structure = [1.0e-9, 10]
-	openmc_group_struct = np.logspace(1, -9, 101)
+	#openmc_group_struct = np.logspace(1, -9, 101)
 	
 	# --- Outputs ---
 	
+class DBase:
+	""" A class that handles all generated libraries """
+	# Database specific immutable parameters
+	
+	# stored libraries
+	
+	# stored information about current database
+	
+

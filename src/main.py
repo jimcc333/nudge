@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/python3
 #
 #  main.py
 #  
@@ -20,7 +19,8 @@
 #  
 
 import os
-import objects
+from objects import *
+from parser import *
 
 def main(args):
 	print "hello world"
@@ -36,21 +36,26 @@ def main(args):
 			
 			try:
 				doc = open(inputfile, "r")
+				
 			except IOError:
 				print "Could not open ", inputfile
-				return
+				libraries -= 1
+				continue
 			
 			for line in doc.readlines():
 				items = line.split()
-				#print items[0]
-				#if items[0] == 
+				# print items, " ", items[0]
+				if items[0] == "NEUT_PROD":
+					print "detected!"
 		break
 	
 	print "Total libraries: ", libraries
 	
-	lib1 = objects.Library()
+	
+	lib1 = objects.Library(path = "path", number = 1)
+	
 	print "blabla"
-	print lib1.enrichment
+	print lib1.fuel_cell_radius
 	
 	return 0
 
