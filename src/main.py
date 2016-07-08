@@ -14,13 +14,18 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #  
-#  
+#  Naming and standards:
+#	The database folder should contain:
+#		- /Inputs 				(folder containing all inputs)
+#			- [tag][number].txt		(input file for library [number])
+#		- /build-[tag][number] 
+#			- /brightlite0
+#				- [nucid].txt	(output for [nucid] nuclide of input [number])
 #  
 #  
 
-import os
 from objects import *
-from parser import *
+import os
 
 import numpy as np
 from matplotlib.mlab import PCA as mlabPCA
@@ -29,22 +34,37 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 def main(args):
-	print "hello world"
+	print("hello world")
 	
+	# inputs to be taken from user
 	databasepath = "/home/cem/nudge/db_dbtest1/"
-	database = objects.DBase("database1")
 	
-	libraries = 0
+	database = DBase("database1")
+	
+	#TODO: first read inputs and create a lib for each ID
+	#	at lib creation attempt to read lib output
+	#	at the end of reading all inputs read outputs and do consistency check
 	for filename in os.listdir(databasepath):
-		if filename[0:5] == "build": 
-			libraries += 1
-			lib = objects.Library(databasepath + filename, libraries)
-			database.Add(lib)
+		if filename[:6] == "Inputs":
+			print("Reading libraries")
+			for inputfile in os.listdir(databasepath + "Inputs/"):
+				# Initialize library
+				inputlib = Library(databasepath, databasepath + "Inputs/" + inputfile, int(inputfile[:-3]))
+				
+				# Add lib to database
+				if not database.Exists(inputlib.number):
+					database.AddSLib(inputlib)
+					print(" Added lib #" + str(inputlib.number) + " to database")
+				
+				break
+			break
 	
-	print "Total libraries: ", libraries
-	database.UpdateData()	
-	database.PCA()
 	
+	print("Total libraries: " + str(len(database.slibs)))
+	#database.UpdateData()	
+	#database.PCA()
+	
+	"""
 	pca_mat = mlabPCA(database.data_mat)
 	
 	fig1 = plt.figure()
@@ -60,8 +80,8 @@ def main(args):
 	ax2.set_xlabel("PC1")
 	ax2.set_xlabel("PC2")
 	ax2.set_zlabel("PC3")
-	plt.show()
-	
+	plt.show()"""
+
 	return 0
 
 if __name__ == '__main__':

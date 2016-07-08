@@ -1,30 +1,53 @@
+import os
+
 import numpy as np
 
 class Library:
 	""" A class that holds library information """ 
+	#TODO "run" routine to talk to xsgen, needs to be parallizable
 	
-	def __init__(self, path, number):
-		self.path = path		# Path of the library folder w/ brightlite0
+	def __init__(self, database_path, ip_path, number):
+		self.ip_path = ip_path		# Path of the library folder w/ brightlite0
 		self.number = number	# Unique number of the library
 		
 		self.max_prod = 0
 		self.max_dest = 0
 		self.max_BU = 0
 		
+		# Read input
+		self.ReadInput(ip_path)
+		
 		#TODO: pass combining fractions (frac) better
 		
-		u235_file = path + "/brightlite0/922350.txt"
-		self.Read("U235", u235_file, 0.04)
-		
-		u238_file = path + "/brightlite0/922380.txt"
-		self.Read("U235", u238_file, 0.96)
+		if os.path.isdir(database_path + "build-sr" + str(number) + "/"):
+			self.scout = True
+			self.completed = True
+			
+			u235_file = database_path + "build-sr" + str(number) + "/brightlite0/922350.txt"
+			self.ReadOutput("U235", u235_file, 0.04)
+			
+			u238_file = database_path + "build-sr" + str(number) + "/brightlite0/922380.txt"
+			self.ReadOutput("U235", u238_file, 0.96)
+			
+			print("Completed reading scout output #" + str(number))
+		elif os.path.isdir(database_path + "build-fr" + str(number) + "/"):
+			self.scout = False
+			self.completed = True
+			
+			#TODO: read full run output
+			
+		else:	# library not run yet
+			self.completed = False
+			
+			#TODO: add library to queue
 	
-		
-	def Read(self, nuclide, file_path, frac):	
+	
+	def ReadOutput(self, nuclide, file_path, frac):	
 		try:
 			doc = open(file_path, "r")
 		except IOError:
-			print "Could not open ", file_path
+			print("Could not open ", file_path)
+			return
 					
 		for line in doc.readlines():
 			items = line.split()
@@ -36,6 +59,56 @@ class Library:
 			if items[0] == "BUd":
 				self.max_BU += sum( [float(i) for i in items[1:]] ) * frac
 		doc.close()
+		
+	def ReadInput(self, ip_path):
+		try:
+			doc = open(ip_path, "r")
+		except IOError:
+			print("Could not open ", file_path)
+			return
+		
+		for line in doc.readlines():
+			items = line.split()
+			
+			if len(items) < 3:
+				continue
+			if items[0] == "fuel_cell_radius":
+				self.fuel_cell_radius = float(items[2])
+			if items[0] == "void_cell_radius":
+				self.void_cell_radius = float(items[2])
+			if items[0] == "clad_cell_radius":
+				self.clad_cell_radius = float(items[2])
+			if items[0] == "unit_cell_pitch":
+				self.unit_cell_pitch = float(items[2])
+			if items[0] == "unit_cell_height":
+				self.unit_cell_height = float(items[2])
+			if items[0] == "fuel_density":
+				self.fuel_density = float(items[2])
+			if items[0] == "clad_density":
+				self.clad_density = float(items[2])
+			if items[0] == "cool_density":
+				self.cool_density = float(items[2])
+			if items[0] == "flux":
+				self.flux = float(items[2])
+			if items[0] == "k_particles":
+				self.k_particles = float(items[2])
+			if items[0] == "k_cycles":
+				self.k_cycles = float(items[2])
+			if items[0] == "k_cycles_skip":
+				self.k_cycles_skip = float(items[2])
+		
+	def Print(self):
+		print('Lib #', self.number, ' input information:')
+		print('  fuel radius: ', self.fuel_cell_radius)
+		print('  void radius: ', self.void_cell_radius)
+		print('  clad radius: ', self.clad_cell_radius)
+		print('  fuel density: ', self.fuel_density)
+		print('  clad density: ', self.clad_density)
+		print('  coolant density: ', self.cool_density)
+		print(' output information:')
+		print('  max prod: ', self.max_prod)
+		print('  max dest: ', self.max_dest)
+		print('  max BU: ', self.max_BU)
 	
 	# --- Inputs ---
 	# Initial heavy metal mass fraction distribution
@@ -68,7 +141,7 @@ class Library:
 	
 class DBase:
 	""" A class that handles all generated libraries """
-	libs = []
+	slibs = []		# Completed scout libs
 	max_prods = []
 	max_dests = []
 	max_BUs = []
@@ -80,12 +153,19 @@ class DBase:
 	
 	
 	# stored libraries
-	def Add(self, added_lib):
-		self.libs.append(added_lib)
+	def AddSLib(self, added_lib):
+		self.slibs.append(added_lib)
 	
+	def Exists(self, number):
+		for lib in self.slibs:
+			if lib.number == number:
+				return True
+		return False
+	
+	#TODO: make this actually update and then divide to completed and queued 
 	# information about current database
 	def UpdateData(self):
-		for i in self.libs:
+		for i in self.slibs:
 			self.max_prods.append(i.max_prod)
 			self.max_dests.append(i.max_dest)
 			self.max_BUs.append(i.max_BU)
