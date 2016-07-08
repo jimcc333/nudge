@@ -1,13 +1,15 @@
 import os
 
 import numpy as np
+from matplotlib.mlab import PCA as mlabPCA
 
 class Library:
 	""" A class that holds library information """ 
 	#TODO "run" routine to talk to xsgen, needs to be parallizable
 	
-	def __init__(self, database_path, ip_path, number):
-		self.ip_path = ip_path		# Path of the library folder w/ brightlite0
+	def __init__(self, op_path, ip_path, number):
+		self.ip_path = ip_path		# Path of the input file
+		self.op_path = op_path	# path to the library folder w/ brightlite0 in it
 		self.number = number	# Unique number of the library
 		
 		self.max_prod = 0
@@ -19,18 +21,18 @@ class Library:
 		
 		#TODO: pass combining fractions (frac) better
 		
-		if os.path.isdir(database_path + "build-sr" + str(number) + "/"):
+		if os.path.isdir(op_path + "build-sr" + str(number) + "/"):
 			self.scout = True
 			self.completed = True
 			
-			u235_file = database_path + "build-sr" + str(number) + "/brightlite0/922350.txt"
+			u235_file = op_path + "build-sr" + str(number) + "/brightlite0/922350.txt"
 			self.ReadOutput("U235", u235_file, 0.04)
 			
-			u238_file = database_path + "build-sr" + str(number) + "/brightlite0/922380.txt"
+			u238_file = op_path + "build-sr" + str(number) + "/brightlite0/922380.txt"
 			self.ReadOutput("U235", u238_file, 0.96)
 			
 			print("Completed reading scout output #" + str(number))
-		elif os.path.isdir(database_path + "build-fr" + str(number) + "/"):
+		elif os.path.isdir(op_path + "build-fr" + str(number) + "/"):
 			self.scout = False
 			self.completed = True
 			
@@ -88,6 +90,8 @@ class Library:
 				self.clad_density = float(items[2])
 			if items[0] == "cool_density":
 				self.cool_density = float(items[2])
+			if items[0] == "enrichment":
+				self.enrichment = float(items[2])
 			if items[0] == "flux":
 				self.flux = float(items[2])
 			if items[0] == "k_particles":
@@ -145,12 +149,17 @@ class DBase:
 	max_prods = []
 	max_dests = []
 	max_BUs = []
+	fuel_cell_radius = []
+	clad_cell_radius = []
+	clad_cell_thickness = []
+	void_cell_radius = []
+	enrichment = []
 	
 	def __init__(self, name):
 		self.name = name
 		
 	# Database specific immutable parameters
-	
+	#TODO: combining fractions
 	
 	# stored libraries
 	def AddSLib(self, added_lib):
@@ -165,10 +174,27 @@ class DBase:
 	#TODO: make this actually update and then divide to completed and queued 
 	# information about current database
 	def UpdateData(self):
+		self.max_prods.clear()
+		self.max_dests.clear()
+		self.max_BUs.clear()
+		
+		self.fuel_cell_radius.clear()
+		self.clad_cell_radius.clear()
+		self.clad_cell_thickness.clear()
+		self.void_cell_radius.clear()
+		self.enrichment.clear()
+		
 		for i in self.slibs:
+			self.fuel_cell_radius.append(i.fuel_cell_radius)
+			self.clad_cell_radius.append(i.clad_cell_radius)
+			self.clad_cell_thickness.append(i.clad_cell_radius - i.fuel_cell_radius)
+			self.void_cell_radius.append(i.void_cell_radius)
+			self.enrichment.append(i.enrichment)
+			
 			self.max_prods.append(i.max_prod)
 			self.max_dests.append(i.max_dest)
 			self.max_BUs.append(i.max_BU)
+			
 		
 	def PCA(self):
 		self.np_prods = np.asarray(self.max_prods)
@@ -176,7 +202,13 @@ class DBase:
 		self.np_BUs = np.asarray(self.max_BUs)
 		
 		self.data_mat = np.column_stack((self.np_prods, self.np_dests, self.np_BUs))
+		self.pca_mat = mlabPCA(self.data_mat)	# PCA matrix 
 		
+	def Print(self):
+		print("Database scout run max values: ")
+		print("  Max prods: ", self.max_prods)
+		print("  Max desds: ", self.max_dests)
+		print("  Max BUs  : ", self.max_BUs)
 		
 		
 	

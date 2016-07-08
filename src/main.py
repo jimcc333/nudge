@@ -28,7 +28,6 @@ from objects import *
 import os
 
 import numpy as np
-from matplotlib.mlab import PCA as mlabPCA
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -55,32 +54,40 @@ def main(args):
 				if not database.Exists(inputlib.number):
 					database.AddSLib(inputlib)
 					print(" Added lib #" + str(inputlib.number) + " to database")
-				
-				break
 			break
 	
 	
 	print("Total libraries: " + str(len(database.slibs)))
-	#database.UpdateData()	
-	#database.PCA()
-	
+	database.UpdateData()
+	#database.Print()
+	database.PCA()
 	"""
-	pca_mat = mlabPCA(database.data_mat)
-	
 	fig1 = plt.figure()
 	ax1 = fig1.add_subplot(111, projection='3d')
 	ax1.scatter(database.data_mat[:,0], database.data_mat[:,1], database.data_mat[:,2])
 	ax1.set_xlabel("Neutron Production")
-	ax1.set_xlabel("Neutron Destruction")
+	ax1.set_ylabel("Neutron Destruction")
 	ax1.set_zlabel("Burnup")
 	
 	fig2 = plt.figure()
 	ax2 = fig2.add_subplot(111, projection='3d')
-	ax2.scatter(pca_mat.Y[:,0], pca_mat.Y[:,1], pca_mat.Y[:,2])
+	ax2.scatter(database.pca_mat.Y[:,0], database.pca_mat.Y[:,1], database.pca_mat.Y[:,2])
 	ax2.set_xlabel("PC1")
-	ax2.set_xlabel("PC2")
+	ax2.set_ylabel("PC2")
 	ax2.set_zlabel("PC3")
-	plt.show()"""
+	"""
+	
+	fig3 = plt.figure()
+	ax3 = fig3.add_subplot(111, projection='3d')
+	# Size by PC1 value
+	print(database.pca_mat.Y[:,0])
+	s = (database.pca_mat.Y[:,0]+2) **2 * 10	
+	print(s)
+	ax3.scatter(database.fuel_cell_radius, database.enrichment, database.clad_cell_thickness, s=s)
+	ax3.set_xlabel("Fuel Radius")
+	ax3.set_ylabel("Enrichment")
+	ax3.set_zlabel("Clad Thickness")
+	plt.show()
 
 	return 0
 
