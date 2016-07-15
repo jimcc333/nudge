@@ -104,16 +104,22 @@ class Library:
 		
 	def Print(self):
 		print('Lib #', self.number, ' input information:')
-		print('  fuel radius: ', self.fuel_cell_radius)
-		print('  void radius: ', self.void_cell_radius)
-		print('  clad radius: ', self.clad_cell_radius)
-		print('  fuel density: ', self.fuel_density)
-		print('  clad density: ', self.clad_density)
+		print('  fuel radius    : ', self.fuel_cell_radius)
+		print('  void radius    : ', self.void_cell_radius)
+		print('  clad radius    : ', self.clad_cell_radius)
+		print('  fuel density   : ', self.fuel_density)
+		print('  clad density   : ', self.clad_density)
 		print('  coolant density: ', self.cool_density)
+		print(' Normalized values')
+		print('  fuel radius : ', self.norm_fuel_radius)
+		print('  fuel density: ', self.norm_fuel_density)
+		print('  clad density: ', self.norm_clad_density)
+		print('  cool density: ', self.norm_cool_density)
+		print('  enrichment  : ', self.norm_enrichment)		
 		print(' output information:')
 		print('  max prod: ', self.max_prod)
 		print('  max dest: ', self.max_dest)
-		print('  max BU: ', self.max_BU)
+		print('  max BU  : ', self.max_BU)
 	
 	# --- Inputs ---
 	# Initial heavy metal mass fraction distribution
@@ -161,6 +167,7 @@ class DBase:
 	max_dests = []
 	max_BUs = []
 	
+	# Base case parameters
 	fuel_cell_radius = []
 	clad_cell_radius = []
 	clad_cell_thickness = []
@@ -174,10 +181,9 @@ class DBase:
 	
 	range_fuel_density = [1,0]
 	range_clad_density = [1,0]
-	range_cool_denisty = [1,0]
+	range_cool_density = [1,0]
 	
 	range_enrichment = [1,0]
-	
 	
 	
 	def __init__(self, name):
@@ -187,6 +193,7 @@ class DBase:
 	#TODO: combining fractions
 	
 	# stored libraries
+	#TODO: should check if exists first
 	def AddSLib(self, added_lib):
 		self.slibs.append(added_lib)
 	
@@ -196,7 +203,8 @@ class DBase:
 				return True
 		return False
 	
-	#TODO: make this actually update and then divide to completed and queued 
+	#TODO: divide to completed and queued 
+	#TODO: currently only recreates, make it update
 	# information about current database
 	def UpdateData(self):
 		self.max_prods.clear()
@@ -230,7 +238,7 @@ class DBase:
 		
 	def UpdateMetrics(self):
 		# work in progress
-		#TODO: have a class to handle metrics, ffs
+		#TODO: have a class to handle metrics
 		# Update the range of metrics
 		self.range_fuel_radius[0] = min(self.slibs, key=attrgetter('fuel_cell_radius')).fuel_cell_radius
 		self.range_fuel_radius[1] = max(self.slibs, key=attrgetter('fuel_cell_radius')).fuel_cell_radius
@@ -241,17 +249,81 @@ class DBase:
 		self.range_clad_density[0] = min(self.slibs, key=attrgetter('clad_density')).clad_density
 		self.range_clad_density[1] = max(self.slibs, key=attrgetter('clad_density')).clad_density
 		
-		self.range_cool_denisty[0] = min(self.slibs, key=attrgetter('cool_density')).cool_density
-		self.range_cool_denisty[1] = max(self.slibs, key=attrgetter('cool_density')).cool_density
+		self.range_cool_density[0] = min(self.slibs, key=attrgetter('cool_density')).cool_density
+		self.range_cool_density[1] = max(self.slibs, key=attrgetter('cool_density')).cool_density
 		
 		self.range_enrichment[0] = min(self.slibs, key=attrgetter('enrichment')).enrichment
 		self.range_enrichment[1] = max(self.slibs, key=attrgetter('enrichment')).enrichment
 		
 		# Update the metrics in libraries
 		for lib in self.slibs:
-			lib.fuel_cell_radius = (lib.fuel_cell_radius - self.range_fuel_radius[0]) / \
+			lib.norm_fuel_radius = (lib.fuel_cell_radius - self.range_fuel_radius[0]) / \
 									(self.range_fuel_radius[1] - self.range_fuel_radius[0])
-			
+									
+			lib.norm_fuel_density = (lib.fuel_density - self.range_fuel_density[0]) / \
+									(self.range_fuel_density[1] - self.range_fuel_density[0])
+									
+			lib.norm_clad_density = (lib.clad_density - self.range_clad_density[0]) / \
+									(self.range_clad_density[1] - self.range_clad_density[0])
+									
+			lib.norm_cool_density = (lib.cool_density - self.range_cool_density[0]) / \
+									(self.range_cool_density[1] - self.range_cool_density[0])
+									
+			lib.norm_enrichment = (lib.enrichment - self.range_enrichment[0]) / \
+									(self.range_enrichment[1] - self.range_enrichment[0])
+		
+	# Uses inverse distance weighing to find library at target (t_) metrics		
+	def EstLib(self, neighbor_libs, t_fuel_radius=-1, t_fuel_density=-1, t_clad_density=-1, \
+				t_cool_density=-1, t_enrichment=-1):
+		print('Begin workflow to interpolate a library')
+		
+		t_metrics = []
+		lib_metrics =[]
+		
+		if t_fuel_radius >= 0 and t_fuel_radius <= 1:
+			metrics = []
+			for lib in neighbor_libs:
+				metrics.append(lib.norm_fuel_radius)
+			lib_metrics.append(metrics)
+			t_metrics.append(t_fuel_radius)
+		
+		if t_fuel_density >= 0 and t_fuel_density <= 1:
+			metrics = []
+			for lib in neighbor_libs:
+				metrics.append(lib.norm_fuel_density)
+			lib_metrics.append(metrics)
+			t_metrics.append(t_fuel_density)
+		
+		if t_clad_density >= 0 and t_clad_density <= 1:
+			metrics = []
+			for lib in neighbor_libs:
+				metrics.append(lib.norm_clad_density)
+			lib_metrics.append(metrics)
+			t_metrics.append(t_clad_density)
+		
+		if t_cool_density >= 0 and t_cool_density <= 1:
+			metrics = []
+			for lib in neighbor_libs:
+				metrics.append(lib.norm_cool_density)
+			lib_metrics.append(metrics)
+			t_metrics.append(t_cool_density)
+				
+		if t_enrichment >= 0 and t_enrichment <= 1:
+			metrics = []
+			for lib in neighbor_libs:
+				metrics.append(lib.norm_enrichment)
+			lib_metrics.append(metrics)
+			t_metrics.append(t_enrichment)
+		
+		if len(lib_metrics) < 0:
+			print('Error, no parameters for interpolation.')
+			return
+		if len(lib_metrics[0]) < 1:
+			print('Error, not enough libraries for interpolation')
+			return
+		
+		print(' Parameters passed: ', len(lib_metrics))
+		print(' Libraries for interpolation: ', len(lib_metrics[0]))
 		
 		
 	def Print(self):
@@ -259,7 +331,7 @@ class DBase:
 		print("  Fuel radius range:  ", self.range_fuel_radius)
 		print("  Fuel density range: ", self.range_fuel_density)
 		print("  Clad denisty range: ", self.range_clad_density)
-		print("  Cool density range: ", self.range_cool_denisty)
+		print("  Cool density range: ", self.range_cool_density)
 		print("  Enrichment range:   ", self.range_enrichment)
 		#print("  Max prods: ", self.max_prods)
 		#print("  Max desds: ", self.max_dests)

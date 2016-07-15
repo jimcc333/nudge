@@ -66,8 +66,8 @@ def main(args):
 	#database.Print()
 	database.PCA()
 	
-	database.UpdateMetrics()
-	database.Print()
+	database.UpdateMetrics();
+	database.EstLib(database.slibs[0:10], t_fuel_radius=1, t_fuel_density=0.3, t_cool_density=0, t_enrichment=0.8)
 	
 	"""
 	fig1 = plt.figure()
