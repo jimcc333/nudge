@@ -277,6 +277,7 @@ class DBase:
 				t_cool_density=-1, t_enrichment=-1):
 		print('Begin workflow to interpolate a library')
 		
+		# Read parameters and store them in metrics lists
 		t_metrics = []
 		lib_metrics =[]
 		
@@ -324,6 +325,13 @@ class DBase:
 		
 		print(' Parameters passed: ', len(lib_metrics))
 		print(' Libraries for interpolation: ', len(lib_metrics[0]))
+		
+		# Calculate distances
+		lib_distances = lib_metrics
+		
+		for metric in [0:len(lib_metrics)]:
+			print(metric)
+			
 		
 		
 	def Print(self):
