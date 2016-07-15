@@ -329,9 +329,13 @@ class DBase:
 		# Calculate distances
 		lib_distances = lib_metrics
 		
-		for metric in [0:len(lib_metrics)]:
-			print(metric)
-			
+		for metric in range(len(lib_metrics)):
+			for lib in range(len(lib_metrics[0])):
+				lib_distances[metric][lib] = (lib_metrics[metric][lib] - \
+											t_metrics[metric]) ** 2
+		print(lib_distances)
+		
+		# Interpolate library
 		
 		
 	def Print(self):
