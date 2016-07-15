@@ -22,6 +22,10 @@
 #			- /brightlite0
 #				- [nucid].txt	(output for [nucid] nuclide of input [number])
 #  
+#
+#	Terms:
+#		- Scout library: A library thats run in a short time and that has curtailed outputs
+#		- Metric: Values that libraries get interpolated on
 #  
 
 from objects import *
@@ -61,6 +65,10 @@ def main(args):
 	database.UpdateData()
 	#database.Print()
 	database.PCA()
+	
+	database.UpdateMetrics()
+	database.Print()
+	
 	"""
 	fig1 = plt.figure()
 	ax1 = fig1.add_subplot(111, projection='3d')
@@ -75,7 +83,6 @@ def main(args):
 	ax2.set_xlabel("PC1")
 	ax2.set_ylabel("PC2")
 	ax2.set_zlabel("PC3")
-	"""
 	
 	fig3 = plt.figure()
 	ax3 = fig3.add_subplot(111, projection='3d')
@@ -88,7 +95,8 @@ def main(args):
 	ax3.set_ylabel("Enrichment")
 	ax3.set_zlabel("Clad Thickness")
 	plt.show()
-
+	"""
+	
 	return 0
 
 if __name__ == '__main__':

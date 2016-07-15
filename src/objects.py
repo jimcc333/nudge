@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 from matplotlib.mlab import PCA as mlabPCA
+from operator import attrgetter
 
 class Library:
 	""" A class that holds library information """ 
@@ -141,6 +142,16 @@ class Library:
 	group_structure = [1.0e-9, 10]
 	#openmc_group_struct = np.logspace(1, -9, 101)
 	
+	# --- Normalized Values ---
+	norm_fuel_radius = 0.5
+	
+	norm_fuel_density = 0.5
+	norm_clad_density = 0.5
+	norm_cool_density = 0.5
+	
+	norm_enrichment = 0.5
+	
+	
 	# --- Outputs ---
 	
 class DBase:
@@ -149,11 +160,25 @@ class DBase:
 	max_prods = []
 	max_dests = []
 	max_BUs = []
+	
 	fuel_cell_radius = []
 	clad_cell_radius = []
 	clad_cell_thickness = []
 	void_cell_radius = []
+	
 	enrichment = []
+	
+	
+	# Min and max values ("range") in database
+	range_fuel_radius = [1,0]	# [min,max]
+	
+	range_fuel_density = [1,0]
+	range_clad_density = [1,0]
+	range_cool_denisty = [1,0]
+	
+	range_enrichment = [1,0]
+	
+	
 	
 	def __init__(self, name):
 		self.name = name
@@ -195,7 +220,6 @@ class DBase:
 			self.max_dests.append(i.max_dest)
 			self.max_BUs.append(i.max_BU)
 			
-		
 	def PCA(self):
 		self.np_prods = np.asarray(self.max_prods)
 		self.np_dests = np.asarray(self.max_dests)
@@ -204,11 +228,43 @@ class DBase:
 		self.data_mat = np.column_stack((self.np_prods, self.np_dests, self.np_BUs))
 		self.pca_mat = mlabPCA(self.data_mat)	# PCA matrix 
 		
+	def UpdateMetrics(self):
+		# work in progress
+		#TODO: have a class to handle metrics, ffs
+		# Update the range of metrics
+		self.range_fuel_radius[0] = min(self.slibs, key=attrgetter('fuel_cell_radius')).fuel_cell_radius
+		self.range_fuel_radius[1] = max(self.slibs, key=attrgetter('fuel_cell_radius')).fuel_cell_radius
+		
+		self.range_fuel_density[0] = min(self.slibs, key=attrgetter('fuel_density')).fuel_density
+		self.range_fuel_density[1] = max(self.slibs, key=attrgetter('fuel_density')).fuel_density
+		
+		self.range_clad_density[0] = min(self.slibs, key=attrgetter('clad_density')).clad_density
+		self.range_clad_density[1] = max(self.slibs, key=attrgetter('clad_density')).clad_density
+		
+		self.range_cool_denisty[0] = min(self.slibs, key=attrgetter('cool_density')).cool_density
+		self.range_cool_denisty[1] = max(self.slibs, key=attrgetter('cool_density')).cool_density
+		
+		self.range_enrichment[0] = min(self.slibs, key=attrgetter('enrichment')).enrichment
+		self.range_enrichment[1] = max(self.slibs, key=attrgetter('enrichment')).enrichment
+		
+		# Update the metrics in libraries
+		for lib in self.slibs:
+			lib.fuel_cell_radius = (lib.fuel_cell_radius - self.range_fuel_radius[0]) / \
+									(self.range_fuel_radius[1] - self.range_fuel_radius[0])
+			
+		
+		
 	def Print(self):
-		print("Database scout run max values: ")
-		print("  Max prods: ", self.max_prods)
-		print("  Max desds: ", self.max_dests)
-		print("  Max BUs  : ", self.max_BUs)
+		print("Database scout run ranges: ")
+		print("  Fuel radius range:  ", self.range_fuel_radius)
+		print("  Fuel density range: ", self.range_fuel_density)
+		print("  Clad denisty range: ", self.range_clad_density)
+		print("  Cool density range: ", self.range_cool_denisty)
+		print("  Enrichment range:   ", self.range_enrichment)
+		#print("  Max prods: ", self.max_prods)
+		#print("  Max desds: ", self.max_dests)
+		#print("  Max BUs  : ", self.max_BUs)
+		
 		
 		
 	
