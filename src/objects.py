@@ -64,6 +64,9 @@ class Library:
 		doc.close()
 		
 	def ReadInput(self, ip_path):
+		if ip_path == "x":
+			return
+			
 		try:
 			doc = open(ip_path, "r")
 		except IOError:
@@ -103,23 +106,29 @@ class Library:
 				self.k_cycles_skip = float(items[2])
 		
 	def Print(self):
-		print('Lib #', self.number, ' input information:')
-		print('  fuel radius    : ', self.fuel_cell_radius)
-		print('  void radius    : ', self.void_cell_radius)
-		print('  clad radius    : ', self.clad_cell_radius)
-		print('  fuel density   : ', self.fuel_density)
-		print('  clad density   : ', self.clad_density)
-		print('  coolant density: ', self.cool_density)
-		print(' Normalized values')
-		print('  fuel radius : ', self.norm_fuel_radius)
-		print('  fuel density: ', self.norm_fuel_density)
-		print('  clad density: ', self.norm_clad_density)
-		print('  cool density: ', self.norm_cool_density)
-		print('  enrichment  : ', self.norm_enrichment)		
-		print(' output information:')
-		print('  max prod: ', self.max_prod)
-		print('  max dest: ', self.max_dest)
-		print('  max BU  : ', self.max_BU)
+		if self.ip_path == "x":
+			print('Interpolated library output information: ')
+			print('  Max prod: ', self.max_prod)
+			print('  Max dest: ', self.max_dest)
+			print('  Max BU  : ', self.max_BU)
+		else:
+			print('Lib #', self.number, ' input information:')
+			print('  fuel radius    : ', self.fuel_cell_radius)
+			print('  void radius    : ', self.void_cell_radius)
+			print('  clad radius    : ', self.clad_cell_radius)
+			print('  fuel density   : ', self.fuel_density)
+			print('  clad density   : ', self.clad_density)
+			print('  coolant density: ', self.cool_density)
+			print(' Normalized values')
+			print('  fuel radius : ', self.norm_fuel_radius)
+			print('  fuel density: ', self.norm_fuel_density)
+			print('  clad density: ', self.norm_clad_density)
+			print('  cool density: ', self.norm_cool_density)
+			print('  enrichment  : ', self.norm_enrichment)		
+			print(' output information:')
+			print('  max prod: ', self.max_prod)
+			print('  max dest: ', self.max_dest)
+			print('  max BU  : ', self.max_BU)
 	
 	# --- Inputs ---
 	# Initial heavy metal mass fraction distribution
@@ -273,8 +282,10 @@ class DBase:
 									(self.range_enrichment[1] - self.range_enrichment[0])
 		
 	# Uses inverse distance weighing to find library at target (t_) metrics		
-	def EstLib(self, neighbor_libs, t_fuel_radius=-1, t_fuel_density=-1, t_clad_density=-1, \
+	def EstLib(self, neighbor_libs, alpha=0.5, t_fuel_radius=-1, t_fuel_density=-1, t_clad_density=-1, \
 				t_cool_density=-1, t_enrichment=-1):
+		# Notes: 
+		# 	- The passed variables need to be normalized [0,1]
 		print('Begin workflow to interpolate a library')
 		
 		# Read parameters and store them in metrics lists
@@ -327,16 +338,26 @@ class DBase:
 		print(' Libraries for interpolation: ', len(lib_metrics[0]))
 		
 		# Calculate distances
-		lib_distances = lib_metrics
+		lib_distances = []
 		
-		for metric in range(len(lib_metrics)):
-			for lib in range(len(lib_metrics[0])):
-				lib_distances[metric][lib] = (lib_metrics[metric][lib] - \
-											t_metrics[metric]) ** 2
-		print(lib_distances)
+		for lib_i in range(len(lib_metrics[0])):
+			distance = 1
+			for met_i in range(len(lib_metrics)):
+				distance *= (lib_metrics[met_i][lib_i] - t_metrics[met_i])**2
+			distance = distance**(alpha/2)
+			lib_distances.append(distance)		
+		tot_dist = sum(lib_distances)
 		
 		# Interpolate library
+		interpolated_lib = Library("x","x",-1)
+		for lib_i, lib in enumerate(neighbor_libs):
+			interpolated_lib.max_prod += lib.max_prod * lib_distances[lib_i] / tot_dist
+			interpolated_lib.max_dest += lib.max_dest * lib_distances[lib_i] / tot_dist
+			interpolated_lib.max_BU   += lib.max_BU * lib_distances[lib_i] / tot_dist
 		
+		interpolated_lib.Print()
+		print(' Library interpolation complete')
+		return interpolated_lib
 		
 	def Print(self):
 		print("Database scout run ranges: ")
