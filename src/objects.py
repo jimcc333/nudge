@@ -216,6 +216,7 @@ class DBase:
 	#TODO: currently only recreates, make it update
 	# information about current database
 	def UpdateData(self):
+		# Delete old data
 		self.max_prods.clear()
 		self.max_dests.clear()
 		self.max_BUs.clear()
@@ -226,6 +227,23 @@ class DBase:
 		self.void_cell_radius.clear()
 		self.enrichment.clear()
 		
+		print('before:')
+		#for lib_i, lib in enumerate(self.slibs):
+			#print(lib_i, ' ', lib.number)
+		
+		# Update indexes
+		new_slibs = self.slibs
+		for lib in self.slibs:
+			print('lib number: ', lib.number)
+			new_slibs[lib.number-1] = lib
+		self.slibs = new_slibs
+		del new_slibs
+		
+		print('\n\n after:')
+		for i in range(len(self.slibs)):
+			print(i, ' ', self.slibs[i].number)
+			
+		# Rebuild lib values
 		for i in self.slibs:
 			self.fuel_cell_radius.append(i.fuel_cell_radius)
 			self.clad_cell_radius.append(i.clad_cell_radius)

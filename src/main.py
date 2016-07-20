@@ -16,17 +16,26 @@
 #  
 #  Naming and standards:
 #	The database folder should contain:
-#		- /Inputs 				(folder containing all inputs)
-#			- [tag][number].txt		(input file for library [number])
-#		- /build-[tag][number] 
-#			- /brightlite0
-#				- [nucid].txt	(output for [nucid] nuclide of input [number])
+#		- /SR_Inputs 				(folder containing all scouting inputs)
+#			- [number].txt			(input file for scout library [number])
+#		- /FR_Inputs 				(folder containing all full run inputs)
+#			- [number].txt			(input file for full library [number])
+#		- SR_Outputs				(folder for all scouting output libraries)
+#			- /build-[number] 		(this number must match the one in SR_Inputs)
+#				- /brightlite0		(created by xsgen)
+#					- [nucid].txt	(output for [nucid] nuclide of input [number])
+#		- FR_Outputs				(folder for all full library outputs)
+#			- /build-[number] 		(this number must match the one in FR_Inputs)
+#				- /brightlite0		(created by xsgen)
+#					- [nucid].txt	(output for [nucid] nuclide of input [number])
+#		- database_inputs.py		(file containing database inputs)
 #  
 #
 #	Terms:
 #		- Scout library: A library thats run in a short time and that has curtailed outputs
 #		- Metric: Values that libraries get interpolated on
 #  
+#TODO: let users input changes in xsgen-dependent constants (such as brightlite0 folder)
 
 from objects import *
 import os
@@ -52,7 +61,9 @@ def main(args):
 			print("Reading libraries")
 			for inputfile in os.listdir(databasepath + "Inputs/"):
 				# Initialize library
-				inputlib = Library(databasepath, databasepath + "Inputs/" + inputfile, int(inputfile[:-3]))
+				print(inputfile, '  ', inputfile.split())
+				lib_number = [int(s) for s in inputfile.split() if s.isdigit()]
+				inputlib = Library(databasepath, databasepath + "Inputs/" + inputfile, lib_number[-1])
 				
 				# Add lib to database
 				if not database.Exists(inputlib.number):
