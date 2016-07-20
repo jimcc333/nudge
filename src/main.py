@@ -32,7 +32,8 @@
 #  
 #
 #	Terms:
-#		- library number: indicated as [number]. Unique number for input-output pair. Starts at zero.
+#		- Library number: indicated as [number]. Unique number for input-output pair. Starts at zero.
+#		- Library progress: scout:[0:1), full=1
 #		- Scout library: A library thats run in a short time and that has curtailed outputs
 #		- Metric: Values that libraries get interpolated on
 #  
