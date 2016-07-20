@@ -21,7 +21,6 @@ class Library:
 		self.ReadInput(ip_path)
 		
 		#TODO: pass combining fractions (frac) better
-		print(op_path + "/build-sr" + str(number) + "/")
 		if os.path.isdir(op_path + "/build-sr" + str(number) + "/"):
 			self.scout = True
 			self.completed = True
@@ -33,7 +32,7 @@ class Library:
 			self.ReadOutput("U235", u238_file, 0.96)
 			
 			print("Completed reading scout output #" + str(number))
-		elif os.path.isdir(op_path + "build-fr" + str(number) + "/"):
+		elif os.path.isdir(op_path + "/build-fr" + str(number) + "/"):
 			self.scout = False
 			self.completed = True
 			
@@ -238,7 +237,6 @@ class DBase:
 			self.max_prods.append(i.max_prod)
 			self.max_dests.append(i.max_dest)
 			self.max_BUs.append(i.max_BU)
-		print(self.max_BUs)
 			
 	def PCA(self):
 		self.np_prods = np.asarray(self.max_prods)
@@ -289,7 +287,7 @@ class DBase:
 				t_cool_density=-1, t_enrichment=-1):
 		# Notes: 
 		# 	- The passed variables need to be normalized [0,1]
-		print('Begin workflow to interpolate a library')
+		print('Begining workflow to interpolate a library')
 		
 		# Read parameters and store them in metrics lists
 		t_metrics = []
@@ -346,7 +344,11 @@ class DBase:
 		for lib_i in range(len(lib_metrics[0])):
 			distance = 1
 			for met_i in range(len(lib_metrics)):
-				distance *= (lib_metrics[met_i][lib_i] - t_metrics[met_i])**2
+				met_dist = (lib_metrics[met_i][lib_i] - t_metrics[met_i])**2
+				#TODO: make this a global treshold variable or return the matching lib
+				if met_dist == 0:
+					met_dist = 0.001**2
+				distance *= met_dist
 			distance = distance**(alpha/2)
 			lib_distances.append(distance)		
 		tot_dist = sum(lib_distances)

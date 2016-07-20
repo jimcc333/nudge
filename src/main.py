@@ -109,11 +109,13 @@ def main(args):
 	print("Total libraries: " + str(len(database.slibs)))
 
 	database.UpdateData()
-	database.Print()
+	database.UpdateMetrics()
 	database.PCA()
 	
-	database.UpdateMetrics();
-	database.EstLib(database.slibs[3:7], t_fuel_radius=1, t_fuel_density=0.3, t_cool_density=0, t_enrichment=0.8)
+	database.slibs[8].Print()
+	database.slibs[9].Print()
+	
+	database.EstLib(database.slibs[8:10], 	t_enrichment=0.1)
 
 	"""
 	fig1 = plt.figure()
