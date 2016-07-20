@@ -32,9 +32,18 @@
 #  
 #
 #	Terms:
+#		- library number: indicated as [number]. Unique number for input-output pair. Starts at zero.
 #		- Scout library: A library thats run in a short time and that has curtailed outputs
 #		- Metric: Values that libraries get interpolated on
 #  
+#
+#
+#	Notes:
+#		- Folder structure and naming chosen to be simple and intuitive. This enables users to copy-paste
+#		  their existing libraries and easily allow NUDGE to use it in a given database
+#
+#
+#
 #TODO: let users input changes in xsgen-dependent constants (such as brightlite0 folder)
 
 from objects import *
@@ -47,39 +56,68 @@ from mpl_toolkits.mplot3d import Axes3D
 
 def main(args):
 	print("hello world")
+	# Inputs with defaults
+	database_name = 'database1'
+	SR_Input_folder = 'SR_Inputs'
 	
-	# inputs to be taken from user
+	# inputs must be taken from user
 	databasepath = "/home/cem/nudge/db_dbtest1/"
 	
-	database = DBase("database1")
+	database = DBase(database_name)
 	
-	#TODO: first read inputs and create a lib for each ID
-	#	at lib creation attempt to read lib output
-	#	at the end of reading all inputs read outputs and do consistency check
+	lib_numbers = [] # list containing library numbers
+	
 	for filename in os.listdir(databasepath):
-		if filename[:6] == "Inputs":
-			print("Reading libraries")
-			for inputfile in os.listdir(databasepath + "Inputs/"):
-				# Initialize library
-				print(inputfile, '  ', inputfile.split())
-				lib_number = [int(s) for s in inputfile.split() if s.isdigit()]
-				inputlib = Library(databasepath, databasepath + "Inputs/" + inputfile, lib_number[-1])
+		
+		# Attempt to read all available scout libraries (SR)
+		if filename[:9] == SR_Input_folder:
+			# Keeps looping through the files in the folder until all inputs are read in order
+			tot_files = len(os.listdir(databasepath + SR_Input_folder))
+			print('Attempting to read', tot_files, 'scout libraries')
+			while len(lib_numbers) < tot_files:
+				for inputfile in os.listdir(databasepath + SR_Input_folder):
+					status = 0 # used to avoid infinite loops
+					lib_number = [int(s) for s in inputfile.split('.') if s.isdigit()] # extract the number from filename
+					if len(lib_numbers) == 0: # initially the list is empty
+						if lib_number[-1] == 0:
+							lib_numbers.append(lib_number[-1])
+							inputlib = Library(databasepath, databasepath + SR_Input_folder \
+										+ '/' + inputfile, lib_number[-1])
+							database.AddSLib(inputlib)
+							status = 1
+							break
+					elif lib_number[-1] == lib_numbers[-1] + 1: 
+						lib_numbers.append(lib_number[-1])
+						inputlib = Library(databasepath, databasepath + SR_Input_folder \
+									+ '/' + inputfile, lib_number[-1])
+						database.AddSLib(inputlib)
+						status =1
+						break
+				if status == 0:
+					if len(lib_numbers) == 0:
+						print('No input files found in:', databasepath + SR_Input_folder)
+						print('Make sure input file numbering starts from zero: 0.py, 1.py, etc')
+					else:
+						print(len(lib_numbers), 'inputs read, however', tot_files - len(lib_numbers), \
+							'files in', databasepath + SR_Input_folder, 'were ignored')
+					break
+			
+			
 				
-				# Add lib to database
-				if not database.Exists(inputlib.number):
-					database.AddSLib(inputlib)
-					print(" Added lib #" + str(inputlib.number) + " to database")
-			break
-	
+	print(lib_numbers)
+
+				
+		
 	
 	print("Total libraries: " + str(len(database.slibs)))
+	"""
 	database.UpdateData()
 	#database.Print()
 	database.PCA()
 	
 	database.UpdateMetrics();
 	database.EstLib(database.slibs[3:7], t_fuel_radius=1, t_fuel_density=0.3, t_cool_density=0, t_enrichment=0.8)
-	
+	"""
 	"""
 	fig1 = plt.figure()
 	ax1 = fig1.add_subplot(111, projection='3d')
