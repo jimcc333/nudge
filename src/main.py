@@ -115,7 +115,10 @@ def main(args):
 	database.slibs[8].Print()
 	database.slibs[9].Print()
 	
-	database.EstLib(database.slibs[8:10], 	t_enrichment=0.1)
+	database.EstLib(database.slibs[8:10], 	t_enrichment=0.01, t_cool_density=0.99)
+	
+	
+	
 
 	"""
 	fig1 = plt.figure()

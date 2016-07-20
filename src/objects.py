@@ -104,7 +104,7 @@ class Library:
 			if items[0] == "k_cycles_skip":
 				self.k_cycles_skip = float(items[2])
 		
-	def Print(self):
+	def Print(self, detail=0):
 		if self.ip_path == "x":
 			print('Interpolated library output information: ')
 			print('  Max prod: ', self.max_prod)
@@ -112,16 +112,18 @@ class Library:
 			print('  Max BU  : ', self.max_BU)
 		else:
 			print('Lib #', self.number, ' input information:')
-			print('  fuel radius    : ', self.fuel_cell_radius)
-			print('  void radius    : ', self.void_cell_radius)
-			print('  clad radius    : ', self.clad_cell_radius)
-			print('  fuel density   : ', self.fuel_density)
-			print('  clad density   : ', self.clad_density)
-			print('  coolant density: ', self.cool_density)
+			if(detail):
+				print('  fuel radius    : ', self.fuel_cell_radius)
+				print('  void radius    : ', self.void_cell_radius)
+				print('  clad radius    : ', self.clad_cell_radius)
+				print('  fuel density   : ', self.fuel_density)
+				print('  clad density   : ', self.clad_density)
+				print('  coolant density: ', self.cool_density)
 			print(' Normalized values')
 			print('  fuel radius : ', self.norm_fuel_radius)
 			print('  fuel density: ', self.norm_fuel_density)
-			print('  clad density: ', self.norm_clad_density)
+			if(detail):
+				print('  clad density: ', self.norm_clad_density)
 			print('  cool density: ', self.norm_cool_density)
 			print('  enrichment  : ', self.norm_enrichment)		
 			print(' output information:')
@@ -292,12 +294,14 @@ class DBase:
 		# Read parameters and store them in metrics lists
 		t_metrics = []
 		lib_metrics =[]
+		lib_metrics_names = []
 		
 		if t_fuel_radius >= 0 and t_fuel_radius <= 1:
 			metrics = []
 			for lib in neighbor_libs:
 				metrics.append(lib.norm_fuel_radius)
 			lib_metrics.append(metrics)
+			lib_metrics_names.append('Norm Fuel Rad:')
 			t_metrics.append(t_fuel_radius)
 		
 		if t_fuel_density >= 0 and t_fuel_density <= 1:
@@ -305,6 +309,7 @@ class DBase:
 			for lib in neighbor_libs:
 				metrics.append(lib.norm_fuel_density)
 			lib_metrics.append(metrics)
+			lib_metrics_names.append('Norm Fuel Dens:')
 			t_metrics.append(t_fuel_density)
 		
 		if t_clad_density >= 0 and t_clad_density <= 1:
@@ -312,6 +317,7 @@ class DBase:
 			for lib in neighbor_libs:
 				metrics.append(lib.norm_clad_density)
 			lib_metrics.append(metrics)
+			lib_metrics_names.append('Norm Clad Dens:')
 			t_metrics.append(t_clad_density)
 		
 		if t_cool_density >= 0 and t_cool_density <= 1:
@@ -319,6 +325,7 @@ class DBase:
 			for lib in neighbor_libs:
 				metrics.append(lib.norm_cool_density)
 			lib_metrics.append(metrics)
+			lib_metrics_names.append('Norm Cool Dens:')
 			t_metrics.append(t_cool_density)
 				
 		if t_enrichment >= 0 and t_enrichment <= 1:
@@ -326,6 +333,7 @@ class DBase:
 			for lib in neighbor_libs:
 				metrics.append(lib.norm_enrichment)
 			lib_metrics.append(metrics)
+			lib_metrics_names.append('Norm Enrichment:')
 			t_metrics.append(t_enrichment)
 		
 		if len(lib_metrics) < 0:
@@ -335,7 +343,9 @@ class DBase:
 			print('Error, not enough libraries for interpolation')
 			return
 		
-		print(' Parameters passed: ', len(lib_metrics))
+		print(' Parameters')
+		for i in range(len(lib_metrics_names)):
+			print('  ', lib_metrics_names[i], t_metrics[i])
 		print(' Libraries for interpolation: ', len(lib_metrics[0]))
 		
 		# Calculate distances
@@ -344,10 +354,10 @@ class DBase:
 		for lib_i in range(len(lib_metrics[0])):
 			distance = 1
 			for met_i in range(len(lib_metrics)):
-				met_dist = (lib_metrics[met_i][lib_i] - t_metrics[met_i])**2
+				met_dist = 1-(lib_metrics[met_i][lib_i] - t_metrics[met_i])**2
 				#TODO: make this a global treshold variable or return the matching lib
 				if met_dist == 0:
-					met_dist = 0.001**2
+					met_dist = 0.0001**2
 				distance *= met_dist
 			distance = distance**(alpha/2)
 			lib_distances.append(distance)		
