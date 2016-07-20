@@ -21,15 +21,15 @@ class Library:
 		self.ReadInput(ip_path)
 		
 		#TODO: pass combining fractions (frac) better
-		
-		if os.path.isdir(op_path + "build-sr" + str(number) + "/"):
+		print(op_path + "/build-sr" + str(number) + "/")
+		if os.path.isdir(op_path + "/build-sr" + str(number) + "/"):
 			self.scout = True
 			self.completed = True
 			
-			u235_file = op_path + "build-sr" + str(number) + "/brightlite0/922350.txt"
+			u235_file = op_path + "/build-sr" + str(number) + "/brightlite0/922350.txt"
 			self.ReadOutput("U235", u235_file, 0.04)
 			
-			u238_file = op_path + "build-sr" + str(number) + "/brightlite0/922380.txt"
+			u238_file = op_path + "/build-sr" + str(number) + "/brightlite0/922380.txt"
 			self.ReadOutput("U235", u238_file, 0.96)
 			
 			print("Completed reading scout output #" + str(number))
@@ -226,22 +226,6 @@ class DBase:
 		self.clad_cell_thickness.clear()
 		self.void_cell_radius.clear()
 		self.enrichment.clear()
-		
-		print('before:')
-		#for lib_i, lib in enumerate(self.slibs):
-			#print(lib_i, ' ', lib.number)
-		
-		# Update indexes
-		new_slibs = self.slibs
-		for lib in self.slibs:
-			print('lib number: ', lib.number)
-			new_slibs[lib.number-1] = lib
-		self.slibs = new_slibs
-		del new_slibs
-		
-		print('\n\n after:')
-		for i in range(len(self.slibs)):
-			print(i, ' ', self.slibs[i].number)
 			
 		# Rebuild lib values
 		for i in self.slibs:
@@ -254,6 +238,7 @@ class DBase:
 			self.max_prods.append(i.max_prod)
 			self.max_dests.append(i.max_dest)
 			self.max_BUs.append(i.max_BU)
+		print(self.max_BUs)
 			
 	def PCA(self):
 		self.np_prods = np.asarray(self.max_prods)

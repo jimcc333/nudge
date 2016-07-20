@@ -60,6 +60,7 @@ def main(args):
 	# Inputs with defaults
 	database_name = 'database1'
 	SR_Input_folder = 'SR_Inputs'
+	SR_Output_folder = 'SR_Outputs'
 	
 	# inputs must be taken from user
 	databasepath = "/home/cem/nudge/db_dbtest1/"
@@ -82,15 +83,15 @@ def main(args):
 					if len(lib_numbers) == 0: # initially the list is empty
 						if lib_number[-1] == 0:
 							lib_numbers.append(lib_number[-1])
-							inputlib = Library(databasepath, databasepath + SR_Input_folder \
-										+ '/' + inputfile, lib_number[-1])
+							inputlib = Library(databasepath + SR_Output_folder, \
+										databasepath + SR_Input_folder + '/' + inputfile, lib_number[-1])
 							database.AddSLib(inputlib)
 							status = 1
 							break
 					elif lib_number[-1] == lib_numbers[-1] + 1: 
 						lib_numbers.append(lib_number[-1])
-						inputlib = Library(databasepath, databasepath + SR_Input_folder \
-									+ '/' + inputfile, lib_number[-1])
+						inputlib = Library(databasepath + SR_Output_folder, \
+									databasepath + SR_Input_folder + '/' + inputfile, lib_number[-1])
 						database.AddSLib(inputlib)
 						status =1
 						break
@@ -104,21 +105,16 @@ def main(args):
 					break
 			
 			
-				
-	print(lib_numbers)
-
-				
-		
 	
 	print("Total libraries: " + str(len(database.slibs)))
-	"""
+
 	database.UpdateData()
-	#database.Print()
+	database.Print()
 	database.PCA()
 	
 	database.UpdateMetrics();
 	database.EstLib(database.slibs[3:7], t_fuel_radius=1, t_fuel_density=0.3, t_cool_density=0, t_enrichment=0.8)
-	"""
+
 	"""
 	fig1 = plt.figure()
 	ax1 = fig1.add_subplot(111, projection='3d')
