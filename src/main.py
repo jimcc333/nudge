@@ -29,7 +29,7 @@
 #				- /brightlite0		created by xsgen
 #					- [nucid].txt	output for [nucid] nuclide of input [number]
 #		- basecase.py				xsgen input file containing base-case values
-#		- database_inputs.py		file containing database inputs
+#		- inputs.txt				file containing database inputs
 #  
 #
 #	Terms:
@@ -44,6 +44,7 @@
 #	Notes:
 #		- Folder structure and naming chosen to be simple and intuitive. This enables users to copy-paste
 #		  their existing libraries and easily allow NUDGE to use it in a given database
+#		- xsgen inputs include void and cladding radius, NUDGE also uses thickness in inputs and some workflow
 #
 #
 #
@@ -74,10 +75,8 @@ def main(args):
 	
 	database.Print()
 	
-	for lib in database.slibs:
-		lib.Print(detail=2)
 	
-	database.UpdateNeigbors()
+	#database.UpdateNeigbors()
 	
 	#print('Calculating PCA')
 	#database.PCA()

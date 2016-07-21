@@ -11,14 +11,15 @@ class PathNaming:
 		self.database_path = database_path
 		
 		self.base_input = 'basecase.py'		# This file is used as the base case for the database
+		self.dbase_input = 'inputs.txt'		# Used for database creation inputs
 		
 		self.SR_Input_folder = 'SR_Inputs'	# Where scout run inputs are stored
-		self.SR_Output_folder = 'SR_Outputs'	# Where scout run outputs are stored
+		self.SR_Output_folder = 'SR_Outputs'# Where scout run outputs are stored
 		self.FR_Input_folder = 'FR_Inputs'	# Where full run inputs are stored
-		self.FR_Output_folder = 'FR_Outputs'	# Where full run outputs are stored
+		self.FR_Output_folder = 'FR_Outputs'# Where full run outputs are stored
 		
-		self.xsgen_prefix = 'build-'			# The prefix xsgen assigns to output folders
-		self.xsgen_op_folder = 'brightlite0'	# The folder xsgen places bright-lite formatted outputs
+		self.xsgen_prefix = 'build-'		# The prefix xsgen assigns to output folders
+		self.xsgen_op_folder = 'brightlite0'# The folder xsgen places bright-lite formatted outputs
 		
 		self.sr_prefix = 'sr'				# The prefix given to scout libs
 		self.fr_prefix = 'fr'				# The prefix given to full libs
@@ -277,6 +278,9 @@ class DBase:
 		self.name = paths.database_name
 		self.dimensions = dimensions
 		
+		# Read database inputs
+		self.ReadInput(paths.database_path + paths.dbase_input)
+		
 		# Check to see if there's an scout library input folder
 		if os.path.exists(paths.database_path + paths.SR_Input_folder):
 			tot_files = len(os.listdir(paths.database_path + paths.SR_Input_folder))
@@ -310,6 +314,49 @@ class DBase:
 		
 	# Database specific immutable parameters
 	#TODO: combining fractions
+	
+	def ReadInput(self, ip_path):
+		# Make sure it's there
+		if not os.path.exists(ip_path):
+			error_message = 'The database input file does not exist. Looking for: ' \
+							+ ip_path
+			raise RuntimeError(error_message)
+		
+		
+		doc = open(ip_path., "r")
+		
+		for line in doc.readlines():
+			items = line.split()
+			
+			if len(items) < 3:
+				continue
+			if items[0] == "fuel_cell_radius":
+				self.inputs.fuel_cell_radius = float(items[2])
+			if items[0] == "void_cell_radius":
+				self.inputs.void_cell_radius = float(items[2])
+			if items[0] == "clad_cell_radius":
+				self.inputs.clad_cell_radius = float(items[2])
+			if items[0] == "unit_cell_pitch":
+				self.inputs.unit_cell_pitch = float(items[2])
+			if items[0] == "unit_cell_height":
+				self.inputs.unit_cell_height = float(items[2])
+			if items[0] == "fuel_density":
+				self.inputs.fuel_density = float(items[2])
+			if items[0] == "clad_density":
+				self.inputs.clad_density = float(items[2])
+			if items[0] == "cool_density":
+				self.inputs.cool_density = float(items[2])
+			if items[0] == "enrichment":
+				self.inputs.enrichment = float(items[2])
+			if items[0] == "flux":
+				self.inputs.flux = float(items[2])
+			if items[0] == "k_particles":
+				self.inputs.k_particles = float(items[2])
+			if items[0] == "k_cycles":
+				self.inputs.k_cycles = float(items[2])
+			if items[0] == "k_cycles_skip":
+				self.inputs.k_cycles_skip = float(items[2])
+		
 	
 	# stored libraries
 	#TODO: should check if exists first
@@ -516,7 +563,7 @@ class DBase:
 				n_coordinates = []
 				for i in neighbors:
 					n_coordinates.append(self.slibs[i].Coordinates())
-				print('coordinates:', n_coordinates)
+				#print('coordinates:', n_coordinates)
 				self.slib_neighbors.append(Neighborhood(neighbors, n_coordinates))
 				
 				self.slib_neighbors[-1].CalculateScore()
