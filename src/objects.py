@@ -484,11 +484,24 @@ class DBase:
 		
 		# Go through each slib and update its neighborhood
 		for lib in self.slibs:
-			print('Updating the neighborhood of lib', lib.number)
+			#print('Updating the neighborhood of lib', lib.number)
 			
 			if len(self.slib_neighbors) <= lib.number:
 				# Lib doesn't have a neighborhood
-				print(' Constructing an initial neighborhood for lib', lib.number)
+				#print(' Constructing an initial neighborhood for lib', lib.number)
+				neighbors = list(range(len(self.slibs)))
+				neighbors = neighbors[:lib.number] + neighbors[lib.number+1:]
+				# selection could be improved, but I predict it never will be worth it (esp if there's saved state data)
+				if len(neighbors) > self.dimensions*2:
+					neighbors = neighbors[:self.dimensions*2]
+				self.slib_neighbors.append(Neighborhood(neighbors))
+				
+				
+		print('neighbors size:', len(self.slib_neighbors))
+		
+		lib_nums = list(range(len(self.slib_neighbors)))
+		print(lib_nums)		
+		print(lib_nums[:3] + lib_nums[4:])
 				
 		
 	def Print(self):
