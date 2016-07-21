@@ -468,36 +468,36 @@ class DBase:
 		# work in progress
 		#TODO: have a class to handle metrics
 		# Update the range of metrics
-		self.range_fuel_radius[0] = min([i.inputs.fuel_cell_radius for i in self.slibs])
-		self.range_fuel_radius[1] = max([i.inputs.fuel_cell_radius for i in self.slibs])
+		self.range_fuel_radius[0] = min([i.inputs.geometry['fuel_cell_radius'] for i in self.slibs])
+		self.range_fuel_radius[1] = max([i.inputs.geometry['fuel_cell_radius'] for i in self.slibs])
 		
-		self.range_fuel_density[0] = min([i.inputs.fuel_density for i in self.slibs])
-		self.range_fuel_density[1] = max([i.inputs.fuel_density for i in self.slibs])
+		self.range_fuel_density[0] = min([i.inputs.density['fuel_density'] for i in self.slibs])
+		self.range_fuel_density[1] = max([i.inputs.density['fuel_density'] for i in self.slibs])
 		
-		self.range_clad_density[0] = min([i.inputs.clad_density for i in self.slibs])
-		self.range_clad_density[1] = max([i.inputs.clad_density for i in self.slibs])
+		self.range_clad_density[0] = min([i.inputs.density['clad_density'] for i in self.slibs])
+		self.range_clad_density[1] = max([i.inputs.density['clad_density'] for i in self.slibs])
 		
-		self.range_cool_density[0] = min([i.inputs.cool_density for i in self.slibs])
-		self.range_cool_density[1] = max([i.inputs.cool_density for i in self.slibs])
+		self.range_cool_density[0] = min([i.inputs.density['cool_density'] for i in self.slibs])
+		self.range_cool_density[1] = max([i.inputs.density['cool_density'] for i in self.slibs])
 		
-		self.range_enrichment[0] = min([i.inputs.enrichment for i in self.slibs])
-		self.range_enrichment[1] = max([i.inputs.enrichment for i in self.slibs])
+		self.range_enrichment[0] = min([i.inputs.other['enrichment'] for i in self.slibs])
+		self.range_enrichment[1] = max([i.inputs.other['enrichment'] for i in self.slibs])
 		
 		# Update the metrics in libraries
 		for lib in self.slibs:
-			lib.norm_fuel_radius = (lib.inputs.fuel_cell_radius - self.range_fuel_radius[0]) / \
+			lib.norm_fuel_radius = (lib.inputs.geometry['fuel_cell_radius'] - self.range_fuel_radius[0]) / \
 									(self.range_fuel_radius[1] - self.range_fuel_radius[0])
 									
-			lib.norm_fuel_density = (lib.inputs.fuel_density - self.range_fuel_density[0]) / \
+			lib.norm_fuel_density = (lib.inputs.density['fuel_density'] - self.range_fuel_density[0]) / \
 									(self.range_fuel_density[1] - self.range_fuel_density[0])
 									
-			lib.norm_clad_density = (lib.inputs.clad_density - self.range_clad_density[0]) / \
+			lib.norm_clad_density = (lib.inputs.density['clad_density'] - self.range_clad_density[0]) / \
 									(self.range_clad_density[1] - self.range_clad_density[0])
 									
-			lib.norm_cool_density = (lib.inputs.cool_density - self.range_cool_density[0]) / \
+			lib.norm_cool_density = (lib.inputs.density['cool_density'] - self.range_cool_density[0]) / \
 									(self.range_cool_density[1] - self.range_cool_density[0])
 									
-			lib.norm_enrichment = (lib.inputs.enrichment - self.range_enrichment[0]) / \
+			lib.norm_enrichment = (lib.inputs.other['enrichment'] - self.range_enrichment[0]) / \
 									(self.range_enrichment[1] - self.range_enrichment[0])
 		
 	# Uses inverse distance weighing to find library at target (t_) metrics		
