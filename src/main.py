@@ -45,6 +45,7 @@
 #		- Folder structure and naming chosen to be simple and intuitive. This enables users to copy-paste
 #		  their existing libraries and easily allow NUDGE to use it in a given database
 #		- xsgen inputs include void and cladding radius, NUDGE also uses thickness in inputs and some workflow
+#		- Dicts in the xsgen input file (initial heavy metal) should be written so that each item is in a new line
 #
 #
 #

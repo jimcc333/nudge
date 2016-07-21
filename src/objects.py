@@ -55,6 +55,30 @@ class xsgenParams:
 			'group_structure': None,
 			'openmc_group_struct': None,
 		}
+	
+	# Returns the number of defined inputs
+	def DefinedCount(self):
+		defined_inputs = 0
+		defined_inputs += sum(1 for i in self.initial_heavy_metal.values() if i != None)
+		defined_inputs += sum(1 for i in self.geometry.values() if i != None)
+		defined_inputs += sum(1 for i in self.density.values() if i != None)
+		defined_inputs += sum(1 for i in self.other.values() if i != None)
+		return defined_inputs
+	
+	def PrintDefined(self):
+		for key, value in self.initial_heavy_metal.items():
+			if value != None:
+				print(key, value)
+		for key, value in self.geometry.items():
+			if value != None:
+				print(key, value)
+		for key, value in self.density.items():
+			if value != None:
+				print(key, value)
+		for key, value in self.other.items():
+			if value != None:
+				print(key, value)
+				
 
 class Neighborhood:
 	# A class that holds information about the sample point neighborhood
@@ -136,46 +160,68 @@ class Library:
 		except IOError:
 			print("Could not open ", file_path)
 			return
+			
+		max_lines = 500
+		ip = doc.readlines()
 		
-		for line in doc.readlines():
-			items = line.split()
+		for line_i in range(len(ip)):
+			items = ip[line_i].split()
 			
 			if len(items) < 3:
 				continue
-			if items[0] == "fuel_cell_radius":
+			if items[0] == 'fuel_cell_radius':
 				self.inputs.geometry[items[0]] = float(items[2])
-			if items[0] == "void_cell_radius":
+			if items[0] == 'void_cell_radius':
 				self.inputs.geometry[items[0]] = float(items[2])
-			if items[0] == "clad_cell_radius":
+			if items[0] == 'clad_cell_radius':
 				self.inputs.geometry[items[0]] = float(items[2])
-			if items[0] == "unit_cell_pitch":
+			if items[0] == 'unit_cell_pitch':
 				self.inputs.geometry[items[0]] = float(items[2])
-			if items[0] == "unit_cell_height":
+			if items[0] == 'unit_cell_height':
 				self.inputs.geometry[items[0]] = float(items[2])
-			if items[0] == "fuel_density":
+			if items[0] == 'fuel_density':
 				self.inputs.density[items[0]] = float(items[2])
-			if items[0] == "clad_density":
+			if items[0] == 'clad_density':
 				self.inputs.density[items[0]] = float(items[2])
-			if items[0] == "cool_density":
+			if items[0] == 'cool_density':
 				self.inputs.density[items[0]] = float(items[2])
-			if items[0] == "enrichment":
+			if items[0] == 'enrichment':
 				self.inputs.other[items[0]] = float(items[2])
-			if items[0] == "flux":
+			if items[0] == 'flux':
 				self.inputs.other[items[0]] = float(items[2])
-			if items[0] == "k_particles":
+			if items[0] == 'k_particles':
 				self.inputs.other[items[0]] = float(items[2])
-			if items[0] == "k_cycles":
+			if items[0] == 'k_cycles':
 				self.inputs.other[items[0]] = float(items[2])
-			if items[0] == "k_cycles_skip":
+			if items[0] == 'k_cycles_skip':
 				self.inputs.other[items[0]] = float(items[2])
-		
+			if items[0] == 'initial_heavy_metal':
+				while line_i < max_lines:
+					line_i += 1
+					items = ip[line_i].replace(':',' ').replace(',',' ').split()
+					if len(items) > 2:
+						error_message = 'Input file in ' + self.ip_path + \
+										' has formatting error at initial_heavy_metal. Make sure each NUCID is in a new line and close bracket (}) at a new line.'
+						raise RuntimeError(error_message)
+					if '}' not in items[0]:
+						self.inputs.initial_heavy_metal[int(items[0])] = float(items[1])
+					else:
+						# End of initial heavy metal
+						break
+
+		if self.inputs.other['enrichment'] != None:
+			if self.inputs.other['enrichment'] - (self.inputs.initial_heavy_metal[922350] \
+				/(self.inputs.initial_heavy_metal[922350] + self.inputs.initial_heavy_metal[922380])) > 0.001:
+					error_message = 'Input file in ' + self.ip_path + ' has inconsistency between enrichment and given mass compositions'
+					raise RuntimeError(error_message)
+			
 	def Print(self, detail=0):
 		if detail == 2:
 			print('Lib #', self.number, ' normalized inputs:')
 			print(' F dens:', round(self.norm_fuel_density,2))
 			print(' C dens:', round(self.norm_clad_density,2))
 			return
-		if self.ip_path == "x":
+		if self.ip_path == 'x':
 			print('Interpolated library output information: ')
 			print('  Max prod: ', self.max_prod)
 			print('  Max dest: ', self.max_dest)
