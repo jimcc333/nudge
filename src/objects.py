@@ -59,11 +59,16 @@ class Neighborhood:
 	#	Neighborhoods are used to calculate gradients of points
 	#	A library does not need outputs to have a fully defined neighborhood
 	
-	def __init__(self, lib_numbers):
+	def __init__(self, lib_numbers, coordinates):
 		self.lib_numbers = lib_numbers
 		self.cohesion = 1	# C=1 implies all points are as far away as possible
 		self.adhesion = 0	# A=1 implies all points are on the same spot
 		self.neighbor_score = 0	# Lowest neighbor score
+		self.coordinates = coordinates
+	
+	def CalculateScore(self):
+		print('calculating neighborhood score')
+		
 
 class Library:
 	""" A class that holds library information """ 
@@ -195,18 +200,32 @@ class Library:
 			print('  max dest: ', self.max_dest)
 			print('  max BU  : ', self.max_BU)
 
+	def Coordinates(self):
+		coordinates = []
+		
+		if self.norm_fuel_radius != -1:
+			coordinates.append(self.norm_fuel_radius)
+		if self.norm_fuel_density != -1:
+			coordinates.append(self.norm_fuel_density)
+		if self.norm_clad_density != -1:
+			coordinates.append(self.norm_clad_density)
+		if self.norm_cool_density != -1:
+			coordinates.append(self.norm_cool_density)
+		if self.norm_enrichment != -1:
+			coordinates.append(self.norm_enrichment)
+			
+		return coordinates
 	
 	# --- Inputs ---
 	
 	# --- Normalized Values ---
-	norm_fuel_radius = 0.5
+	norm_fuel_radius = -1
 	
-	norm_fuel_density = 0.5
-	norm_clad_density = 0.5
-	norm_cool_density = 0.5
+	norm_fuel_density = -1
+	norm_clad_density = -1
+	norm_cool_density = -1
 	
-	norm_enrichment = 0.5
-	
+	norm_enrichment = -1
 	
 	# --- Outputs ---
 	
@@ -494,8 +513,13 @@ class DBase:
 				# selection could be improved, but I predict it never will be worth it (esp if there's saved state data)
 				if len(neighbors) > self.dimensions*2:
 					neighbors = neighbors[:self.dimensions*2]
-				self.slib_neighbors.append(Neighborhood(neighbors))
+				n_coordinates = []
+				for i in neighbors:
+					n_coordinates.append(self.slibs[i].Coordinates())
+				print('coordinates:', n_coordinates)
+				self.slib_neighbors.append(Neighborhood(neighbors, n_coordinates))
 				
+				self.slib_neighbors[-1].CalculateScore()
 				
 		print('neighbors size:', len(self.slib_neighbors))
 		
