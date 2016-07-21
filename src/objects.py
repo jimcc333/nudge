@@ -95,7 +95,9 @@ class Neighborhood:
 		self.coordinates = coordinates
 	
 	def CalculateScore(self):
-		print('calculating neighborhood score')
+		print('Calculating neighborhood score')
+		print(' Libs in this neighborhood:', self.lib_numbers)
+		print(' Coordinates:', self.coordinates)
 		
 
 class Library:
@@ -113,6 +115,15 @@ class Library:
 		self.max_prod = 0
 		self.max_dest = 0
 		self.max_BU = 0
+		
+		# --- Normalized Values ---
+		self.normalized = {
+			'fuel_cell_radius': None,
+			'fuel_density': None,
+			'clad_density': None,
+			'cool_density': None,
+			'enrichment': None,
+		}
 		
 		# Read input
 		self.ReadInput(ip_path)
@@ -218,11 +229,6 @@ class Library:
 					raise RuntimeError(error_message)
 			
 	def Print(self, detail=0):
-		if detail == 2:
-			print('Lib #', self.number, ' normalized inputs:')
-			print(' F dens:', round(self.norm_fuel_density,2))
-			print(' C dens:', round(self.norm_clad_density,2))
-			return
 		if self.ip_path == 'x':
 			print('Interpolated library output information: ')
 			print('  Max prod: ', self.max_prod)
@@ -239,8 +245,7 @@ class Library:
 				print('  coolant density: ', self.inputs.cool_density)
 			print(' Path:', self.ip_path)
 			print(' Normalized values')
-			print('  fuel radius : ', self.norm_fuel_radius)
-			print('  fuel density: ', self.norm_fuel_density)
+			print(self.normalized)
 			if(detail):
 				print('  clad density: ', self.norm_clad_density)
 			print('  cool density: ', self.norm_cool_density)
@@ -250,34 +255,14 @@ class Library:
 			print('  max dest: ', self.max_dest)
 			print('  max BU  : ', self.max_BU)
 
-	def Coordinates(self):
-		coordinates = []
+	def Coordinates(self, varied_ips):
+		coordinates = {}
 		
-		if self.norm_fuel_radius != -1:
-			coordinates.append(self.norm_fuel_radius)
-		if self.norm_fuel_density != -1:
-			coordinates.append(self.norm_fuel_density)
-		if self.norm_clad_density != -1:
-			coordinates.append(self.norm_clad_density)
-		if self.norm_cool_density != -1:
-			coordinates.append(self.norm_cool_density)
-		if self.norm_enrichment != -1:
-			coordinates.append(self.norm_enrichment)
-			
+		for key, value in self.normalized.items():
+			if key in varied_ips:
+				coordinates[key] = value
+		
 		return coordinates
-	
-	# --- Inputs ---
-	
-	# --- Normalized Values ---
-	norm_fuel_radius = -1
-	
-	norm_fuel_density = -1
-	norm_clad_density = -1
-	norm_cool_density = -1
-	
-	norm_enrichment = -1
-	
-	# --- Outputs ---
 	
 class DBase:
 	""" A class that handles all generated libraries """
@@ -375,7 +360,8 @@ class DBase:
 							+ ip_path
 			raise RuntimeError(error_message)
 		
-		self.ip_ranges = xsgenParams()
+		self.ip_ranges = xsgenParams()	# Ranges of varied inputs
+		self.varied_ips = []	# the varied inputs
 		
 		doc = open(ip_path, "r")
 		
@@ -394,6 +380,7 @@ class DBase:
 			try:
 				if len(str(int(items[0]))) == 6 and len(items) == 2:
 					self.ip_ranges.initial_heavy_metal[int(items[0])] = float(items[1])
+					self.varied_ips.append(int(items[0]))
 			except (ValueError):
 				pass
 			
@@ -401,10 +388,14 @@ class DBase:
 			if len(items) == 2 and float(items[1]) > 0:
 				if items[0] in self.ip_ranges.geometry:
 					self.ip_ranges.geometry[items[0]] = float(items[1])
+					self.varied_ips.append(items[0])
 				if items[0] in self.ip_ranges.density:
 					self.ip_ranges.density[items[0]] = float(items[1])
+					self.varied_ips.append(items[0])
 				if items[0] in self.ip_ranges.other:
 					self.ip_ranges.other[items[0]] = float(items[1])
+					self.varied_ips.append(items[0])
+		print('Varied inputs:', self.varied_ips)
 		
 	
 	# stored libraries
@@ -485,21 +476,23 @@ class DBase:
 		
 		# Update the metrics in libraries
 		for lib in self.slibs:
-			lib.norm_fuel_radius = (lib.inputs.geometry['fuel_cell_radius'] - self.range_fuel_radius[0]) / \
+			lib.normalized['fuel_cell_radius'] = (lib.inputs.geometry['fuel_cell_radius'] - self.range_fuel_radius[0]) / \
 									(self.range_fuel_radius[1] - self.range_fuel_radius[0])
 									
-			lib.norm_fuel_density = (lib.inputs.density['fuel_density'] - self.range_fuel_density[0]) / \
+			lib.normalized['fuel_density'] = (lib.inputs.density['fuel_density'] - self.range_fuel_density[0]) / \
 									(self.range_fuel_density[1] - self.range_fuel_density[0])
 									
-			lib.norm_clad_density = (lib.inputs.density['clad_density'] - self.range_clad_density[0]) / \
+			lib.normalized['clad_density'] = (lib.inputs.density['clad_density'] - self.range_clad_density[0]) / \
 									(self.range_clad_density[1] - self.range_clad_density[0])
 									
-			lib.norm_cool_density = (lib.inputs.density['cool_density'] - self.range_cool_density[0]) / \
+			lib.normalized['cool_density'] = (lib.inputs.density['cool_density'] - self.range_cool_density[0]) / \
 									(self.range_cool_density[1] - self.range_cool_density[0])
 									
-			lib.norm_enrichment = (lib.inputs.other['enrichment'] - self.range_enrichment[0]) / \
+			lib.normalized['enrichment'] = (lib.inputs.other['enrichment'] - self.range_enrichment[0]) / \
 									(self.range_enrichment[1] - self.range_enrichment[0])
-		
+	
+	""" 
+	#TODO: needs to be rewritten for compatibility
 	# Uses inverse distance weighing to find library at target (t_) metrics		
 	def EstLib(self, neighbor_libs, alpha=0.5, t_fuel_radius=-1, t_fuel_density=-1, t_clad_density=-1, \
 				t_cool_density=-1, t_enrichment=-1):
@@ -589,7 +582,7 @@ class DBase:
 		interpolated_lib.Print()
 		print(' Library interpolation complete')
 		return interpolated_lib
-		
+		"""
 		
 	def UpdateNeigbors(self):
 		
@@ -602,7 +595,7 @@ class DBase:
 			#print('Updating the neighborhood of lib', lib.number)
 			
 			if len(self.slib_neighbors) <= lib.number:
-				# Lib doesn't have a neighborhood
+				# Lib doesn't have a defined neighborhood
 				#print(' Constructing an initial neighborhood for lib', lib.number)
 				neighbors = list(range(len(self.slibs)))
 				neighbors = neighbors[:lib.number] + neighbors[lib.number+1:]
@@ -611,7 +604,7 @@ class DBase:
 					neighbors = neighbors[:self.dimensions*2]
 				n_coordinates = []
 				for i in neighbors:
-					n_coordinates.append(self.slibs[i].Coordinates())
+					n_coordinates.append(self.slibs[i].Coordinates(self.varied_ips))
 				#print('coordinates:', n_coordinates)
 				self.slib_neighbors.append(Neighborhood(neighbors, n_coordinates))
 				

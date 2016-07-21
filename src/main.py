@@ -36,7 +36,8 @@
 #		- Library number: indicated as [number]. Unique number for input-output pair. Starts at zero.
 #		- Library progress: scout:[0:1), full=1
 #		- Scout library: A library thats run in a short time and that has curtailed outputs
-#		- Metric: Values that libraries get interpolated on
+#		- Metric: Names of inputs that libraries get interpolated on
+#		- Coordinates: the normalized ([0,1]) metrics with only the varied ones so that dbase dimensions match coordinate dimensions
 #		- Neighborhood: Determined by inputs, the "closest" libs to a given lib (for gradient estimation)
 #  
 #
@@ -77,7 +78,7 @@ def main(args):
 	database.Print()
 	
 	
-	#database.UpdateNeigbors()
+	database.UpdateNeigbors()
 	
 	#print('Calculating PCA')
 	#database.PCA()
