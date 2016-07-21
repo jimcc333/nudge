@@ -294,6 +294,9 @@ class DBase:
 	slibs = []		# Scout libs
 	flibs = []		# Full libs
 	
+	complete_slibs = 0
+	complete_flibs = 0
+	
 	# Library neighborhoods
 	slib_neighbors = []
 	flib_neighbors = []
@@ -460,6 +463,7 @@ class DBase:
 		# Rebuild lib values
 		for i in self.slibs:
 			if i.completed:
+				complete_slibs += 1
 				self.fuel_cell_radius.append(i.inputs.fuel_cell_radius)
 				self.clad_cell_radius.append(i.inputs.clad_cell_radius)
 				self.clad_cell_thickness.append(i.inputs.clad_cell_radius - i.inputs.fuel_cell_radius)

@@ -39,7 +39,11 @@
 #		- Metric: Names of inputs that libraries get interpolated on
 #		- Coordinates: the normalized ([0,1]) metrics with only the varied ones so that dbase dimensions match coordinate dimensions
 #		- Neighborhood: Determined by inputs, the "closest" libs to a given lib (for gradient estimation)
-#  
+#
+#	Flags:
+#		-g (guided): start NUDGE in guided mode 
+#		-d (database): used for the database path
+#		-h (help):  help screen
 #
 #
 #	Notes:
@@ -53,6 +57,7 @@
 #TODO: updatemetrics fails when a variable isnt varied by a divide by zero error
 
 from objects import *
+from interface import *
 import os
 
 import numpy as np
@@ -62,21 +67,31 @@ from mpl_toolkits.mplot3d import Axes3D
 
 def main(args):
 	os.system('cls' if os.name == 'nt' else 'clear')
-	print('-- NUDGE: NUclear Database GEneration software --')
-	# Inputs with defaults
-	paths = PathNaming(database_path = '/home/cem/nudge/db2/')
+	
+	# Check if help is requested
+	if '-h' in args:
+		screen.HelpScreen()
+		return
+	
+	# Initialize screen
+	screen.InitScreen()
+	
+	# Take user inputs
+	try:
+		paths = PathNaming(database_path = args[args.index('-d')+1])
+	except ValueError:
+		usr_path = input('No database path found, please enter full path to database: \n')
+		paths = PathNaming(database_path = usr_path)
 	
 	# Initiate database
 	database = DBase(paths, 2)	
-	print('Total libraries: ' + str(len(database.slibs)))
 	
-	print('Updating data')
 	database.UpdateData()
 		
-	print('Updating metrics')
 	database.UpdateMetrics()
 	
-	database.Print()
+	screen.UpdateInfo(database)
+	
 	
 	
 	database.UpdateNeigbors()
@@ -124,6 +139,7 @@ def main(args):
 	ax3.set_zlabel("Clad Thickness")
 	plt.show()
 	"""
+	
 	
 	return 0
 
