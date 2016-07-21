@@ -1,9 +1,12 @@
 import os
 import copy
+import math
 
 import numpy as np
 from matplotlib.mlab import PCA as mlabPCA
 from operator import attrgetter
+from scipy.spatial import distance
+
 
 class PathNaming:
 	# A class that holds all info about the naming of system file paths
@@ -87,19 +90,40 @@ class Neighborhood:
 	#	Neighborhoods are used to calculate gradients of points
 	#	A library does not need outputs to have a fully defined neighborhood
 	
-	def __init__(self, lib_numbers, coordinates):
+	def __init__(self, p_coords, lib_numbers, coordinates):
+		self.p_coords = p_coords
 		self.lib_numbers = lib_numbers
 		self.cohesion = 1	# C=1 implies all points are as far away as possible
 		self.adhesion = 0	# A=1 implies all points are on the same spot
-		self.neighbor_score = 0	# Lowest neighbor score
 		self.coordinates = coordinates
+		self.CalculateScore()
 	
 	def CalculateScore(self):
-		print('Calculating neighborhood score')
-		print(' Libs in this neighborhood:', self.lib_numbers)
-		print(' Coordinates:', self.coordinates)
+		# Cohesion: avrg(distance(coord, center))
+		distances = []
+		p = [value for value in self.p_coords.values()]
+		for coord in self.coordinates:
+			x = [value for value in coord.values()]
+			distances.append(distance.euclidean(p,x))
+		self.cohesion = np.mean(distances)
 		
-
+		# Adhesion: avrg(min(distance(coord1,coord2)))
+		tot_libs = len(self.lib_numbers)
+		distances.clear()
+		lib_distances = []
+		for lib1 in range(tot_libs):
+			for lib2 in range(tot_libs):
+				if lib1 != lib2:
+					x1 = [value for value in self.coordinates[lib1].values()]
+					x2 = [value for value in self.coordinates[lib2].values()]
+					lib_distances.append(distance.euclidean(x1,x2))
+			distances.append(min(lib_distances))
+			lib_distances.clear()
+		self.adhesion = np.mean(distances)
+		
+		# Neighborhood score: A/(sqrt(2)*C^2)
+		self.neighbor_score = self.adhesion / ( (self.cohesion**2)*math.sqrt(2))
+	
 class Library:
 	""" A class that holds library information """ 
 	#TODO "run" routine to talk to xsgen, needs to be parallizable
@@ -285,7 +309,6 @@ class DBase:
 	void_cell_radius = []
 	
 	enrichment = []
-	
 	
 	# Min and max values ("range") in database
 	range_fuel_radius = [1,0]	# [min,max]
@@ -594,8 +617,8 @@ class DBase:
 		for lib in self.slibs:
 			#print('Updating the neighborhood of lib', lib.number)
 			
+			# Lib doesn't have a defined neighborhood
 			if len(self.slib_neighbors) <= lib.number:
-				# Lib doesn't have a defined neighborhood
 				#print(' Constructing an initial neighborhood for lib', lib.number)
 				neighbors = list(range(len(self.slibs)))
 				neighbors = neighbors[:lib.number] + neighbors[lib.number+1:]
@@ -606,15 +629,11 @@ class DBase:
 				for i in neighbors:
 					n_coordinates.append(self.slibs[i].Coordinates(self.varied_ips))
 				#print('coordinates:', n_coordinates)
-				self.slib_neighbors.append(Neighborhood(neighbors, n_coordinates))
-				
-				self.slib_neighbors[-1].CalculateScore()
-				
-		print('neighbors size:', len(self.slib_neighbors))
-		
-		lib_nums = list(range(len(self.slib_neighbors)))
-		print(lib_nums)		
-		print(lib_nums[:3] + lib_nums[4:])
+				self.slib_neighbors.append(Neighborhood(lib.Coordinates(self.varied_ips), neighbors, n_coordinates))
+			
+			# Compare the current library score to all other possible options
+			#TODO: pass the new libs and only check them
+			
 				
 		
 	def Print(self):

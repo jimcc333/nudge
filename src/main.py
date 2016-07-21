@@ -80,6 +80,45 @@ def main(args):
 	
 	database.UpdateNeigbors()
 	
+	neighbors = [1,2,3,4]
+	n_coordinates = []
+	for i in neighbors:
+		n_coordinates.append(database.slibs[i].Coordinates(database.varied_ips))
+	n1 = Neighborhood(database.slibs[0].Coordinates(database.varied_ips),neighbors, n_coordinates)
+	print('N1:',n1.neighbor_score)
+	
+	neighbors = [1,2,3,5]
+	n_coordinates = []
+	for i in neighbors:
+		n_coordinates.append(database.slibs[i].Coordinates(database.varied_ips))
+	n1 = Neighborhood(database.slibs[0].Coordinates(database.varied_ips),neighbors, n_coordinates)
+	print('N2:',n1.neighbor_score)
+	
+	neighbors = [1,2,5,4]
+	n_coordinates = []
+	for i in neighbors:
+		n_coordinates.append(database.slibs[i].Coordinates(database.varied_ips))
+	n1 = Neighborhood(database.slibs[0].Coordinates(database.varied_ips),neighbors, n_coordinates)
+	print('N3:',n1.neighbor_score)
+	
+	neighbors = [1,5,3,4]
+	n_coordinates = []
+	for i in neighbors:
+		n_coordinates.append(database.slibs[i].Coordinates(database.varied_ips))
+	n1 = Neighborhood(database.slibs[0].Coordinates(database.varied_ips),neighbors, n_coordinates)
+	print('N4:',n1.neighbor_score)
+	
+	neighbors = [5,2,3,4]
+	n_coordinates = []
+	for i in neighbors:
+		n_coordinates.append(database.slibs[i].Coordinates(database.varied_ips))
+	n1 = Neighborhood(database.slibs[0].Coordinates(database.varied_ips),neighbors, n_coordinates)
+	print('N5:',n1.neighbor_score)
+	
+	for lib in database.slibs:
+		print(lib.Coordinates(database.varied_ips))
+	
+	
 	#print('Calculating PCA')
 	#database.PCA()
 	
