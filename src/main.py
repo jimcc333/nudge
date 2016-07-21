@@ -59,50 +59,13 @@ def main(args):
 	print("hello world")
 	# Inputs with defaults
 	database_name = 'database1'
-	SR_Input_folder = 'SR_Inputs'
-	SR_Output_folder = 'SR_Outputs'
 	
-	# inputs must be taken from user
-	databasepath = "/home/cem/nudge/db_dbtest1/"
+	# Inputs that must be taken from user
+	database_path = "/home/cem/nudge/db_dbtest1/"
 	
-	database = DBase(database_name)
+	database = DBase(database_name, database_path)
 	
-	lib_numbers = [] # list containing library numbers
 	
-	for filename in os.listdir(databasepath):
-		
-		# Attempt to read all available scout libraries (SR)
-		if filename[:9] == SR_Input_folder:
-			# Keeps looping through the files in the folder until all inputs are read in order
-			tot_files = len(os.listdir(databasepath + SR_Input_folder))
-			print('Attempting to read', tot_files, 'scout libraries')
-			while len(lib_numbers) < tot_files:
-				for inputfile in os.listdir(databasepath + SR_Input_folder):
-					status = 0 # used to avoid infinite loops
-					lib_number = [int(s) for s in inputfile.split('.') if s.isdigit()] # extract the number from filename
-					if len(lib_numbers) == 0: # initially the list is empty
-						if lib_number[-1] == 0:
-							lib_numbers.append(lib_number[-1])
-							inputlib = Library(databasepath + SR_Output_folder, \
-										databasepath + SR_Input_folder + '/' + inputfile, lib_number[-1])
-							database.AddSLib(inputlib)
-							status = 1
-							break
-					elif lib_number[-1] == lib_numbers[-1] + 1: 
-						lib_numbers.append(lib_number[-1])
-						inputlib = Library(databasepath + SR_Output_folder, \
-									databasepath + SR_Input_folder + '/' + inputfile, lib_number[-1])
-						database.AddSLib(inputlib)
-						status =1
-						break
-				if status == 0:
-					if len(lib_numbers) == 0:
-						print('No input files found in:', databasepath + SR_Input_folder)
-						print('Make sure input file numbering starts from zero: 0.py, 1.py, etc')
-					else:
-						print(len(lib_numbers), 'inputs read, however', tot_files - len(lib_numbers), \
-							'files in', databasepath + SR_Input_folder, 'were ignored')
-					break
 			
 			
 	

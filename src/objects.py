@@ -173,6 +173,8 @@ class Library:
 class DBase:
 	""" A class that handles all generated libraries """
 	slibs = []		# Completed scout libs
+	
+	# Scout lib output parameters
 	max_prods = []
 	max_dests = []
 	max_BUs = []
@@ -196,8 +198,45 @@ class DBase:
 	range_enrichment = [1,0]
 	
 	
-	def __init__(self, name):
+	def __init__(self, name, database_path, SR_Input_folder = 'SR_Inputs', SR_Output_folder = 'SR_Outputs'):
 		self.name = name
+		lib_numbers = [] # list containing library numbers
+	
+		for filename in os.listdir(database_path):
+			
+			# Attempt to read all available scout libraries (SR)
+			if filename[:9] == SR_Input_folder:
+				# Keeps looping through the files in the folder until all inputs are read in order
+				tot_files = len(os.listdir(database_path + SR_Input_folder))
+				print('Attempting to read', tot_files, 'scout libraries')
+				while len(lib_numbers) < tot_files:
+					for inputfile in os.listdir(database_path + SR_Input_folder):
+						status = 0 # used to avoid infinite loops
+						lib_number = [int(s) for s in inputfile.split('.') if s.isdigit()] # extract the number from filename
+						if len(lib_numbers) == 0: # initially the list is empty
+							if lib_number[-1] == 0:
+								lib_numbers.append(lib_number[-1])
+								inputlib = Library(database_path + SR_Output_folder, \
+											database_path + SR_Input_folder + '/' + inputfile, lib_number[-1])
+								self.AddSLib(inputlib)
+								status = 1
+								break
+						elif lib_number[-1] == lib_numbers[-1] + 1: 
+							lib_numbers.append(lib_number[-1])
+							inputlib = Library(database_path + SR_Output_folder, \
+										database_path + SR_Input_folder + '/' + inputfile, lib_number[-1])
+							self.AddSLib(inputlib)
+							status =1
+							break
+					if status == 0:
+						if len(lib_numbers) == 0:
+							print('No input files found in:', database_path + SR_Input_folder)
+							print('Make sure input file numbering starts from zero: 0.py, 1.py, etc')
+						else:
+							print(len(lib_numbers), 'inputs read, however', tot_files - len(lib_numbers), \
+								'files in', database_path + SR_Input_folder, 'were ignored')
+						break
+		
 		
 	# Database specific immutable parameters
 	#TODO: combining fractions
