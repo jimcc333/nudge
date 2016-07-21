@@ -58,22 +58,23 @@ from mpl_toolkits.mplot3d import Axes3D
 def main(args):
 	print("hello world")
 	# Inputs with defaults
-	database_name = 'database1'
+	paths = PathNaming(database_path = "/home/cem/nudge/db_dbtest1/")
 	
-	# Inputs that must be taken from user
-	database_path = "/home/cem/nudge/db_dbtest1/"
-	
-	database = DBase(database_name, database_path)
-	
-	
-			
-			
-	
+	# Initiate database
+	database = DBase(paths)	
 	print("Total libraries: " + str(len(database.slibs)))
 
+	print('Updating data')
 	database.UpdateData()
+	
+	print('Updating metrics')
 	database.UpdateMetrics()
+	
+	database.Print()
+	
+	print('Calculating PCA')
 	database.PCA()
+	
 	
 	database.slibs[8].Print()
 	database.slibs[9].Print()

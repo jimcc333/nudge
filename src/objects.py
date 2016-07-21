@@ -9,6 +9,7 @@ class Library:
 	#TODO "run" routine to talk to xsgen, needs to be parallizable
 	
 	def __init__(self, op_path, ip_path, number):
+		
 		self.ip_path = ip_path		# Path of the input file
 		self.op_path = op_path	# path to the library folder w/ brightlite0 in it
 		self.number = number	# Unique number of the library
@@ -31,7 +32,7 @@ class Library:
 			u238_file = op_path + "/build-sr" + str(number) + "/brightlite0/922380.txt"
 			self.ReadOutput("U235", u238_file, 0.96)
 			
-			print("Completed reading scout output #" + str(number))
+			#print("Completed reading scout output #" + str(number))
 		elif os.path.isdir(op_path + "/build-fr" + str(number) + "/"):
 			self.scout = False
 			self.completed = True
@@ -172,7 +173,8 @@ class Library:
 	
 class DBase:
 	""" A class that handles all generated libraries """
-	slibs = []		# Completed scout libs
+	slibs = []		# Scout libs
+	flibs = []		# Full libs
 	
 	# Scout lib output parameters
 	max_prods = []
@@ -198,44 +200,47 @@ class DBase:
 	range_enrichment = [1,0]
 	
 	
-	def __init__(self, name, database_path, SR_Input_folder = 'SR_Inputs', SR_Output_folder = 'SR_Outputs'):
-		self.name = name
-		lib_numbers = [] # list containing library numbers
-	
-		for filename in os.listdir(database_path):
+	def __init__(self, paths):
+		
+		# Read database, assuming software may have been interrupted and
+		#	the folder may have some inputs and outputs 
+		
+		if not os.path.isdir(paths.database_path):
+			raise RuntimeError('The database path does not exist')
 			
-			# Attempt to read all available scout libraries (SR)
-			if filename[:9] == SR_Input_folder:
-				# Keeps looping through the files in the folder until all inputs are read in order
-				tot_files = len(os.listdir(database_path + SR_Input_folder))
-				print('Attempting to read', tot_files, 'scout libraries')
-				while len(lib_numbers) < tot_files:
-					for inputfile in os.listdir(database_path + SR_Input_folder):
-						status = 0 # used to avoid infinite loops
-						lib_number = [int(s) for s in inputfile.split('.') if s.isdigit()] # extract the number from filename
-						if len(lib_numbers) == 0: # initially the list is empty
-							if lib_number[-1] == 0:
-								lib_numbers.append(lib_number[-1])
-								inputlib = Library(database_path + SR_Output_folder, \
-											database_path + SR_Input_folder + '/' + inputfile, lib_number[-1])
-								self.AddSLib(inputlib)
-								status = 1
-								break
-						elif lib_number[-1] == lib_numbers[-1] + 1: 
-							lib_numbers.append(lib_number[-1])
-							inputlib = Library(database_path + SR_Output_folder, \
-										database_path + SR_Input_folder + '/' + inputfile, lib_number[-1])
-							self.AddSLib(inputlib)
-							status =1
-							break
-					if status == 0:
-						if len(lib_numbers) == 0:
-							print('No input files found in:', database_path + SR_Input_folder)
-							print('Make sure input file numbering starts from zero: 0.py, 1.py, etc')
-						else:
-							print(len(lib_numbers), 'inputs read, however', tot_files - len(lib_numbers), \
-								'files in', database_path + SR_Input_folder, 'were ignored')
+		if not os.path.exists(paths.database_path + paths.base_input):
+			error_message = 'The database base-case input file does not exist. Looking for: ' \
+							+ paths.database_path + paths.base_input
+			raise RuntimeError(error_message)
+		
+		self.name = paths.database_name
+		
+		# Check to see if there's an scout library input folder
+		if os.path.exists(paths.database_path + paths.SR_Input_folder):
+			tot_files = len(os.listdir(paths.database_path + paths.SR_Input_folder))
+		# If the input scout library folder doesn't exist create it
+		else:
+			os.mkdir(paths.database_path + paths.SR_Input_folder)
+			tot_files = 0
+		
+		
+		tot_sr_libs = 0
+		# If there are files SR_Inputs, read them
+		if tot_files > 0:
+			print('Attempting to read', tot_files, 'scout libraries')
+			for ip_number in range(tot_files):
+					file_path = paths.database_path + paths.SR_Input_folder + '/' + str(ip_number) +'.py'
+					if os.path.exists(file_path):
+						inputlib = Library(op_path=paths.database_path + paths.SR_Output_folder, ip_path=file_path, number=ip_number)
+						self.AddLib(inputlib)
+						tot_sr_libs += 1
+					else:
+						# Could continue here instead of breaking, but at this point this is better
 						break
+							
+		if tot_sr_libs < tot_files:
+			print(tot_sr_libs, 'inputs read, however', tot_files - tot_sr_libs, \
+						'files in', paths.database_path + paths.SR_Input_folder, 'were ignored')
 		
 		
 	# Database specific immutable parameters
@@ -243,8 +248,18 @@ class DBase:
 	
 	# stored libraries
 	#TODO: should check if exists first
-	def AddSLib(self, added_lib):
-		self.slibs.append(added_lib)
+	def AddLib(self, added_lib):
+		if added_lib.scout:
+			if added_lib.number != len(self.slibs):
+				raise RuntimeError('Scout library number mismatch when adding to slibs')
+			
+			self.slibs.append(added_lib)
+		else:
+			if added_lib.number != len(self.flibs):
+				raise RuntimeError('Full library number mismatch when adding to slibs')
+				
+			self.flibs.append(added_lib)
+	
 	
 	def Exists(self, number):
 		for lib in self.slibs:
@@ -425,6 +440,19 @@ class DBase:
 		#print("  Max BUs  : ", self.max_BUs)
 		
 		
+
+class PathNaming:
+	def __init__(self, database_path = "/home/cem/nudge/db_dbtest1/"):
+		self.database_path = database_path
+		
+	database_name = 'database1'
+	
+	base_input = 'basecase.py'		# This file is used as the base case for the database
+	
+	SR_Input_folder = 'SR_Inputs'	# Where scout run inputs are stored
+	SR_Output_folder = 'SR_Outputs'	# Where scout run outputs are stored
+	FR_Input_folder = 'FR_Inputs'	# Where full run inputs are stored
+	FR_Output_folder = 'FR_Outputs'	# Where full run outputs are stored
 		
 	
 
