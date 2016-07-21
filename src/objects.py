@@ -30,30 +30,31 @@ class xsgenParams:
 	# A class that holds all parameters also used in xsgeninputs
 	def __init__(self):
 		# Initial heavy metal mass fraction distribution
-		initial_heavy_metal = {
-			922350: 0.033,
-			922380: 0.967,
-		}
+		self.initial_heavy_metal = {}
 		
-		# Geometry inputs
-		fuel_cell_radius = 0.410			# [cm]
-		void_cell_radius = 0.4185			# [cm]
-		clad_cell_radius = 0.475			# [cm]
-		unit_cell_pitch  = 0.65635 * 2.0	# [cm]
-		unit_cell_height = 10.0				# [cm]
+		self.geometry = {		# Geometry inputs
+			'fuel_cell_radius': None,	# [cm]
+			'void_cell_radius': None,	# [cm]
+			'clad_cell_radius': None,	# [cm]
+			'unit_cell_pitch': None,	# [cm]
+			'unit_cell_height': None,		# [cm]
+			}
 		
-		# Density inputs
-		fuel_density = 10.7  # Fuel density [g/cc]
-		clad_density = 5.87  # Cladding Density [g/cc]
-		cool_density = 0.73  # Coolant Density [g/cc]
+		self.density = {			# Density inputs
+			'fuel_density': None,	# Fuel density [g/cc]
+			'clad_density': None,	# Cladding Density [g/cc]
+			'cool_density': None,	# Coolant Density [g/cc]
+			}
 
-		# Others
-		flux = 3e14  			# Average reactor flux [n/cm2/s]
-		k_particles   = 5000	# Number of particles to run per kcode cycle
-		k_cycles      = 130		# Number of kcode cycles to run
-		k_cycles_skip = 30		# Number of kcode cycles to run but skip
-		group_structure = [1.0e-9, 10]
-		#openmc_group_struct = np.logspace(1, -9, 101)
+		self.other = {		# Others
+			'enrichment': None,		# Fuel enrichment (Uranium fuel only) as atom fraction
+			'flux:': None,	  		# Average reactor flux [n/cm2/s]
+			'k_particles': None,	# Number of particles to run per kcode cycle
+			'k_cycles': None,		# Number of kcode cycles to run
+			'k_cycles_skip': None,	# Number of kcode cycles to run but skip
+			'group_structure': None,
+			'openmc_group_struct': None,
+		}
 
 class Neighborhood:
 	# A class that holds information about the sample point neighborhood
@@ -81,7 +82,7 @@ class Library:
 		self.op_path = op_path	# path to the library folder w/ Bright-lite formatted .txt files in it
 		self.number = number	# Unique number of the library
 		self.scout = scout
-		self.inputs = PathNaming(database_path)
+		self.inputs = xsgenParams()
 		
 		self.max_prod = 0
 		self.max_dest = 0
@@ -142,31 +143,31 @@ class Library:
 			if len(items) < 3:
 				continue
 			if items[0] == "fuel_cell_radius":
-				self.inputs.fuel_cell_radius = float(items[2])
+				self.inputs.geometry[items[0]] = float(items[2])
 			if items[0] == "void_cell_radius":
-				self.inputs.void_cell_radius = float(items[2])
+				self.inputs.geometry[items[0]] = float(items[2])
 			if items[0] == "clad_cell_radius":
-				self.inputs.clad_cell_radius = float(items[2])
+				self.inputs.geometry[items[0]] = float(items[2])
 			if items[0] == "unit_cell_pitch":
-				self.inputs.unit_cell_pitch = float(items[2])
+				self.inputs.geometry[items[0]] = float(items[2])
 			if items[0] == "unit_cell_height":
-				self.inputs.unit_cell_height = float(items[2])
+				self.inputs.geometry[items[0]] = float(items[2])
 			if items[0] == "fuel_density":
-				self.inputs.fuel_density = float(items[2])
+				self.inputs.density[items[0]] = float(items[2])
 			if items[0] == "clad_density":
-				self.inputs.clad_density = float(items[2])
+				self.inputs.density[items[0]] = float(items[2])
 			if items[0] == "cool_density":
-				self.inputs.cool_density = float(items[2])
+				self.inputs.density[items[0]] = float(items[2])
 			if items[0] == "enrichment":
-				self.inputs.enrichment = float(items[2])
+				self.inputs.other[items[0]] = float(items[2])
 			if items[0] == "flux":
-				self.inputs.flux = float(items[2])
+				self.inputs.other[items[0]] = float(items[2])
 			if items[0] == "k_particles":
-				self.inputs.k_particles = float(items[2])
+				self.inputs.other[items[0]] = float(items[2])
 			if items[0] == "k_cycles":
-				self.inputs.k_cycles = float(items[2])
+				self.inputs.other[items[0]] = float(items[2])
 			if items[0] == "k_cycles_skip":
-				self.inputs.k_cycles_skip = float(items[2])
+				self.inputs.other[items[0]] = float(items[2])
 		
 	def Print(self, detail=0):
 		if detail == 2:
@@ -322,12 +323,25 @@ class DBase:
 							+ ip_path
 			raise RuntimeError(error_message)
 		
+		self.const_inputs = xsgenParams()
 		
-		doc = open(ip_path., "r")
+		doc = open(ip_path, "r")
 		
 		for line in doc.readlines():
 			items = line.split()
 			
+			# Check empty line
+			if len(items) == 0:
+				print('empty')
+				continue
+			
+			# Check for comments
+			if items[0][0] == '#' or items[0][0] == '/':
+				print('comment',end='')
+				continue
+				
+			
+			"""
 			if len(items) < 3:
 				continue
 			if items[0] == "fuel_cell_radius":
@@ -355,7 +369,7 @@ class DBase:
 			if items[0] == "k_cycles":
 				self.inputs.k_cycles = float(items[2])
 			if items[0] == "k_cycles_skip":
-				self.inputs.k_cycles_skip = float(items[2])
+				self.inputs.k_cycles_skip = float(items[2])"""
 		
 	
 	# stored libraries
