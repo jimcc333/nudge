@@ -330,7 +330,9 @@ class DBase:
 		# Read database inputs
 		self.ReadInput(paths.database_path + paths.dbase_input)
 		
-		print('def count:',self.ip_ranges.DefinedCount())
+		if self.dimensions != self.ip_ranges.DefinedCount():
+			raise RuntimeError('Dimensions and database input file varied inputs number mismatch')
+		print('Database dimensions:', self.dimensions)
 		
 		# Check to see if there's an scout library input folder
 		if os.path.exists(paths.database_path + paths.SR_Input_folder):

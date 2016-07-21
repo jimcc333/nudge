@@ -60,13 +60,13 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 def main(args):
-	print("hello world")
+	print('-- NUDGE: NUclear Database GEneration software --')
 	# Inputs with defaults
-	paths = PathNaming(database_path = "/home/cem/nudge/db2/")
+	paths = PathNaming(database_path = '/home/cem/nudge/db2/')
 	
 	# Initiate database
 	database = DBase(paths, 2)	
-	print("Total libraries: " + str(len(database.slibs)))
+	print('Total libraries: ' + str(len(database.slibs)))
 	
 	print('Updating data')
 	database.UpdateData()
