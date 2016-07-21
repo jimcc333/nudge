@@ -6,6 +6,7 @@ from matplotlib.mlab import PCA as mlabPCA
 from operator import attrgetter
 
 class PathNaming:
+	# A class that holds all info about the naming of system file paths
 	def __init__(self, database_path = "/home/cem/nudge/db_dbtest1/"):
 		self.database_path = database_path
 		
@@ -25,6 +26,7 @@ class PathNaming:
 		self.database_name = 'database1'
 		
 class xsgenParams:
+	# A class that holds all parameters also used in xsgeninputs
 	def __init__(self):
 		# Initial heavy metal mass fraction distribution
 		initial_heavy_metal = {
@@ -52,6 +54,15 @@ class xsgenParams:
 		group_structure = [1.0e-9, 10]
 		#openmc_group_struct = np.logspace(1, -9, 101)
 
+class Neighborhood:
+	# A class that holds information about the sample point neighborhood
+	#	Neighborhoods are used to calculate gradients of points
+	
+	def __init__(self, lib_numbers)
+		self.lib_numbers = lib_numbers
+		self.cohesion = 1	# C=1 implies all points are as far away as possible
+		self.adhesion = 0	# A=1 implies all points are on the same spot
+		self.neighbor_score = 0	# Lowest neighbor score
 
 class Library:
 	""" A class that holds library information """ 
@@ -68,6 +79,8 @@ class Library:
 		self.max_prod = 0
 		self.max_dest = 0
 		self.max_BU = 0
+		
+		self.neighbor_scores = []
 		
 		# Read input
 		self.ReadInput(ip_path)

@@ -58,7 +58,7 @@ from mpl_toolkits.mplot3d import Axes3D
 def main(args):
 	print("hello world")
 	# Inputs with defaults
-	paths = PathNaming(database_path = "/home/cem/nudge/db_dbtest1/")
+	paths = PathNaming(database_path = "/home/cem/nudge/db2/")
 	
 	# Initiate database
 	database = DBase(paths)	
@@ -72,13 +72,12 @@ def main(args):
 	
 	database.Print()
 	
-	print('Calculating PCA')
+	#print('Calculating PCA')
 	#database.PCA()
 	
 	
-	database.slibs[8].Print()
-	database.slibs[9].Print()
-	
+	#database.slibs[8].Print()
+	#database.slibs[9].Print()
 	#database.EstLib(database.slibs[8:10], 	t_enrichment=0.01, t_cool_density=0.99)
 	
 	
