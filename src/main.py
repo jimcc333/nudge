@@ -16,19 +16,20 @@
 #  
 #  Naming and standards:
 #	The database folder should contain:
-#		- /SR_Inputs 				(folder containing all scouting inputs)
-#			- [number].txt			(input file for scout library [number])
-#		- /FR_Inputs 				(folder containing all full run inputs)
-#			- [number].txt			(input file for full library [number])
-#		- SR_Outputs				(folder for all scouting output libraries)
-#			- /build-[number] 		(this number must match the one in SR_Inputs)
-#				- /brightlite0		(created by xsgen)
-#					- [nucid].txt	(output for [nucid] nuclide of input [number])
-#		- FR_Outputs				(folder for all full library outputs)
-#			- /build-[number] 		(this number must match the one in FR_Inputs)
-#				- /brightlite0		(created by xsgen)
-#					- [nucid].txt	(output for [nucid] nuclide of input [number])
-#		- database_inputs.py		(file containing database inputs)
+#		- /SR_Inputs 				folder containing all scouting inputs
+#			- [number].txt			input file for scout library [number]
+#		- /FR_Inputs 				folder containing all full run inputs
+#			- [number].txt			input file for full library [number]
+#		- /SR_Outputs				folder for all scouting output libraries
+#			- /build-[number] 		this number must match the one in SR_Inputs
+#				- /brightlite0		created by xsgen
+#					- [nucid].txt	output for [nucid] nuclide of input [number]
+#		- /FR_Outputs				folder for all full library outputs
+#			- /build-[number] 		this number must match the one in FR_Inputs
+#				- /brightlite0		created by xsgen
+#					- [nucid].txt	output for [nucid] nuclide of input [number]
+#		- basecase.py				xsgen input file containing base-case values
+#		- database_inputs.py		file containing database inputs
 #  
 #
 #	Terms:
@@ -36,6 +37,7 @@
 #		- Library progress: scout:[0:1), full=1
 #		- Scout library: A library thats run in a short time and that has curtailed outputs
 #		- Metric: Values that libraries get interpolated on
+#		- Neighborhood: Determined by inputs, the "closest" libs to a given lib (for gradient estimation)
 #  
 #
 #
@@ -61,7 +63,7 @@ def main(args):
 	paths = PathNaming(database_path = "/home/cem/nudge/db2/")
 	
 	# Initiate database
-	database = DBase(paths)	
+	database = DBase(paths, 2)	
 	print("Total libraries: " + str(len(database.slibs)))
 	
 	print('Updating data')
@@ -71,6 +73,11 @@ def main(args):
 	database.UpdateMetrics()
 	
 	database.Print()
+	
+	for lib in database.slibs:
+		lib.Print(detail=2)
+	
+	database.UpdateNeigbors()
 	
 	#print('Calculating PCA')
 	#database.PCA()

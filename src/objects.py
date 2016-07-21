@@ -57,8 +57,9 @@ class xsgenParams:
 class Neighborhood:
 	# A class that holds information about the sample point neighborhood
 	#	Neighborhoods are used to calculate gradients of points
+	#	A library does not need outputs to have a fully defined neighborhood
 	
-	def __init__(self, lib_numbers)
+	def __init__(self, lib_numbers):
 		self.lib_numbers = lib_numbers
 		self.cohesion = 1	# C=1 implies all points are as far away as possible
 		self.adhesion = 0	# A=1 implies all points are on the same spot
@@ -79,8 +80,6 @@ class Library:
 		self.max_prod = 0
 		self.max_dest = 0
 		self.max_BU = 0
-		
-		self.neighbor_scores = []
 		
 		# Read input
 		self.ReadInput(ip_path)
@@ -164,6 +163,11 @@ class Library:
 				self.inputs.k_cycles_skip = float(items[2])
 		
 	def Print(self, detail=0):
+		if detail == 2:
+			print('Lib #', self.number, ' normalized inputs:')
+			print(' F dens:', round(self.norm_fuel_density,2))
+			print(' C dens:', round(self.norm_clad_density,2))
+			return
 		if self.ip_path == "x":
 			print('Interpolated library output information: ')
 			print('  Max prod: ', self.max_prod)
@@ -190,6 +194,7 @@ class Library:
 			print('  max prod: ', self.max_prod)
 			print('  max dest: ', self.max_dest)
 			print('  max BU  : ', self.max_BU)
+
 	
 	# --- Inputs ---
 	
@@ -209,6 +214,10 @@ class DBase:
 	""" A class that handles all generated libraries """
 	slibs = []		# Scout libs
 	flibs = []		# Full libs
+	
+	# Library neighborhoods
+	slib_neighbors = []
+	flib_neighbors = []
 	
 	# Scout lib output parameters
 	max_prods = []
@@ -234,8 +243,7 @@ class DBase:
 	range_enrichment = [1,0]
 	
 	
-	def __init__(self, paths):
-		
+	def __init__(self, paths, dimensions):		
 		# Read database, assuming software may have been interrupted and
 		#	the folder may have some inputs and outputs 
 		
@@ -248,6 +256,7 @@ class DBase:
 			raise RuntimeError(error_message)
 		
 		self.name = paths.database_name
+		self.dimensions = dimensions
 		
 		# Check to see if there's an scout library input folder
 		if os.path.exists(paths.database_path + paths.SR_Input_folder):
@@ -285,6 +294,7 @@ class DBase:
 	
 	# stored libraries
 	#TODO: should check if exists first
+	#TODO: should update relevant neighborhoods
 	def AddLib(self, added_lib):
 		if added_lib.scout:
 			if added_lib.number != len(self.slibs):
@@ -464,6 +474,22 @@ class DBase:
 		interpolated_lib.Print()
 		print(' Library interpolation complete')
 		return interpolated_lib
+		
+		
+	def UpdateNeigbors(self):
+		
+		if len(self.slibs) < self.dimensions * 2 + 2:
+			# Not enough libs to construct neighborhoods
+			return
+		
+		# Go through each slib and update its neighborhood
+		for lib in self.slibs:
+			print('Updating the neighborhood of lib', lib.number)
+			
+			if len(self.slib_neighbors) <= lib.number:
+				# Lib doesn't have a neighborhood
+				print(' Constructing an initial neighborhood for lib', lib.number)
+				
 		
 	def Print(self):
 		print("Database scout run ranges: ")
