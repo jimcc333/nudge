@@ -61,6 +61,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 def main(args):
+	os.system('cls' if os.name == 'nt' else 'clear')
 	print('-- NUDGE: NUclear Database GEneration software --')
 	# Inputs with defaults
 	paths = PathNaming(database_path = '/home/cem/nudge/db2/')
