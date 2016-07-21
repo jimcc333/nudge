@@ -63,23 +63,23 @@ def main(args):
 	# Initiate database
 	database = DBase(paths)	
 	print("Total libraries: " + str(len(database.slibs)))
-
+	
 	print('Updating data')
 	database.UpdateData()
-	
+		
 	print('Updating metrics')
 	database.UpdateMetrics()
 	
 	database.Print()
 	
 	print('Calculating PCA')
-	database.PCA()
+	#database.PCA()
 	
 	
 	database.slibs[8].Print()
 	database.slibs[9].Print()
 	
-	database.EstLib(database.slibs[8:10], 	t_enrichment=0.01, t_cool_density=0.99)
+	#database.EstLib(database.slibs[8:10], 	t_enrichment=0.01, t_cool_density=0.99)
 	
 	
 	

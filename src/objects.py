@@ -1,18 +1,69 @@
 import os
+import copy
 
 import numpy as np
 from matplotlib.mlab import PCA as mlabPCA
 from operator import attrgetter
 
+class PathNaming:
+	def __init__(self, database_path = "/home/cem/nudge/db_dbtest1/"):
+		self.database_path = database_path
+		
+		self.base_input = 'basecase.py'		# This file is used as the base case for the database
+		
+		self.SR_Input_folder = 'SR_Inputs'	# Where scout run inputs are stored
+		self.SR_Output_folder = 'SR_Outputs'	# Where scout run outputs are stored
+		self.FR_Input_folder = 'FR_Inputs'	# Where full run inputs are stored
+		self.FR_Output_folder = 'FR_Outputs'	# Where full run outputs are stored
+		
+		self.xsgen_prefix = 'build-'			# The prefix xsgen assigns to output folders
+		self.xsgen_op_folder = 'brightlite0'	# The folder xsgen places bright-lite formatted outputs
+		
+		self.sr_prefix = 'sr'				# The prefix given to scout libs
+		self.fr_prefix = 'fr'				# The prefix given to full libs
+		
+		self.database_name = 'database1'
+		
+class xsgenParams:
+	def __init__(self):
+		# Initial heavy metal mass fraction distribution
+		initial_heavy_metal = {
+			922350: 0.033,
+			922380: 0.967,
+		}
+		
+		# Geometry inputs
+		fuel_cell_radius = 0.410			# [cm]
+		void_cell_radius = 0.4185			# [cm]
+		clad_cell_radius = 0.475			# [cm]
+		unit_cell_pitch  = 0.65635 * 2.0	# [cm]
+		unit_cell_height = 10.0				# [cm]
+		
+		# Density inputs
+		fuel_density = 10.7  # Fuel density [g/cc]
+		clad_density = 5.87  # Cladding Density [g/cc]
+		cool_density = 0.73  # Coolant Density [g/cc]
+
+		# Others
+		flux = 3e14  			# Average reactor flux [n/cm2/s]
+		k_particles   = 5000	# Number of particles to run per kcode cycle
+		k_cycles      = 130		# Number of kcode cycles to run
+		k_cycles_skip = 30		# Number of kcode cycles to run but skip
+		group_structure = [1.0e-9, 10]
+		#openmc_group_struct = np.logspace(1, -9, 101)
+
+
 class Library:
 	""" A class that holds library information """ 
 	#TODO "run" routine to talk to xsgen, needs to be parallizable
 	
-	def __init__(self, op_path, ip_path, number):
+	def __init__(self, database_path, op_path, ip_path, number, scout):
 		
-		self.ip_path = ip_path		# Path of the input file
-		self.op_path = op_path	# path to the library folder w/ brightlite0 in it
+		self.ip_path = ip_path	# Path of the input file
+		self.op_path = op_path	# path to the library folder w/ Bright-lite formatted .txt files in it
 		self.number = number	# Unique number of the library
+		self.scout = scout
+		self.inputs = PathNaming(database_path)
 		
 		self.max_prod = 0
 		self.max_dest = 0
@@ -22,26 +73,20 @@ class Library:
 		self.ReadInput(ip_path)
 		
 		#TODO: pass combining fractions (frac) better
-		if os.path.isdir(op_path + "/build-sr" + str(number) + "/"):
-			self.scout = True
+		if os.path.isdir(op_path):
 			self.completed = True
 			
-			u235_file = op_path + "/build-sr" + str(number) + "/brightlite0/922350.txt"
+			u235_file = op_path + "/922350.txt"
 			self.ReadOutput("U235", u235_file, 0.04)
 			
-			u238_file = op_path + "/build-sr" + str(number) + "/brightlite0/922380.txt"
+			u238_file = op_path + "/922380.txt"
 			self.ReadOutput("U235", u238_file, 0.96)
 			
 			#print("Completed reading scout output #" + str(number))
-		elif os.path.isdir(op_path + "/build-fr" + str(number) + "/"):
-			self.scout = False
-			self.completed = True
-			
-			#TODO: read full run output
-			
-		else:	# library not run yet
+		else:
 			self.completed = False
 			
+			#TODO: read full run output
 			#TODO: add library to queue
 	
 	
@@ -79,31 +124,31 @@ class Library:
 			if len(items) < 3:
 				continue
 			if items[0] == "fuel_cell_radius":
-				self.fuel_cell_radius = float(items[2])
+				self.inputs.fuel_cell_radius = float(items[2])
 			if items[0] == "void_cell_radius":
-				self.void_cell_radius = float(items[2])
+				self.inputs.void_cell_radius = float(items[2])
 			if items[0] == "clad_cell_radius":
-				self.clad_cell_radius = float(items[2])
+				self.inputs.clad_cell_radius = float(items[2])
 			if items[0] == "unit_cell_pitch":
-				self.unit_cell_pitch = float(items[2])
+				self.inputs.unit_cell_pitch = float(items[2])
 			if items[0] == "unit_cell_height":
-				self.unit_cell_height = float(items[2])
+				self.inputs.unit_cell_height = float(items[2])
 			if items[0] == "fuel_density":
-				self.fuel_density = float(items[2])
+				self.inputs.fuel_density = float(items[2])
 			if items[0] == "clad_density":
-				self.clad_density = float(items[2])
+				self.inputs.clad_density = float(items[2])
 			if items[0] == "cool_density":
-				self.cool_density = float(items[2])
+				self.inputs.cool_density = float(items[2])
 			if items[0] == "enrichment":
-				self.enrichment = float(items[2])
+				self.inputs.enrichment = float(items[2])
 			if items[0] == "flux":
-				self.flux = float(items[2])
+				self.inputs.flux = float(items[2])
 			if items[0] == "k_particles":
-				self.k_particles = float(items[2])
+				self.inputs.k_particles = float(items[2])
 			if items[0] == "k_cycles":
-				self.k_cycles = float(items[2])
+				self.inputs.k_cycles = float(items[2])
 			if items[0] == "k_cycles_skip":
-				self.k_cycles_skip = float(items[2])
+				self.inputs.k_cycles_skip = float(items[2])
 		
 	def Print(self, detail=0):
 		if self.ip_path == "x":
@@ -114,12 +159,13 @@ class Library:
 		else:
 			print('Lib #', self.number, ' input information:')
 			if(detail):
-				print('  fuel radius    : ', self.fuel_cell_radius)
-				print('  void radius    : ', self.void_cell_radius)
-				print('  clad radius    : ', self.clad_cell_radius)
-				print('  fuel density   : ', self.fuel_density)
-				print('  clad density   : ', self.clad_density)
-				print('  coolant density: ', self.cool_density)
+				print('  fuel radius    : ', self.inputs.fuel_cell_radius)
+				print('  void radius    : ', self.inputs.void_cell_radius)
+				print('  clad radius    : ', self.inputs.clad_cell_radius)
+				print('  fuel density   : ', self.inputs.fuel_density)
+				print('  clad density   : ', self.inputs.clad_density)
+				print('  coolant density: ', self.inputs.cool_density)
+			print(' Path:', self.ip_path)
 			print(' Normalized values')
 			print('  fuel radius : ', self.norm_fuel_radius)
 			print('  fuel density: ', self.norm_fuel_density)
@@ -133,31 +179,6 @@ class Library:
 			print('  max BU  : ', self.max_BU)
 	
 	# --- Inputs ---
-	# Initial heavy metal mass fraction distribution
-	initial_heavy_metal = {
-		922350: 0.033,
-		922380: 0.967,
-    }
-    
-	# Geometry inputs
-	fuel_cell_radius = 0.410			# [cm]
-	void_cell_radius = 0.4185			# [cm]
-	clad_cell_radius = 0.475			# [cm]
-	unit_cell_pitch  = 0.65635 * 2.0	# [cm]
-	unit_cell_height = 10.0				# [cm]
-	
-	# Density inputs
-	fuel_density = 10.7  # Fuel density [g/cc]
-	clad_density = 5.87  # Cladding Density [g/cc]
-	cool_density = 0.73  # Coolant Density [g/cc]
-
-	# Others
-	flux = 3e14  			# Average reactor flux [n/cm2/s]
-	k_particles   = 5000	# Number of particles to run per kcode cycle
-	k_cycles      = 130		# Number of kcode cycles to run
-	k_cycles_skip = 30		# Number of kcode cycles to run but skip
-	group_structure = [1.0e-9, 10]
-	#openmc_group_struct = np.logspace(1, -9, 101)
 	
 	# --- Normalized Values ---
 	norm_fuel_radius = 0.5
@@ -229,9 +250,12 @@ class DBase:
 		if tot_files > 0:
 			print('Attempting to read', tot_files, 'scout libraries')
 			for ip_number in range(tot_files):
-					file_path = paths.database_path + paths.SR_Input_folder + '/' + str(ip_number) +'.py'
-					if os.path.exists(file_path):
-						inputlib = Library(op_path=paths.database_path + paths.SR_Output_folder, ip_path=file_path, number=ip_number)
+					ip_path = paths.database_path + paths.SR_Input_folder + '/' + str(ip_number) +'.py'
+					op_path = paths.database_path + paths.SR_Output_folder + '/' + paths.xsgen_prefix \
+								+ paths.sr_prefix + str(ip_number) + '/' + paths.xsgen_op_folder
+								
+					if os.path.exists(ip_path):
+						inputlib = Library(database_path=paths.database_path, op_path=op_path, ip_path=ip_path, number=ip_number, scout=True)
 						self.AddLib(inputlib)
 						tot_sr_libs += 1
 					else:
@@ -252,15 +276,13 @@ class DBase:
 		if added_lib.scout:
 			if added_lib.number != len(self.slibs):
 				raise RuntimeError('Scout library number mismatch when adding to slibs')
-			
-			self.slibs.append(added_lib)
+			self.slibs.append(copy.deepcopy(added_lib))
 		else:
 			if added_lib.number != len(self.flibs):
 				raise RuntimeError('Full library number mismatch when adding to slibs')
-				
-			self.flibs.append(added_lib)
+			self.flibs.append(copy.deepcopy(added_lib))
 	
-	
+	#TODO: this probably isnt used and aint even right
 	def Exists(self, number):
 		for lib in self.slibs:
 			if lib.number == number:
@@ -284,58 +306,60 @@ class DBase:
 			
 		# Rebuild lib values
 		for i in self.slibs:
-			self.fuel_cell_radius.append(i.fuel_cell_radius)
-			self.clad_cell_radius.append(i.clad_cell_radius)
-			self.clad_cell_thickness.append(i.clad_cell_radius - i.fuel_cell_radius)
-			self.void_cell_radius.append(i.void_cell_radius)
-			self.enrichment.append(i.enrichment)
-			
-			self.max_prods.append(i.max_prod)
-			self.max_dests.append(i.max_dest)
-			self.max_BUs.append(i.max_BU)
+			if i.completed:
+				self.fuel_cell_radius.append(i.inputs.fuel_cell_radius)
+				self.clad_cell_radius.append(i.inputs.clad_cell_radius)
+				self.clad_cell_thickness.append(i.inputs.clad_cell_radius - i.inputs.fuel_cell_radius)
+				self.void_cell_radius.append(i.inputs.void_cell_radius)
+				self.enrichment.append(i.inputs.enrichment)
+				
+				self.max_prods.append(i.max_prod)
+				self.max_dests.append(i.max_dest)
+				self.max_BUs.append(i.max_BU)
 			
 	def PCA(self):
-		self.np_prods = np.asarray(self.max_prods)
-		self.np_dests = np.asarray(self.max_dests)
-		self.np_BUs = np.asarray(self.max_BUs)
-		
-		self.data_mat = np.column_stack((self.np_prods, self.np_dests, self.np_BUs))
-		self.pca_mat = mlabPCA(self.data_mat)	# PCA matrix 
+		if len(self.max_prods) > 0:
+			self.np_prods = np.asarray(self.max_prods)
+			self.np_dests = np.asarray(self.max_dests)
+			self.np_BUs = np.asarray(self.max_BUs)
+			
+			self.data_mat = np.column_stack((self.np_prods, self.np_dests, self.np_BUs))
+			self.pca_mat = mlabPCA(self.data_mat)	# PCA matrix 
 		
 	def UpdateMetrics(self):
 		# work in progress
 		#TODO: have a class to handle metrics
 		# Update the range of metrics
-		self.range_fuel_radius[0] = min(self.slibs, key=attrgetter('fuel_cell_radius')).fuel_cell_radius
-		self.range_fuel_radius[1] = max(self.slibs, key=attrgetter('fuel_cell_radius')).fuel_cell_radius
+		self.range_fuel_radius[0] = min([i.inputs.fuel_cell_radius for i in self.slibs])
+		self.range_fuel_radius[1] = max([i.inputs.fuel_cell_radius for i in self.slibs])
 		
-		self.range_fuel_density[0] = min(self.slibs, key=attrgetter('fuel_density')).fuel_density
-		self.range_fuel_density[1] = max(self.slibs, key=attrgetter('fuel_density')).fuel_density
+		self.range_fuel_density[0] = min([i.inputs.fuel_density for i in self.slibs])
+		self.range_fuel_density[1] = max([i.inputs.fuel_density for i in self.slibs])
 		
-		self.range_clad_density[0] = min(self.slibs, key=attrgetter('clad_density')).clad_density
-		self.range_clad_density[1] = max(self.slibs, key=attrgetter('clad_density')).clad_density
+		self.range_clad_density[0] = min([i.inputs.clad_density for i in self.slibs])
+		self.range_clad_density[1] = max([i.inputs.clad_density for i in self.slibs])
 		
-		self.range_cool_density[0] = min(self.slibs, key=attrgetter('cool_density')).cool_density
-		self.range_cool_density[1] = max(self.slibs, key=attrgetter('cool_density')).cool_density
+		self.range_cool_density[0] = min([i.inputs.cool_density for i in self.slibs])
+		self.range_cool_density[1] = max([i.inputs.cool_density for i in self.slibs])
 		
-		self.range_enrichment[0] = min(self.slibs, key=attrgetter('enrichment')).enrichment
-		self.range_enrichment[1] = max(self.slibs, key=attrgetter('enrichment')).enrichment
+		self.range_enrichment[0] = min([i.inputs.enrichment for i in self.slibs])
+		self.range_enrichment[1] = max([i.inputs.enrichment for i in self.slibs])
 		
 		# Update the metrics in libraries
 		for lib in self.slibs:
-			lib.norm_fuel_radius = (lib.fuel_cell_radius - self.range_fuel_radius[0]) / \
+			lib.norm_fuel_radius = (lib.inputs.fuel_cell_radius - self.range_fuel_radius[0]) / \
 									(self.range_fuel_radius[1] - self.range_fuel_radius[0])
 									
-			lib.norm_fuel_density = (lib.fuel_density - self.range_fuel_density[0]) / \
+			lib.norm_fuel_density = (lib.inputs.fuel_density - self.range_fuel_density[0]) / \
 									(self.range_fuel_density[1] - self.range_fuel_density[0])
 									
-			lib.norm_clad_density = (lib.clad_density - self.range_clad_density[0]) / \
+			lib.norm_clad_density = (lib.inputs.clad_density - self.range_clad_density[0]) / \
 									(self.range_clad_density[1] - self.range_clad_density[0])
 									
-			lib.norm_cool_density = (lib.cool_density - self.range_cool_density[0]) / \
+			lib.norm_cool_density = (lib.inputs.cool_density - self.range_cool_density[0]) / \
 									(self.range_cool_density[1] - self.range_cool_density[0])
 									
-			lib.norm_enrichment = (lib.enrichment - self.range_enrichment[0]) / \
+			lib.norm_enrichment = (lib.inputs.enrichment - self.range_enrichment[0]) / \
 									(self.range_enrichment[1] - self.range_enrichment[0])
 		
 	# Uses inverse distance weighing to find library at target (t_) metrics		
@@ -353,7 +377,7 @@ class DBase:
 		if t_fuel_radius >= 0 and t_fuel_radius <= 1:
 			metrics = []
 			for lib in neighbor_libs:
-				metrics.append(lib.norm_fuel_radius)
+				metrics.append(lib.inputs.norm_fuel_radius)
 			lib_metrics.append(metrics)
 			lib_metrics_names.append('Norm Fuel Rad:')
 			t_metrics.append(t_fuel_radius)
@@ -361,7 +385,7 @@ class DBase:
 		if t_fuel_density >= 0 and t_fuel_density <= 1:
 			metrics = []
 			for lib in neighbor_libs:
-				metrics.append(lib.norm_fuel_density)
+				metrics.append(lib.inputs.norm_fuel_density)
 			lib_metrics.append(metrics)
 			lib_metrics_names.append('Norm Fuel Dens:')
 			t_metrics.append(t_fuel_density)
@@ -369,7 +393,7 @@ class DBase:
 		if t_clad_density >= 0 and t_clad_density <= 1:
 			metrics = []
 			for lib in neighbor_libs:
-				metrics.append(lib.norm_clad_density)
+				metrics.append(lib.inputs.norm_clad_density)
 			lib_metrics.append(metrics)
 			lib_metrics_names.append('Norm Clad Dens:')
 			t_metrics.append(t_clad_density)
@@ -377,7 +401,7 @@ class DBase:
 		if t_cool_density >= 0 and t_cool_density <= 1:
 			metrics = []
 			for lib in neighbor_libs:
-				metrics.append(lib.norm_cool_density)
+				metrics.append(lib.inputs.norm_cool_density)
 			lib_metrics.append(metrics)
 			lib_metrics_names.append('Norm Cool Dens:')
 			t_metrics.append(t_cool_density)
@@ -385,7 +409,7 @@ class DBase:
 		if t_enrichment >= 0 and t_enrichment <= 1:
 			metrics = []
 			for lib in neighbor_libs:
-				metrics.append(lib.norm_enrichment)
+				metrics.append(lib.inputs.norm_enrichment)
 			lib_metrics.append(metrics)
 			lib_metrics_names.append('Norm Enrichment:')
 			t_metrics.append(t_enrichment)
@@ -441,20 +465,7 @@ class DBase:
 		
 		
 
-class PathNaming:
-	def __init__(self, database_path = "/home/cem/nudge/db_dbtest1/"):
-		self.database_path = database_path
-		
-	database_name = 'database1'
-	
-	base_input = 'basecase.py'		# This file is used as the base case for the database
-	
-	SR_Input_folder = 'SR_Inputs'	# Where scout run inputs are stored
-	SR_Output_folder = 'SR_Outputs'	# Where scout run outputs are stored
-	FR_Input_folder = 'FR_Inputs'	# Where full run inputs are stored
-	FR_Output_folder = 'FR_Outputs'	# Where full run outputs are stored
-		
-	
+
 
 
 
