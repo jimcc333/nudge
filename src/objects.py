@@ -36,8 +36,10 @@ class xsgenParams:
 			'fuel_cell_radius': None,	# [cm]
 			'void_cell_radius': None,	# [cm]
 			'clad_cell_radius': None,	# [cm]
+			'void_thickness': None,		# [cm]
+			'clad_thickness': None,		# [cm]
 			'unit_cell_pitch': None,	# [cm]
-			'unit_cell_height': None,		# [cm]
+			'unit_cell_height': None,	# [cm]
 			}
 		
 		self.density = {			# Density inputs
@@ -328,6 +330,8 @@ class DBase:
 		# Read database inputs
 		self.ReadInput(paths.database_path + paths.dbase_input)
 		
+		print('def count:',self.ip_ranges.DefinedCount())
+		
 		# Check to see if there's an scout library input folder
 		if os.path.exists(paths.database_path + paths.SR_Input_folder):
 			tot_files = len(os.listdir(paths.database_path + paths.SR_Input_folder))
@@ -369,7 +373,7 @@ class DBase:
 							+ ip_path
 			raise RuntimeError(error_message)
 		
-		self.const_inputs = xsgenParams()
+		self.ip_ranges = xsgenParams()
 		
 		doc = open(ip_path, "r")
 		
@@ -378,44 +382,27 @@ class DBase:
 			
 			# Check empty line
 			if len(items) == 0:
-				print('empty')
 				continue
 			
 			# Check for comments
 			if items[0][0] == '#' or items[0][0] == '/':
-				print('comment',end='')
 				continue
-				
 			
-			"""
-			if len(items) < 3:
-				continue
-			if items[0] == "fuel_cell_radius":
-				self.inputs.fuel_cell_radius = float(items[2])
-			if items[0] == "void_cell_radius":
-				self.inputs.void_cell_radius = float(items[2])
-			if items[0] == "clad_cell_radius":
-				self.inputs.clad_cell_radius = float(items[2])
-			if items[0] == "unit_cell_pitch":
-				self.inputs.unit_cell_pitch = float(items[2])
-			if items[0] == "unit_cell_height":
-				self.inputs.unit_cell_height = float(items[2])
-			if items[0] == "fuel_density":
-				self.inputs.fuel_density = float(items[2])
-			if items[0] == "clad_density":
-				self.inputs.clad_density = float(items[2])
-			if items[0] == "cool_density":
-				self.inputs.cool_density = float(items[2])
-			if items[0] == "enrichment":
-				self.inputs.enrichment = float(items[2])
-			if items[0] == "flux":
-				self.inputs.flux = float(items[2])
-			if items[0] == "k_particles":
-				self.inputs.k_particles = float(items[2])
-			if items[0] == "k_cycles":
-				self.inputs.k_cycles = float(items[2])
-			if items[0] == "k_cycles_skip":
-				self.inputs.k_cycles_skip = float(items[2])"""
+			# Check for a 6 digit nucid and that a range is given
+			try:
+				if len(str(int(items[0]))) == 6 and len(items) == 2:
+					self.ip_ranges.initial_heavy_metal[int(items[0])] = float(items[1])
+			except (ValueError):
+				pass
+			
+			# Check the rest of defined inputs
+			if len(items) == 2 and float(items[1]) > 0:
+				if items[0] in self.ip_ranges.geometry:
+					self.ip_ranges.geometry[items[0]] = float(items[1])
+				if items[0] in self.ip_ranges.density:
+					self.ip_ranges.density[items[0]] = float(items[1])
+				if items[0] in self.ip_ranges.other:
+					self.ip_ranges.other[items[0]] = float(items[1])
 		
 	
 	# stored libraries
