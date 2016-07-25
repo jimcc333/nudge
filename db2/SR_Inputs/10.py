@@ -28,8 +28,8 @@ clad_cell_radius = 0.504955
 unit_cell_pitch  = 0.65635 * 2.0
 unit_cell_height = 10.0
 
-fuel_density = 23
-clad_density = 26
+fuel_density = 8
+clad_density = 2
 cool_density = 0.657951
 
 # choose one of the following

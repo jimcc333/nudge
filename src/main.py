@@ -17,9 +17,9 @@
 #  Naming and standards:
 #	The database folder should contain:
 #		- /SR_Inputs 				folder containing all scouting inputs
-#			- [number].txt			input file for scout library [number]
+#			- [number].py			input file for scout library [number]
 #		- /FR_Inputs 				folder containing all full run inputs
-#			- [number].txt			input file for full library [number]
+#			- [number].py			input file for full library [number]
 #		- /SR_Outputs				folder for all scouting output libraries
 #			- /build-[number] 		this number must match the one in SR_Inputs
 #				- /brightlite0		created by xsgen
@@ -50,7 +50,7 @@
 #
 #
 #
-#TODO: let users input changes in xsgen-dependent constants (such as brightlite0 folder)
+#TODO: updatemetrics fails when a variable isnt varied by a divide by zero error
 
 from objects import *
 import os
@@ -79,44 +79,10 @@ def main(args):
 	
 	
 	database.UpdateNeigbors()
+	database.UpdateNeigbors(slib=0)
 	
-	neighbors = [1,2,3,4]
-	n_coordinates = []
-	for i in neighbors:
-		n_coordinates.append(database.slibs[i].Coordinates(database.varied_ips))
-	n1 = Neighborhood(database.slibs[0].Coordinates(database.varied_ips),neighbors, n_coordinates)
-	print('N1:',n1.neighbor_score)
-	
-	neighbors = [1,2,3,5]
-	n_coordinates = []
-	for i in neighbors:
-		n_coordinates.append(database.slibs[i].Coordinates(database.varied_ips))
-	n1 = Neighborhood(database.slibs[0].Coordinates(database.varied_ips),neighbors, n_coordinates)
-	print('N2:',n1.neighbor_score)
-	
-	neighbors = [1,2,5,4]
-	n_coordinates = []
-	for i in neighbors:
-		n_coordinates.append(database.slibs[i].Coordinates(database.varied_ips))
-	n1 = Neighborhood(database.slibs[0].Coordinates(database.varied_ips),neighbors, n_coordinates)
-	print('N3:',n1.neighbor_score)
-	
-	neighbors = [1,5,3,4]
-	n_coordinates = []
-	for i in neighbors:
-		n_coordinates.append(database.slibs[i].Coordinates(database.varied_ips))
-	n1 = Neighborhood(database.slibs[0].Coordinates(database.varied_ips),neighbors, n_coordinates)
-	print('N4:',n1.neighbor_score)
-	
-	neighbors = [5,2,3,4]
-	n_coordinates = []
-	for i in neighbors:
-		n_coordinates.append(database.slibs[i].Coordinates(database.varied_ips))
-	n1 = Neighborhood(database.slibs[0].Coordinates(database.varied_ips),neighbors, n_coordinates)
-	print('N5:',n1.neighbor_score)
-	
-	for lib in database.slibs:
-		print(lib.Coordinates(database.varied_ips))
+	print('score:', database.slib_neighbors[0].neighbor_score)
+	print('libs:', database.slib_neighbors[0].lib_numbers)
 	
 	
 	#print('Calculating PCA')

@@ -5,7 +5,7 @@ from xsgen.nuc_track import transmute
 #############################
 ### General specifcations ###
 #############################
-reactor = "sr1" 
+reactor = "sr100" 
 plugins = ['xsgen.pre', 'xsgen.buk']
 solver = 'openmc+origen'
 formats = ('brightlite',)
@@ -22,15 +22,15 @@ batches = 3
 ### Unit Cell Sepcifications ###
 ################################
 # all in [cm]
-fuel_cell_radius = 0.46
-void_cell_radius = 0.4685
-clad_cell_radius = 0.5335
+fuel_cell_radius = 0.444323
+void_cell_radius = 0.452823
+clad_cell_radius = 0.504955
 unit_cell_pitch  = 0.65635 * 2.0
 unit_cell_height = 10.0
 
-fuel_density = 0.3
-clad_density = 0.5
-cool_density = 0.65
+fuel_density = 2
+clad_density = 18
+cool_density = 0.657951
 
 # choose one of the following
 flux = 3e14  # the average reactor flux in [n/cm2/s]
@@ -38,11 +38,11 @@ flux = 3e14  # the average reactor flux in [n/cm2/s]
 
 # LEU
 initial_heavy_metal = {     # Initial heavy metal mass fraction distribution
-    922350: 0.0506979,
-    922380: 0.949302,
+    922350: 0.0511879,
+    922380: 0.948812,
     }
 
-enrichment = 0.0506979
+enrichment = 0.0511879
 
 pnl = 0.96
 

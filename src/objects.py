@@ -1,6 +1,7 @@
 import os
 import copy
 import math
+import itertools
 
 import numpy as np
 from matplotlib.mlab import PCA as mlabPCA
@@ -607,10 +608,35 @@ class DBase:
 		return interpolated_lib
 		"""
 		
-	def UpdateNeigbors(self):
+	def UpdateNeigbors(self, slib=None):
 		
 		if len(self.slibs) < self.dimensions * 2 + 2:
 			# Not enough libs to construct neighborhoods
+			return
+		
+		if slib != None:
+			# Save current neighborhood information
+			current_score = self.slib_neighbors[slib].neighbor_score
+			current_n_neighbors = self.slib_neighbors[slib].lib_numbers
+			current_coords = self.slibs[slib].Coordinates(self.varied_ips)
+			current_neighborhood = self.slib_neighbors[slib]
+			
+			# Create a list of all candidate libraries
+			list1 = list(range(len(self.slibs)))
+			list1.remove(slib)
+			# Iterate through each combination
+			for subset in itertools.combinations(list1, self.dimensions*2):
+				n_coordinates = []
+				for i in subset:
+					n_coordinates.append(self.slibs[i].Coordinates(self.varied_ips))
+				new_neighborhood = Neighborhood(current_coords, subset, n_coordinates)
+				# Update the current data if new has better score
+				if current_score < new_neighborhood.neighbor_score:
+					current_score = new_neighborhood.neighbor_score
+					current_n_neighbors = subset
+					current_coords = new_neighborhood.p_coords
+					current_neighborhood = new_neighborhood
+			self.slib_neighbors[slib] = current_neighborhood
 			return
 		
 		# Go through each slib and update its neighborhood
