@@ -47,26 +47,35 @@ class colors:
 		
 		
 
-class screen:
+class Screen:
 	"""
 	Handles the output screen in NUDGE
 	
 	The top header is always displayed
 	
 	"""
-	lines = 24
-	width = 80
-	header = '----------------- NUDGE: NUclear Database GEneration software -----------------'
 	
-	def PaintBackground(color, lines=lines, width=width):
+	def __init__(self):
+		self.lines = 24
+		self.bottom_buffer = 1
+		self.width = 80
+		self.default_top = 3
+		self.current_line = 3
+		self.header = '----------------- NUDGE: NUclear Database GEneration software -----------------'
+		return
+	
+	def PaintBackground(self, color, lines=None, width=None):
+		if lines == None: lines = self.lines
+		if width == None: width = self.width
 		for i in range(lines):
 			print(color,' '*width)
 
-	def PrintAt(text, x=1, y=5, color=colors.fg.green):
+	def PrintAt(self, text, x=1, y=None, color=colors.fg.green):
+		if y == None: y = self.current_line
 		x = int(x)
 		y = int(y)
-		if x >= 255: x = 255
-		if y >= 255: y = 255
+		if x >= self.width: x = 255
+		if y >= self.lines: y = 255
 		if x <= 0: x = 0
 		if y <= 0: y = 0
 		
@@ -74,23 +83,40 @@ class screen:
 		VERT = str(y)
 		
 		# Plot the text at the starting at position HORIZ, VERT...
-		print(color + "\033["+VERT+";"+HORIZ+"f" + text)	
+		print(color + "\033["+VERT+";"+HORIZ+"f" + text)
+		self.current_line += 1
 	
-	def InitScreen():
-		screen.PaintBackground(colors.bg.black) # Paints the background color
-		screen.PrintAt(screen.header, 0,0, colors.fg.cyan) # Places the header
+	# Initializes the screen (with correct background
+	def InitScreen(self):
+		self.PaintBackground(colors.bg.black) # Paints the background color
+		self.Header()
+	
+	# Prints the header
+	def Header(self):
+		self.PrintAt(self.header, 0,0, colors.fg.cyan)
 		print(colors.fg.green)
 		
-	def HelpScreen():
+	# Prints the help screen
+	def HelpScreen(self):
 		help_text = 'NUDGE is used to generate xsgen libraries using scout runs and global surrogate modeling' \
 					+ '\n -g (guided): start NUDGE in guided mode \n -d (database): used for the database path \n -h (help):  help screen'
 		print(help_text)
 	
-	def UpdateInfo(database):
-		text = 'Scout libs: ' + str(database.complete_slibs) + '/' + str(len(database.slibs)) + \
-				'  -  Full libs: ' + str(database.complete_flibs) + '/' + str(len(database.flibs)) + \
+	def UpdateInfo(self, database):
+		self.complete_slibs = str(database.complete_slibs)
+		self.slibs = str(len(database.slibs))
+		self.complete_flibs =  str(database.complete_flibs)
+		self.flibs = str(len(database.flibs))
+		text = 'Scout libs: ' + self.complete_slibs + '/' + self.slibs + \
+				'  -  Full libs: ' + self.complete_flibs + '/' + self.flibs + \
 				'  -  Dimensions: ' + str(database.dimensions)
-		screen.PrintAt(text, 2, 2)
+		self.PrintAt(text, 2, 2, color=colors.fg.lightblue)
+		text = 'Varied inputs: ' + str(database.varied_ips)
+		self.PrintAt(text, 2, 3, color=colors.fg.lightblue)
+	
+	def Clean(self):
+		self.InitScreen()
+		self.UpdateInfo()
 		
 		
 		

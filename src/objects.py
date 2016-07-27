@@ -13,6 +13,7 @@ class PathNaming:
 	# A class that holds all info about the naming of system file paths
 	def __init__(self, database_path = "/home/cem/nudge/db_dbtest1/"):
 		self.database_path = database_path
+		self.xsgen_command = 'xsgen --rc'
 		
 		self.base_input = 'basecase.py'		# This file is used as the base case for the database
 		self.dbase_input = 'inputs.txt'		# Used for database creation inputs
@@ -343,8 +344,7 @@ class DBase:
 		self.ReadInput(paths.database_path + paths.dbase_input)
 		
 		if self.dimensions != self.ip_ranges.DefinedCount():
-			raise RuntimeError('Dimensions and database input file varied inputs number mismatch')
-		print('Database dimensions:', self.dimensions)
+			raise RuntimeError('Dimensions and database input file varied inputs number mismatch')\
 		
 		# Check to see if there's an scout library input folder
 		if os.path.exists(paths.database_path + paths.SR_Input_folder):
@@ -358,7 +358,6 @@ class DBase:
 		tot_sr_libs = 0
 		# If there are files SR_Inputs, read them
 		if tot_files > 0:
-			print('Attempting to read', tot_files, 'scout libraries')
 			for ip_number in range(tot_files):
 					ip_path = paths.database_path + paths.SR_Input_folder + '/' + str(ip_number) +'.py'
 					op_path = paths.database_path + paths.SR_Output_folder + '/' + paths.xsgen_prefix \
@@ -370,15 +369,8 @@ class DBase:
 						tot_sr_libs += 1
 					else:
 						# Could continue here instead of breaking, but at this point this is better
-						break
-							
-		if tot_sr_libs < tot_files:
-			print(tot_sr_libs, 'inputs read, however', tot_files - tot_sr_libs, \
-						'files in', paths.database_path + paths.SR_Input_folder, 'were ignored')
-		
-		
-	# Database specific immutable parameters
-	#TODO: combining fractions
+						break		
+						
 	
 	def ReadInput(self, ip_path):
 		# Make sure it's there
@@ -408,7 +400,7 @@ class DBase:
 				if len(str(int(items[0]))) == 6 and len(items) == 2:
 					self.ip_ranges.initial_heavy_metal[int(items[0])] = float(items[1])
 					self.varied_ips.append(int(items[0]))
-			except (ValueError):
+			except ValueError:
 				pass
 			
 			# Check the rest of defined inputs
@@ -422,7 +414,6 @@ class DBase:
 				if items[0] in self.ip_ranges.other:
 					self.ip_ranges.other[items[0]] = float(items[1])
 					self.varied_ips.append(items[0])
-		print('Varied inputs:', self.varied_ips)
 		
 	
 	# stored libraries

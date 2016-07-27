@@ -68,6 +68,8 @@ from mpl_toolkits.mplot3d import Axes3D
 def main(args):
 	os.system('cls' if os.name == 'nt' else 'clear')
 	
+	screen = Screen()
+	
 	# Check if help is requested
 	if '-h' in args:
 		screen.HelpScreen()
@@ -77,39 +79,35 @@ def main(args):
 	screen.InitScreen()
 	
 	# Take user inputs
+	
+	# Initialize paths
 	try:
 		paths = PathNaming(database_path = args[args.index('-d')+1])
 	except ValueError:
 		usr_path = input('No database path found, please enter full path to database: \n')
 		paths = PathNaming(database_path = usr_path)
+	# Check xsgen run command
+	try:
+		paths.xsgen_command = args[args.index('-x')+1]
+	except ValueError:
+		pass
 	
 	# Initiate database
 	database = DBase(paths, 2)	
-	
 	database.UpdateData()
-		
 	database.UpdateMetrics()
-	
 	screen.UpdateInfo(database)
 	
+	#os.system(str(paths.xsgen_command))
 	
+	#database.UpdateNeigbors()
+	#database.UpdateNeigbors(slib=0)
 	
-	database.UpdateNeigbors()
-	database.UpdateNeigbors(slib=0)
-	
-	print('score:', database.slib_neighbors[0].neighbor_score)
-	print('libs:', database.slib_neighbors[0].lib_numbers)
-	
-	
-	#print('Calculating PCA')
 	#database.PCA()
 	
-	
-	#database.slibs[8].Print()
-	#database.slibs[9].Print()
 	#database.EstLib(database.slibs[8:10], 	t_enrichment=0.01, t_cool_density=0.99)
 	
-	
+		
 	
 
 	"""
@@ -140,6 +138,9 @@ def main(args):
 	plt.show()
 	"""
 	
+	input('')
+	screen.PrintAt(colors.reset,y=screen.lines)
+		
 	
 	return 0
 
