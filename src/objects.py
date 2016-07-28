@@ -2,6 +2,7 @@ import os
 import copy
 import math
 import itertools
+import random
 
 import numpy as np
 from matplotlib.mlab import PCA as mlabPCA
@@ -290,6 +291,27 @@ class Library:
 		
 		return coordinates
 	
+	def EstVoronoi(self, p_coords, samples):
+		samples = 5
+		dimensions = len(p_coords[0])
+		
+		# Create samples number of random coordinates
+		random.seed(1) #TODO: remove this line eventually
+		s_coords = 	[[random.random() for i in range(dimensions)] for i in range(samples)]
+		
+		for s in s_coords:
+			min_dist = 9999
+			p_closest = p_coords[0]
+			for p in p_coords:
+			# Save the point and its distance if its closest
+				x1 = [value for value in p.values()]
+				if min_dist > distance.euclidean(x1,s):
+					min_dist = distance.euclidean(x1,s)
+					p_closest = p_coords[p_coords.index(p)]
+			print('new min dist for', p_closest,min_dist)
+				
+		
+	
 class DBase:
 	""" A class that handles all generated libraries """
 	slibs = []		# Scout libs
@@ -325,7 +347,7 @@ class DBase:
 	range_enrichment = [1,0]
 	
 	
-	def __init__(self, paths, dimensions):		
+	def __init__(self, paths):		
 		# Read database, assuming software may have been interrupted and
 		#	the folder may have some inputs and outputs 
 		
@@ -338,7 +360,6 @@ class DBase:
 			raise RuntimeError(error_message)
 		
 		self.name = paths.database_name
-		self.dimensions = dimensions
 		
 		# Read database inputs
 		self.ReadInput(paths.database_path + paths.dbase_input)
@@ -415,6 +436,8 @@ class DBase:
 					self.ip_ranges.other[items[0]] = float(items[1])
 					self.varied_ips.append(items[0])
 		
+		self.dimensions = len(self.varied_ips)
+		
 	
 	# stored libraries
 	#TODO: should check if exists first
@@ -452,18 +475,20 @@ class DBase:
 		self.enrichment.clear()
 			
 		# Rebuild lib values
+		self.complete_slibs = 0
 		for i in self.slibs:
 			if i.completed:
-				complete_slibs += 1
-				self.fuel_cell_radius.append(i.inputs.fuel_cell_radius)
-				self.clad_cell_radius.append(i.inputs.clad_cell_radius)
-				self.clad_cell_thickness.append(i.inputs.clad_cell_radius - i.inputs.fuel_cell_radius)
-				self.void_cell_radius.append(i.inputs.void_cell_radius)
-				self.enrichment.append(i.inputs.enrichment)
+				self.fuel_cell_radius.append(i.inputs.geometry['fuel_cell_radius'])
+				self.clad_cell_radius.append(i.inputs.geometry['clad_cell_radius'])
+				self.clad_cell_thickness.append(i.inputs.geometry['clad_cell_radius'] - i.inputs.geometry['fuel_cell_radius'])
+				self.void_cell_radius.append(i.inputs.geometry['void_cell_radius'])
+				self.enrichment.append(i.inputs.other['enrichment'])
 				
 				self.max_prods.append(i.max_prod)
 				self.max_dests.append(i.max_dest)
 				self.max_BUs.append(i.max_BU)
+				
+				self.complete_slibs += 1
 			
 	def PCA(self):
 		if len(self.max_prods) > 0:
@@ -654,8 +679,7 @@ class DBase:
 			
 			# Compare the current library score to all other possible options
 			#TODO: pass the new libs and only check them
-			
-				
+		
 		
 	def Print(self):
 		print("Database scout run ranges: ")

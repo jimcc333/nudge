@@ -93,10 +93,16 @@ def main(args):
 		pass
 	
 	# Initiate database
-	database = DBase(paths, 2)	
+	database = DBase(paths)	
 	database.UpdateData()
 	database.UpdateMetrics()
 	screen.UpdateInfo(database)
+	
+	database.Print()
+	
+	n_coordinates = [i.Coordinates(database.varied_ips) for i in database.slibs]
+	database.slibs[0].EstVoronoi(n_coordinates, 100)
+	
 	
 	#os.system(str(paths.xsgen_command))
 	

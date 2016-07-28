@@ -111,8 +111,10 @@ class Screen:
 				'  -  Full libs: ' + self.complete_flibs + '/' + self.flibs + \
 				'  -  Dimensions: ' + str(database.dimensions)
 		self.PrintAt(text, 2, 2, color=colors.fg.lightblue)
+		# Note: The following text can take up to 3 lines
 		text = 'Varied inputs: ' + str(database.varied_ips)
 		self.PrintAt(text, 2, 3, color=colors.fg.lightblue)
+		print(colors.fg.green)
 	
 	def Clean(self):
 		self.InitScreen()
