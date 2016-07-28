@@ -40,7 +40,8 @@ class xsgenParams:
 		# Initial heavy metal mass fraction distribution
 		self.initial_heavy_metal = {}
 		
-		self.geometry = {		# Geometry inputs
+		self.xsgen = {
+			# Geometry inputs
 			'fuel_cell_radius': None,	# [cm]
 			'void_cell_radius': None,	# [cm]
 			'clad_cell_radius': None,	# [cm]
@@ -48,44 +49,30 @@ class xsgenParams:
 			'clad_thickness': None,		# [cm]
 			'unit_cell_pitch': None,	# [cm]
 			'unit_cell_height': None,	# [cm]
-			}
-		
-		self.density = {			# Density inputs
-			'fuel_density': None,	# Fuel density [g/cc]
-			'clad_density': None,	# Cladding Density [g/cc]
-			'cool_density': None,	# Coolant Density [g/cc]
-			}
-
-		self.other = {		# Others
+			# Density inputs
+			'fuel_density': None,		# Fuel density [g/cc]
+			'clad_density': None,		# Cladding Density [g/cc]
+			'cool_density': None,		# Coolant Density [g/cc]
+			# Other inputs
 			'enrichment': None,		# Fuel enrichment (Uranium fuel only) as atom fraction
 			'flux:': None,	  		# Average reactor flux [n/cm2/s]
 			'k_particles': None,	# Number of particles to run per kcode cycle
 			'k_cycles': None,		# Number of kcode cycles to run
 			'k_cycles_skip': None,	# Number of kcode cycles to run but skip
-			'group_structure': None,
-			'openmc_group_struct': None,
 		}
-	
+		
 	# Returns the number of defined inputs
 	def DefinedCount(self):
 		defined_inputs = 0
 		defined_inputs += sum(1 for i in self.initial_heavy_metal.values() if i != None)
-		defined_inputs += sum(1 for i in self.geometry.values() if i != None)
-		defined_inputs += sum(1 for i in self.density.values() if i != None)
-		defined_inputs += sum(1 for i in self.other.values() if i != None)
+		defined_inputs += sum(1 for i in self.xsgen.values() if i != None)
 		return defined_inputs
 	
 	def PrintDefined(self):
 		for key, value in self.initial_heavy_metal.items():
 			if value != None:
 				print(key, value)
-		for key, value in self.geometry.items():
-			if value != None:
-				print(key, value)
-		for key, value in self.density.items():
-			if value != None:
-				print(key, value)
-		for key, value in self.other.items():
+		for key, value in self.xsgen.items():
 			if value != None:
 				print(key, value)
 				
@@ -216,32 +203,8 @@ class Library:
 			
 			if len(items) < 3:
 				continue
-			if items[0] == 'fuel_cell_radius':
-				self.inputs.geometry[items[0]] = float(items[2])
-			if items[0] == 'void_cell_radius':
-				self.inputs.geometry[items[0]] = float(items[2])
-			if items[0] == 'clad_cell_radius':
-				self.inputs.geometry[items[0]] = float(items[2])
-			if items[0] == 'unit_cell_pitch':
-				self.inputs.geometry[items[0]] = float(items[2])
-			if items[0] == 'unit_cell_height':
-				self.inputs.geometry[items[0]] = float(items[2])
-			if items[0] == 'fuel_density':
-				self.inputs.density[items[0]] = float(items[2])
-			if items[0] == 'clad_density':
-				self.inputs.density[items[0]] = float(items[2])
-			if items[0] == 'cool_density':
-				self.inputs.density[items[0]] = float(items[2])
-			if items[0] == 'enrichment':
-				self.inputs.other[items[0]] = float(items[2])
-			if items[0] == 'flux':
-				self.inputs.other[items[0]] = float(items[2])
-			if items[0] == 'k_particles':
-				self.inputs.other[items[0]] = float(items[2])
-			if items[0] == 'k_cycles':
-				self.inputs.other[items[0]] = float(items[2])
-			if items[0] == 'k_cycles_skip':
-				self.inputs.other[items[0]] = float(items[2])
+			if items[0] in self.inputs.xsgen:
+				self.inputs.xsgen[items[0]] = float(items[2])
 			if items[0] == 'initial_heavy_metal':
 				while line_i < max_lines:
 					line_i += 1
@@ -256,8 +219,8 @@ class Library:
 						# End of initial heavy metal
 						break
 
-		if self.inputs.other['enrichment'] != None:
-			if self.inputs.other['enrichment'] - (self.inputs.initial_heavy_metal[922350] \
+		if self.inputs.xsgen['enrichment'] != None:
+			if self.inputs.xsgen['enrichment'] - (self.inputs.initial_heavy_metal[922350] \
 				/(self.inputs.initial_heavy_metal[922350] + self.inputs.initial_heavy_metal[922380])) > 0.001:
 					error_message = 'Input file in ' + self.ip_path + ' has inconsistency between enrichment and given mass compositions'
 					raise RuntimeError(error_message)
@@ -271,9 +234,7 @@ class Library:
 		else:
 			print('Lib #', self.number, ' input information:')
 			if(detail):
-				print(self.inputs.geometry)
-				print(self.inputs.density)
-				print(self.inputs.other)
+				print(self.inputs.xsgen)
 			print(' Path:', self.ip_path)
 			print(' Normalized values')
 			print(self.normalized)
@@ -431,14 +392,8 @@ class DBase:
 			
 			# Check the rest of defined inputs
 			if len(items) == 2 and float(items[1]) > 0:
-				if items[0] in self.ip_ranges.geometry:
-					self.ip_ranges.geometry[items[0]] = float(items[1])
-					self.varied_ips.append(items[0])
-				if items[0] in self.ip_ranges.density:
-					self.ip_ranges.density[items[0]] = float(items[1])
-					self.varied_ips.append(items[0])
-				if items[0] in self.ip_ranges.other:
-					self.ip_ranges.other[items[0]] = float(items[1])
+				if items[0] in self.ip_ranges.xsgen:
+					self.ip_ranges.xsgen[items[0]] = float(items[1])
 					self.varied_ips.append(items[0])
 				if items[0] in self.inputs:	# Check database inputs
 					self.inputs[items[0]] = float(items[1])
@@ -460,7 +415,7 @@ class DBase:
 			error_message = 'Dimensions mismatch when adding a new library to database'
 			raise RuntimeError(error_message)
 		
-		print(self.varied_ips, self.ip_ranges.density)
+		print(self.varied_ips, self.ip_ranges.xsgen)
 		# Convert normalized to correct unit value
 		
 		
@@ -507,36 +462,36 @@ class DBase:
 		
 		#TODO: have a class to handle metrics
 		# Update the range of metrics
-		self.range_fuel_radius[0] = min([i.inputs.geometry['fuel_cell_radius'] for i in self.slibs])
-		self.range_fuel_radius[1] = max([i.inputs.geometry['fuel_cell_radius'] for i in self.slibs])
+		self.range_fuel_radius[0] = min([i.inputs.xsgen['fuel_cell_radius'] for i in self.slibs])
+		self.range_fuel_radius[1] = max([i.inputs.xsgen['fuel_cell_radius'] for i in self.slibs])
 		
-		self.range_fuel_density[0] = min([i.inputs.density['fuel_density'] for i in self.slibs])
-		self.range_fuel_density[1] = max([i.inputs.density['fuel_density'] for i in self.slibs])
+		self.range_fuel_density[0] = min([i.inputs.xsgen['fuel_density'] for i in self.slibs])
+		self.range_fuel_density[1] = max([i.inputs.xsgen['fuel_density'] for i in self.slibs])
 		
-		self.range_clad_density[0] = min([i.inputs.density['clad_density'] for i in self.slibs])
-		self.range_clad_density[1] = max([i.inputs.density['clad_density'] for i in self.slibs])
+		self.range_clad_density[0] = min([i.inputs.xsgen['clad_density'] for i in self.slibs])
+		self.range_clad_density[1] = max([i.inputs.xsgen['clad_density'] for i in self.slibs])
 		
-		self.range_cool_density[0] = min([i.inputs.density['cool_density'] for i in self.slibs])
-		self.range_cool_density[1] = max([i.inputs.density['cool_density'] for i in self.slibs])
+		self.range_cool_density[0] = min([i.inputs.xsgen['cool_density'] for i in self.slibs])
+		self.range_cool_density[1] = max([i.inputs.xsgen['cool_density'] for i in self.slibs])
 		
-		self.range_enrichment[0] = min([i.inputs.other['enrichment'] for i in self.slibs])
-		self.range_enrichment[1] = max([i.inputs.other['enrichment'] for i in self.slibs])
+		self.range_enrichment[0] = min([i.inputs.xsgen['enrichment'] for i in self.slibs])
+		self.range_enrichment[1] = max([i.inputs.xsgen['enrichment'] for i in self.slibs])
 		
 		# Update the metrics in libraries
 		for lib in self.slibs:
-			lib.normalized['fuel_cell_radius'] = (lib.inputs.geometry['fuel_cell_radius'] - self.range_fuel_radius[0]) / \
+			lib.normalized['fuel_cell_radius'] = (lib.inputs.xsgen['fuel_cell_radius'] - self.range_fuel_radius[0]) / \
 									(self.range_fuel_radius[1] - self.range_fuel_radius[0])
 									
-			lib.normalized['fuel_density'] = (lib.inputs.density['fuel_density'] - self.range_fuel_density[0]) / \
+			lib.normalized['fuel_density'] = (lib.inputs.xsgen['fuel_density'] - self.range_fuel_density[0]) / \
 									(self.range_fuel_density[1] - self.range_fuel_density[0])
 									
-			lib.normalized['clad_density'] = (lib.inputs.density['clad_density'] - self.range_clad_density[0]) / \
+			lib.normalized['clad_density'] = (lib.inputs.xsgen['clad_density'] - self.range_clad_density[0]) / \
 									(self.range_clad_density[1] - self.range_clad_density[0])
 									
-			lib.normalized['cool_density'] = (lib.inputs.density['cool_density'] - self.range_cool_density[0]) / \
+			lib.normalized['cool_density'] = (lib.inputs.xsgen['cool_density'] - self.range_cool_density[0]) / \
 									(self.range_cool_density[1] - self.range_cool_density[0])
 									
-			lib.normalized['enrichment'] = (lib.inputs.other['enrichment'] - self.range_enrichment[0]) / \
+			lib.normalized['enrichment'] = (lib.inputs.xsgen['enrichment'] - self.range_enrichment[0]) / \
 									(self.range_enrichment[1] - self.range_enrichment[0])
 	
 	""" 
