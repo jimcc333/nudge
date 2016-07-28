@@ -40,6 +40,13 @@
 #		- Coordinates: the normalized ([0,1]) metrics with only the varied ones so that dbase dimensions match coordinate dimensions
 #		- Neighborhood: Determined by inputs, the "closest" libs to a given lib (for gradient estimation)
 #
+#	Workflow:
+#		1 Start UI and read command line arguments
+#		2 Initialize database
+#			- If there are inputs, read them; or create the input folders
+#				- Attempt to read the output of an input if available
+#		3 
+#
 #	Flags:
 #		-g (guided): start NUDGE in guided mode 
 #		-d (database): used for the database path
@@ -79,14 +86,13 @@ def main(args):
 	screen.InitScreen()
 	
 	# Take user inputs
-	
-	# Initialize paths
+	# 	Initialize paths
 	try:
 		paths = PathNaming(database_path = args[args.index('-d')+1])
 	except ValueError:
 		usr_path = input('No database path found, please enter full path to database: \n')
 		paths = PathNaming(database_path = usr_path)
-	# Check xsgen run command
+	# 	Check xsgen run command
 	try:
 		paths.xsgen_command = args[args.index('-x')+1]
 	except ValueError:
@@ -125,7 +131,7 @@ def main(args):
 	
 	#os.system(str(paths.xsgen_command))
 	
-	database.UpdateNeigbors()
+	#database.UpdateNeigbors()
 	#database.UpdateNeigbors(slib=0)
 	
 	#database.PCA()
@@ -135,7 +141,7 @@ def main(args):
 		
 	
 
-
+	'''
 	fig1 = plt.figure()
 	ax1 = fig1.add_subplot(111, projection='3d')	
 	x = []
@@ -163,7 +169,7 @@ def main(args):
 	ax1.set_ylim([0,1])
 	ax1.set_zlim([0,1])
 	plt.show()
-	
+	'''
 	"""
 	fig2 = plt.figure()
 	ax2 = fig2.add_subplot(111, projection='3d')

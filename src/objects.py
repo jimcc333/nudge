@@ -309,14 +309,6 @@ class DBase:
 	max_dests = []
 	max_BUs = []
 	
-	# Base case parameters
-	fuel_cell_radius = []
-	clad_cell_radius = []
-	clad_cell_thickness = []
-	void_cell_radius = []
-	
-	enrichment = []
-	
 	# Min and max values ("range") in database
 	range_fuel_radius = [1,0]	# [min,max]
 	
@@ -344,9 +336,6 @@ class DBase:
 		# Read database inputs
 		self.ReadInput(paths.database_path + paths.dbase_input)
 		
-		if self.dimensions != self.ip_ranges.DefinedCount():
-			raise RuntimeError('Dimensions and database input file varied inputs number mismatch')\
-		
 		# Check to see if there's an scout library input folder
 		if os.path.exists(paths.database_path + paths.SR_Input_folder):
 			tot_files = len(os.listdir(paths.database_path + paths.SR_Input_folder))
@@ -370,7 +359,9 @@ class DBase:
 						tot_sr_libs += 1
 					else:
 						# Could continue here instead of breaking, but at this point this is better
-						break		
+						break	
+		
+		# 	
 						
 	
 	def ReadInput(self, ip_path):
@@ -447,23 +438,11 @@ class DBase:
 		self.max_prods.clear()
 		self.max_dests.clear()
 		self.max_BUs.clear()
-		
-		self.fuel_cell_radius.clear()
-		self.clad_cell_radius.clear()
-		self.clad_cell_thickness.clear()
-		self.void_cell_radius.clear()
-		self.enrichment.clear()
 			
 		# Rebuild lib values
 		self.complete_slibs = 0
 		for i in self.slibs:
 			if i.completed:
-				self.fuel_cell_radius.append(i.inputs.geometry['fuel_cell_radius'])
-				self.clad_cell_radius.append(i.inputs.geometry['clad_cell_radius'])
-				self.clad_cell_thickness.append(i.inputs.geometry['clad_cell_radius'] - i.inputs.geometry['fuel_cell_radius'])
-				self.void_cell_radius.append(i.inputs.geometry['void_cell_radius'])
-				self.enrichment.append(i.inputs.other['enrichment'])
-				
 				self.max_prods.append(i.max_prod)
 				self.max_dests.append(i.max_dest)
 				self.max_BUs.append(i.max_BU)
