@@ -39,13 +39,27 @@
 #		- Metric: Names of inputs that libraries get interpolated on
 #		- Coordinates: the normalized ([0,1]) metrics with only the varied ones so that dbase dimensions match coordinate dimensions
 #		- Neighborhood: Determined by inputs, the "closest" libs to a given lib (for gradient estimation)
+#		- Voronoi cell:
+#
 #
 #	Workflow:
 #		1 Start UI and read command line arguments
 #		2 Initialize database
 #			- If there are inputs, read them; or create the input folders
 #				- Attempt to read the output of an input if available
-#		3 
+#		3 Scouting
+#			- Run basecase as scout run
+#			- Estimate total time, ask if ok to proceed (improve estimate in the background)
+#			- Monte-Carlo inv-norml dist point sampling
+#				- Multi-d domain cropping
+#				- Scout topography map
+#		4 Exploration
+#			- Run basecase, space-filling points
+#		5 Exploitation
+#			- Find highest scored points and inputs near them
+#			- Run new points
+#			- Estimate max error
+#			- Repeat until stop criteria met
 #
 #	Flags:
 #		-g (guided): start NUDGE in guided mode 
@@ -58,6 +72,7 @@
 #		  their existing libraries and easily allow NUDGE to use it in a given database
 #		- xsgen inputs include void and cladding radius, NUDGE also uses thickness in inputs and some workflow
 #		- Dicts in the xsgen input file (initial heavy metal) should be written so that each item is in a new line
+#		- During the Voronoi cell volume calculation, best points to use as inputs during the next-batch are saved too
 #
 #
 #
@@ -99,12 +114,14 @@ def main(args):
 		pass
 	
 	# Initiate database
-	database = DBase(paths)	
-	database.UpdateData()
-	database.UpdateMetrics()
-	screen.UpdateInfo(database)
+	database = DBase(paths)		# Read all available inputs and outputs in the folder
+	database.UpdateMetrics()	# Update database data about the library inputs, outputs, and states
+	screen.UpdateInfo(database)	# Print new info on screen
 	
 	database.Print()
+	
+	# Scouting input creation
+	
 	
 	'''
 	calccount = 0

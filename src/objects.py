@@ -304,6 +304,15 @@ class DBase:
 	slib_neighbors = []
 	flib_neighbors = []
 	
+	# Database inputs
+	inputs = {
+		'max_error': None,	# In [%]
+		'max_time': 100,	# In [hour]
+		'scout_frac': 10,	# Weight of scouting time allocation
+		'explore_frac': 40,	# Weight of exploration time allocation
+		'exploit_frac': 50,	# Weight of exploitation time allocation
+	}
+	
 	# Scout lib output parameters
 	max_prods = []
 	max_dests = []
@@ -336,19 +345,26 @@ class DBase:
 		# Read database inputs
 		self.ReadInput(paths.database_path + paths.dbase_input)
 		
-		# Check to see if there's an scout library input folder
+		# Check to see if there's a scout library input folder
 		if os.path.exists(paths.database_path + paths.SR_Input_folder):
-			tot_files = len(os.listdir(paths.database_path + paths.SR_Input_folder))
+			tot_sfiles = len(os.listdir(paths.database_path + paths.SR_Input_folder))
 		# If the input scout library folder doesn't exist create it
 		else:
 			os.mkdir(paths.database_path + paths.SR_Input_folder)
-			tot_files = 0
-		
+			tot_sfiles = 0
+			
+		# Check to see if there's a full library input folder
+		if os.path.exists(paths.database_path + paths.FR_Input_folder):
+			tot_ffiles = len(os.listdir(paths.database_path + paths.FR_Input_folder))
+		# If the input scout library folder doesn't exist create it
+		else:
+			os.mkdir(paths.database_path + paths.FR_Input_folder)
+			tot_ffiles = 0
 		
 		tot_sr_libs = 0
 		# If there are files SR_Inputs, read them
-		if tot_files > 0:
-			for ip_number in range(tot_files):
+		if tot_sfiles > 0:
+			for ip_number in range(tot_sfiles):
 					ip_path = paths.database_path + paths.SR_Input_folder + '/' + str(ip_number) +'.py'
 					op_path = paths.database_path + paths.SR_Output_folder + '/' + paths.xsgen_prefix \
 								+ paths.sr_prefix + str(ip_number) + '/' + paths.xsgen_op_folder
@@ -360,8 +376,13 @@ class DBase:
 					else:
 						# Could continue here instead of breaking, but at this point this is better
 						break	
+		#TODO: also read full input libs
 		
-		# 	
+		# If there's no output folder, create it
+		if not os.path.exists(paths.database_path + paths.SR_Output_folder):
+			os.mkdir(paths.database_path + paths.SR_Output_folder)
+		if not os.path.exists(paths.database_path + paths.FR_Output_folder):
+			os.mkdir(paths.database_path + paths.FR_Output_folder)
 						
 	
 	def ReadInput(self, ip_path):
@@ -406,6 +427,8 @@ class DBase:
 				if items[0] in self.ip_ranges.other:
 					self.ip_ranges.other[items[0]] = float(items[1])
 					self.varied_ips.append(items[0])
+				if items[0] in self.inputs:	# Check database inputs
+					self.inputs[items[0]] = float(items[1])
 		
 		self.dimensions = len(self.varied_ips)
 		
@@ -431,9 +454,21 @@ class DBase:
 		return False
 	
 	#TODO: divide to completed and queued 
-	#TODO: currently only recreates, make it update
-	# information about current database
-	def UpdateData(self):
+			
+	def PCA(self):
+		if len(self.max_prods) > 0:
+			self.np_prods = np.asarray(self.max_prods)
+			self.np_dests = np.asarray(self.max_dests)
+			self.np_BUs = np.asarray(self.max_BUs)
+			
+			self.data_mat = np.column_stack((self.np_prods, self.np_dests, self.np_BUs))
+			self.pca_mat = mlabPCA(self.data_mat)	# PCA matrix 
+		
+	def UpdateMetrics(self):
+		if len(self.slibs) == 0 and len(self.flibs) == 0:
+			return
+		# work in progress
+		
 		# Delete old data
 		self.max_prods.clear()
 		self.max_dests.clear()
@@ -448,18 +483,7 @@ class DBase:
 				self.max_BUs.append(i.max_BU)
 				
 				self.complete_slibs += 1
-			
-	def PCA(self):
-		if len(self.max_prods) > 0:
-			self.np_prods = np.asarray(self.max_prods)
-			self.np_dests = np.asarray(self.max_dests)
-			self.np_BUs = np.asarray(self.max_BUs)
-			
-			self.data_mat = np.column_stack((self.np_prods, self.np_dests, self.np_BUs))
-			self.pca_mat = mlabPCA(self.data_mat)	# PCA matrix 
 		
-	def UpdateMetrics(self):
-		# work in progress
 		#TODO: have a class to handle metrics
 		# Update the range of metrics
 		self.range_fuel_radius[0] = min([i.inputs.geometry['fuel_cell_radius'] for i in self.slibs])
