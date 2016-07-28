@@ -1,0 +1,35 @@
+# Database input template
+# A work in progress
+
+
+# Input variable ranges. Use following format (without the initial '# '):
+# [input_variable][space][var]
+#  Where [var] is the plus/minus variation of the input variable in the units of the variable
+# Do not enter a [var] or delete the input variable to have it constant
+#
+# -----------------------------------------------------------------------
+
+
+#--- XSgen inputs---
+# -Composition
+922350
+922380
+
+# -Geometry
+fuel_cell_radius
+void_thickness
+clad_thickness
+unit_cell_pitch
+unit_cell_height
+
+# -Density inputs
+fuel_density
+clad_density
+cool_density
+
+# -Others
+flux 4
+
+
+#--- Database building inputs ---
+
