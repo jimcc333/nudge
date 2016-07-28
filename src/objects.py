@@ -289,7 +289,19 @@ class Library:
 		
 	
 class DBase:
-	""" A class that handles all generated libraries """
+	""" 
+	A class that handles all generated libraries 
+	
+	Variables:
+		inputs							# Database inputs
+		self.ip_ranges = xsgenParams()	# Ranges of varied inputs
+		self.varied_ips
+		slibs, flibs
+		complete_slibs, complete_flibs
+		slib_neighbors, flib_neighbors
+		
+	
+	"""
 	slibs = []		# Scout libs
 	flibs = []		# Full libs
 	
@@ -330,7 +342,9 @@ class DBase:
 		self.paths = paths
 		
 		if not os.path.isdir(paths.database_path):
-			raise RuntimeError('The database path does not exist')
+			error_message = 'The database path does not exist. Looking for: ' \
+							 + paths.database_path
+			raise RuntimeError(error_message)
 			
 		if not os.path.exists(paths.database_path + paths.base_input):
 			error_message = 'The database base-case input file does not exist. Looking for: ' \
@@ -390,7 +404,8 @@ class DBase:
 			raise RuntimeError(error_message)
 		
 		self.ip_ranges = xsgenParams()	# Ranges of varied inputs
-		self.varied_ips = []	# the varied inputs
+		self.varied_ips = []			# the varied inputs
+		self.proj_threshold = 0.0001	# Projection check (exploration) threshold
 		
 		doc = open(ip_path, "r")
 		
@@ -640,6 +655,8 @@ class DBase:
 			print('Exploration - no points in database error')
 			return
 		
+		print(coords)
+		
 		# Iterate through all random points
 		rand_count = len(coords) * 100 #TODO: make this better, should probably depend on dimensions too
 		rand_points = [[random.random() for i in range(self.dimensions)] for i in range(rand_count)]
@@ -648,15 +665,16 @@ class DBase:
 		p_cand = [3,3]		# Candidate point to be selected next
 		maximin = 0			# The maximin distance of the selected point (higher better)
 		fail_count = 0		# Number of rejected rand points
-		for rand in rand_points:
+		for counter, rand in enumerate(rand_points):
 			#print('checking point', rand)
 			projection_fail = False		# I know, this is a n00b way to iterate...FINE #TODO: have better flow control
 			min_tot = 10
 			for p in coords:
 				tot_dist = 0
+				p_list = list(p.values())		# Python3 guarantees the order will be consistent if dict not altered
 				for d in range(self.dimensions):
-					dist = (rand[d] - p[d])**2	# Cartesian distance will be calculated with this
-					if dist < 0.0001:			# Projection check
+					dist = (rand[d] - p_list[d])**2	# Cartesian distance will be calculated with this
+					if dist < self.proj_threshold:	# Projection check
 						projection_fail = True
 						#print('  failed point, dist:', dist)
 					else:
@@ -673,6 +691,14 @@ class DBase:
 				#print('assigned new maximin')
 				maximin = min_tot
 				p_cand = rand
+			
+			# Check if projection threshold is too low
+			if (counter+1) % 100 == 0 and fail_count/(counter+1) > 0.50:
+				self.proj_threshold /= 2
+				print('Increasing projection threshold to', self.proj_threshold, \
+						'fail rate was at', round(fail_count/(counter+1), 3))
+			
+		#print('Selected:', p_cand, ' rejected:', 100*round(fail_count/len(rand_points),3),'%')
 		
 		# Create a new library with the selected next point and add it to flibs/slibs
 		
