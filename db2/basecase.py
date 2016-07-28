@@ -1,5 +1,4 @@
-from numpy import logspace
-from xsgen.nuc_track import transmute
+# basecase for pxsgen, all values [0,1]
 
 #############################
 ### General specifcations ###
@@ -26,12 +25,12 @@ clad_cell_radius = 0.475
 unit_cell_pitch  = 0.65635 * 2.0
 unit_cell_height = 10.0
 
-fuel_density = 10.7
-clad_density = 5.87                         # Cladding Density
+fuel_density = 1
+clad_density = 0.23                    # Cladding Density
 cool_density = 0.73                         # Coolant Density
 
 #fuel_specific_power = 40.0 / 1000.0   # Power garnered from fuel [W / g]
-flux = 3e14  # the average reactor flux in [n/cm2/s]
+flux = 0.44  # the average reactor flux in [n/cm2/s]
 
 # LEU
 initial_heavy_metal = {     # Initial heavy metal mass fraction distribution

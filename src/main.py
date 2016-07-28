@@ -73,6 +73,7 @@
 #		  their existing libraries and easily allow NUDGE to use it in a given database
 #		- xsgen inputs include void and cladding radius, NUDGE also uses thickness in inputs and some workflow
 #		- Creation of new library: 1) Generate input file, 2) Initiate library, 3) Add library object to database
+#		- Constant inputs will be assigned the value in basecase, which will be the 0th library in database
 #		- Dicts in the xsgen input file (initial heavy metal) should be written so that each item is in a new line
 #		- During the Voronoi cell volume calculation, best points to use as inputs during the next-batch are saved too
 #
@@ -129,6 +130,7 @@ def main(args):
 		paths = PathNaming(database_path = usr_path)
 		database = DBase(paths)	
 		database.UpdateMetrics()
+		database.Print()
 		database.Exploration(screening = True)
 	
 	

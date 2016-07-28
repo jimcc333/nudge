@@ -410,12 +410,18 @@ class DBase:
 		
 	#TODO: basecase output and general numbering will need to be thought-out
 	def ReadBase(self, path):
-		self.basecase = Library('basecase', 'basecase', path, 0, False)
-	
+		database_path = self.paths.database_path
+		op_path = database_path + self.paths.FR_Output_folder
+		self.basecase = Library(database_path, op_path, path, 0, False)
+		# Also save this file to write new inputs later
+		self.basefile = None
+		with open(path, 'r') as bfile:
+			self.basefile = bfile.read()	
 	
 	# Once normalized coords are generated, pass here to add
 	#TODO: should check if exists first
 	#TODO: should update relevant neighborhoods
+	#TODO: outputting in correct units
 	def AddLib(self, norm_coords, screening):
 		# Adding a library will:
 		#	- Convert normalized coords to correct units
@@ -433,9 +439,32 @@ class DBase:
 		print(new_inputs)
 		for key, value in norm_coords.items():
 			print(key, value)
-			new_inputs[key] = value * self.basecase.inputs.xsgen[key]
+			new_inputs[key] = value #* self.basecase.inputs.xsgen[key]
 		
 		print(new_inputs)
+		
+		# Check if input exists
+		for lib in (self.slibs if screening else self.flibs):
+			if lib.inputs.xsgen == new_inputs:
+				print('Input already exists')
+				return
+		
+		# Create the input file
+		source_path = self.paths.database_path + self.paths.base_input
+		if screening:
+			ip_path = self.paths.database_path + self.paths.SR_Input_folder +\
+					'/' + str(len(self.slibs)) + '.py'
+		else:
+			ip_path = self.paths.database_path + self.paths.FR_Input_folder +\
+					'/' + str(len(self.slibs)) + '.py'
+		print(source_path, ip_path)
+		
+		ipfile = ''
+		ipfile = self.basefile
+		
+		print(ipfile)
+		
+		
 		
 		print('end add lib')
 		return
@@ -869,7 +898,8 @@ class DBase:
 		
 		
 	def Print(self):
-		print("Database scout run ranges: ")
+		print('Database screening ips:', len(self.slibs), ' full ips:', len(self.flibs))
+		print("Database screening run ranges: ")
 		print("  Fuel radius range:  ", self.range_fuel_radius)
 		print("  Fuel density range: ", self.range_fuel_density)
 		print("  Clad denisty range: ", self.range_clad_density)
