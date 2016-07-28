@@ -100,13 +100,32 @@ def main(args):
 	
 	database.Print()
 	
-	n_coordinates = [i.Coordinates(database.varied_ips) for i in database.slibs]
-	database.slibs[0].EstVoronoi(n_coordinates, 100)
+	'''
+	calccount = 0
+	for i in range(calccount):
+		database.EstVoronoi()
+		
+	x = []
+	y = []
+	for lib in database.slibs:
+		x.append(lib.normalized['fuel_cell_radius'])
+		y.append(lib.normalized['enrichment'])
 	
+	fig, ax = plt.subplots()
+	ax.set_xlim([0,1])
+	ax.set_ylim([0,1])
+	sizes = database.EstVoronoi(s_mult=500)
+	sizes = [i*100000 for i in sizes]
+	#sizes = 1
+	ax.scatter(x, y, s=sizes, c=sizes)
+	ax.grid(True)
+	#fig.tight_layout()
+	plt.show()
+	'''
 	
 	#os.system(str(paths.xsgen_command))
 	
-	#database.UpdateNeigbors()
+	database.UpdateNeigbors()
 	#database.UpdateNeigbors(slib=0)
 	
 	#database.PCA()
@@ -116,14 +135,36 @@ def main(args):
 		
 	
 
-	"""
+
 	fig1 = plt.figure()
-	ax1 = fig1.add_subplot(111, projection='3d')
-	ax1.scatter(database.data_mat[:,0], database.data_mat[:,1], database.data_mat[:,2])
-	ax1.set_xlabel("Neutron Production")
-	ax1.set_ylabel("Neutron Destruction")
-	ax1.set_zlabel("Burnup")
+	ax1 = fig1.add_subplot(111, projection='3d')	
+	x = []
+	y = []
+	z = []
+	for lib in database.slibs:
+		x.append(lib.normalized['fuel_cell_radius'])
+		y.append(lib.normalized['enrichment'])
+		z.append(lib.normalized['fuel_density'])
+	print('Calculating Voronoi volumes')
+	sizes = database.EstVoronoi(s_mult=100)
+	sizes = [i*100000 for i in sizes]
+	max_size = sizes.index(max(sizes))
+	print('Calculating neighbors')
+	database.UpdateNeigbors(slib=max_size)
+	colors = [1 for i in range(len(sizes))]
+	colors[max_size] = 10
+	for lib_i in database.slib_neighbors[max_size].lib_numbers:
+		colors[lib_i] = 5
+	max_p = [x[max_size], y[max_size], z[max_size]]
+	max_size = sizes[max_size]
+	ax1.scatter(x,y,z, s=sizes, c=colors)
+	ax1.scatter(max_p[0], max_p[1], max_p[2], s=max_size, c=10, marker='*')
+	ax1.set_xlim([0,1])
+	ax1.set_ylim([0,1])
+	ax1.set_zlim([0,1])
+	plt.show()
 	
+	"""
 	fig2 = plt.figure()
 	ax2 = fig2.add_subplot(111, projection='3d')
 	ax2.scatter(database.pca_mat.Y[:,0], database.pca_mat.Y[:,1], database.pca_mat.Y[:,2])
@@ -144,7 +185,8 @@ def main(args):
 	plt.show()
 	"""
 	
-	input('')
+	print('\n-TheEnd-')
+	#input('')
 	screen.PrintAt(colors.reset,y=screen.lines)
 		
 	

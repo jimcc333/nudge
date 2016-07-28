@@ -289,27 +289,7 @@ class Library:
 			if key in varied_ips:
 				coordinates[key] = value
 		
-		return coordinates
-	
-	def EstVoronoi(self, p_coords, samples):
-		samples = 5
-		dimensions = len(p_coords[0])
-		
-		# Create samples number of random coordinates
-		random.seed(1) #TODO: remove this line eventually
-		s_coords = 	[[random.random() for i in range(dimensions)] for i in range(samples)]
-		
-		for s in s_coords:
-			min_dist = 9999
-			p_closest = p_coords[0]
-			for p in p_coords:
-			# Save the point and its distance if its closest
-				x1 = [value for value in p.values()]
-				if min_dist > distance.euclidean(x1,s):
-					min_dist = distance.euclidean(x1,s)
-					p_closest = p_coords[p_coords.index(p)]
-			print('new min dist for', p_closest,min_dist)
-				
+		return coordinates				
 		
 	
 class DBase:
@@ -627,6 +607,36 @@ class DBase:
 		print(' Library interpolation complete')
 		return interpolated_lib
 		"""
+
+	
+	def EstVoronoi(self, s_mult = 500):
+		# For the set of input points in d dimensional space,
+		# generates samples number of random points. For each random
+		# point, finds which point in p_coords is closest to it. 
+		# Uses the info to estimate voronoi cell volume of points in p_coords.
+		samples = len(self.slibs) * s_mult
+		p_coords = [i.Coordinates(self.varied_ips) for i in self.slibs]
+		p_vol = [0 for i in range(len(self.slibs))]
+		dimensions = len(p_coords[0])
+		
+		# Create samples number of random coordinates
+		#random.seed(1) #TODO: remove this line eventually
+		s_coords = 	[[random.random() for i in range(dimensions)] for i in range(samples)]
+		
+		for s in s_coords:
+			min_dist = 9999
+			p_closest = p_coords[0]
+			for p in p_coords:
+			# Save the index and its distance if its closest
+				x1 = [value for value in p.values()]
+				if min_dist > distance.euclidean(x1,s):
+					min_dist = distance.euclidean(x1,s)
+					p_closest = p_coords.index(p)
+			p_vol[p_closest] += 1.0
+		
+		p_vol = [i/samples for i in p_vol]
+		for i in p_vol: print(round(i,6), end=' ')
+		return p_vol
 		
 	def UpdateNeigbors(self, slib=None):
 		
@@ -645,7 +655,10 @@ class DBase:
 			list1 = list(range(len(self.slibs)))
 			list1.remove(slib)
 			# Iterate through each combination
+			total_iters = len(itertools.combinations(list1, self.dimensions*2))
+			current_iter = 0
 			for subset in itertools.combinations(list1, self.dimensions*2):
+				current_iter += 1
 				n_coordinates = []
 				for i in subset:
 					n_coordinates.append(self.slibs[i].Coordinates(self.varied_ips))
@@ -653,6 +666,7 @@ class DBase:
 				# Update the current data if new has better score
 				if current_score < new_neighborhood.neighbor_score:
 					current_score = new_neighborhood.neighbor_score
+					print(current_score, subset, 100*current_iter/total_iters,'%')
 					current_n_neighbors = subset
 					current_coords = new_neighborhood.p_coords
 					current_neighborhood = new_neighborhood
@@ -678,6 +692,9 @@ class DBase:
 				self.slib_neighbors.append(Neighborhood(lib.Coordinates(self.varied_ips), neighbors, n_coordinates))
 			
 			# Compare the current library score to all other possible options
+			
+			
+			
 			#TODO: pass the new libs and only check them
 		
 		
