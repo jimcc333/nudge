@@ -613,9 +613,30 @@ class DBase:
 
 	
 	def EstVoronoi(self, s_mult = 500):
+		"""
+		The algorithm should work in the following way:
+		
+		ep_vols = list(0, len(existing_points))				# Voronoi cell vol of each ep (existing point)
+		ep_cands = list(blank_point, len(existing_points))	# The best candidate for next input point near ep
+		
+		for rp in random_points:
+			min_dist = 1
+			for ep in existing_points:
+				if dist(rp,ep) < min_dist:
+					min_dist = dist(rp,ep)
+					rp_cell = ep	# rp is in the Voronoi cell of ep
+			
+		
+		
+		
+		
+		
+		"""
 		# For the set of input points in d dimensional space,
 		# generates samples number of random points. For each random
-		# point, finds which point in p_coords is closest to it. 
+		# point, finds which point in p_coords is closest to it for
+		# Voronoi cell volume approximation.
+		# Also for each
 		# Uses the info to estimate voronoi cell volume of points in p_coords.
 		samples = len(self.slibs) * s_mult
 		p_coords = [i.Coordinates(self.varied_ips) for i in self.slibs]
