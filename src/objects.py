@@ -307,6 +307,11 @@ class DBase:
 							 + paths.database_path
 			raise RuntimeError(error_message)
 			
+		if not os.path.exists(paths.database_path + paths.dbase_input):
+			error_message = 'The database input file does not exist. Looking for: ' \
+							+ paths.database_path + paths.dbase_input
+			raise RuntimeError(error_message)
+			
 		if not os.path.exists(paths.database_path + paths.base_input):
 			error_message = 'The database base-case input file does not exist. Looking for: ' \
 							+ paths.database_path + paths.base_input
@@ -316,6 +321,9 @@ class DBase:
 		
 		# Read database inputs
 		self.ReadInput(paths.database_path + paths.dbase_input)
+		
+		# Read basecase input
+		self.ReadBase(paths.database_path + paths.base_input)
 		
 		# Check to see if there's a scout library input folder
 		if os.path.exists(paths.database_path + paths.SR_Input_folder):
@@ -400,6 +408,10 @@ class DBase:
 		
 		self.dimensions = len(self.varied_ips)
 		
+	#TODO: basecase output and general numbering will need to be thought-out
+	def ReadBase(self, path):
+		self.basecase = Library('basecase', 'basecase', path, 0, False)
+	
 	
 	# Once normalized coords are generated, pass here to add
 	#TODO: should check if exists first
@@ -415,9 +427,15 @@ class DBase:
 			error_message = 'Dimensions mismatch when adding a new library to database'
 			raise RuntimeError(error_message)
 		
-		print(self.varied_ips, self.ip_ranges.xsgen)
+		print(self.varied_ips, self.basecase.inputs.xsgen)
 		# Convert normalized to correct unit value
+		new_inputs = self.basecase.inputs.xsgen
+		print(new_inputs)
+		for key, value in norm_coords.items():
+			print(key, value)
+			new_inputs[key] = value * self.basecase.inputs.xsgen[key]
 		
+		print(new_inputs)
 		
 		print('end add lib')
 		return
