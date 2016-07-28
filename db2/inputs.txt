@@ -27,4 +27,4 @@ clad_density 0.5
 cool_density
 
 # Others
-flux 4
+flux

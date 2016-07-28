@@ -45,8 +45,6 @@ class xsgenParams:
 			'fuel_cell_radius': None,	# [cm]
 			'void_cell_radius': None,	# [cm]
 			'clad_cell_radius': None,	# [cm]
-			'void_thickness': None,		# [cm]
-			'clad_thickness': None,		# [cm]
 			'unit_cell_pitch': None,	# [cm]
 			'unit_cell_height': None,	# [cm]
 			# Density inputs
@@ -55,10 +53,8 @@ class xsgenParams:
 			'cool_density': None,		# Coolant Density [g/cc]
 			# Other inputs
 			'enrichment': None,		# Fuel enrichment (Uranium fuel only) as atom fraction
-			'flux:': None,	  		# Average reactor flux [n/cm2/s]
+			'flux': None,	  		# Average reactor flux [n/cm2/s]
 			'k_particles': None,	# Number of particles to run per kcode cycle
-			'k_cycles': None,		# Number of kcode cycles to run
-			'k_cycles_skip': None,	# Number of kcode cycles to run but skip
 		}
 		
 	# Returns the number of defined inputs
@@ -433,7 +429,6 @@ class DBase:
 			error_message = 'Dimensions mismatch when adding a new library to database'
 			raise RuntimeError(error_message)
 		
-		print(self.varied_ips, self.basecase.inputs.xsgen)
 		# Convert normalized to correct unit value
 		new_inputs = self.basecase.inputs.xsgen
 		print(new_inputs)
@@ -441,30 +436,54 @@ class DBase:
 			print(key, value)
 			new_inputs[key] = value #* self.basecase.inputs.xsgen[key]
 		
-		print(new_inputs)
-		
 		# Check if input exists
 		for lib in (self.slibs if screening else self.flibs):
 			if lib.inputs.xsgen == new_inputs:
 				print('Input already exists')
 				return
 		
-		# Create the input file
+		# Create paths
+		lib_number = len(self.slibs)
 		source_path = self.paths.database_path + self.paths.base_input
 		if screening:
 			ip_path = self.paths.database_path + self.paths.SR_Input_folder +\
-					'/' + str(len(self.slibs)) + '.py'
+					'/' + str(lib_number) + '.py'
+			op_path = self.paths.database_path + self.paths.SR_Output_folder +\
+					'/' + str(lib_number) + '.py'
 		else:
 			ip_path = self.paths.database_path + self.paths.FR_Input_folder +\
-					'/' + str(len(self.slibs)) + '.py'
+					'/' + str(lib_number) + '.py'
+			op_path = self.paths.database_path + self.paths.FR_Output_folder +\
+					'/' + str(lib_number) + '.py'
 		print(source_path, ip_path)
 		
-		ipfile = ''
+		# Make input file from basecase file
 		ipfile = self.basefile
 		
-		print(ipfile)
+		# Name the input file reactor by string replacement
+		base_line = [line for line in ipfile.split('\n') if 'reactor = ' in line]
+		if len(base_line) != 1:
+			error_message = 'Input creation error when building from basecase. ' +\
+							str(len(base_line)) + ' instances of: ' + 'reactor = '
+			raise RuntimeError(error_message)
+		ipfile = ipfile.replace(base_line[0], 'reactor = ' + str(lib_number))
 		
+		# Change input variables by string replacement
+		for key, value in new_inputs.items():
+			base_line = [line for line in ipfile.split('\n') if key in line]
+			if len(base_line) != 1:
+				error_message = 'Input creation error when building from basecase. ' +\
+								str(len(base_line)) + ' instances of: ' + key
+				raise RuntimeError(error_message)
+			ipfile = ipfile.replace(base_line[0], key + ' = ' + str(value))		
 		
+		# Write out the file
+		with open(ip_path, 'w') as openfile: # bad naming here
+			openfile.write(ipfile)
+		
+		# Read it in database
+		new_lib = Library(self.paths.database_path, op_path, ip_path, lib_number, screening)
+		self.slibs.append(new_lib) if screening else self.flibs.append(new_lib)
 		
 		print('end add lib')
 		return

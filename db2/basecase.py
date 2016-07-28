@@ -23,7 +23,7 @@ fuel_cell_radius = 0.410
 void_cell_radius = 0.4185
 clad_cell_radius = 0.475
 unit_cell_pitch  = 0.65635 * 2.0
-unit_cell_height = 10.0
+unit_cell_height = 0.1
 
 fuel_density = 1
 clad_density = 0.23                    # Cladding Density

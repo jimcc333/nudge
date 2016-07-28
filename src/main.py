@@ -132,6 +132,7 @@ def main(args):
 		database.UpdateMetrics()
 		database.Print()
 		database.Exploration(screening = True)
+		database.Print()
 	
 	
 	'''
