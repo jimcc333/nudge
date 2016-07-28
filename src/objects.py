@@ -623,7 +623,6 @@ class DBase:
 			print("D = 1")
 	
 	# Finds the coordinates of next point to sample
-	# hacked to work for just 2D on empty database to test exploration
 	def Exploration(self, p_count = 1, screening = False):
 		# Need to figure out:
 		#	- How to scale random count with database size
@@ -636,8 +635,44 @@ class DBase:
 			coords = [i.Coordinates(self.varied_ips) for i in self.slibs]
 		else:
 			coords = [i.Coordinates(self.varied_ips) for i in self.flibs]
+		if len(coords) == 0:
+			#TODO: add basecase lib to database appropriately, this is probably done before this is called
+			print('Exploration - no points in database error')
+			return
 		
 		# Iterate through all random points
+		rand_count = len(coords) * 100 #TODO: make this better, should probably depend on dimensions too
+		rand_points = [[random.random() for i in range(self.dimensions)] for i in range(rand_count)]
+		print('first rand point:', rand_points[0], 'len of rands:', len(rand_points))
+		
+		p_cand = [3,3]		# Candidate point to be selected next
+		maximin = 0			# The maximin distance of the selected point (higher better)
+		fail_count = 0		# Number of rejected rand points
+		for rand in rand_points:
+			#print('checking point', rand)
+			projection_fail = False		# I know, this is a n00b way to iterate...FINE #TODO: have better flow control
+			min_tot = 10
+			for p in coords:
+				tot_dist = 0
+				for d in range(self.dimensions):
+					dist = (rand[d] - p[d])**2	# Cartesian distance will be calculated with this
+					if dist < 0.0001:			# Projection check
+						projection_fail = True
+						#print('  failed point, dist:', dist)
+					else:
+						tot_dist += dist
+				if projection_fail:
+					fail_count += 1
+					break
+				tot_dist = (tot_dist)**0.5		# Total cartesian distance of p from rand point
+				#print('  total distance:', tot_dist, ' min distance:', min_tot)
+				if tot_dist < min_tot:			# Finds the closest distance (in coords) to rand point 
+					#print('  assigned new min_tot')
+					min_tot = tot_dist
+			if min_tot > maximin and not projection_fail:
+				#print('assigned new maximin')
+				maximin = min_tot
+				p_cand = rand
 		
 		# Create a new library with the selected next point and add it to flibs/slibs
 		
@@ -647,6 +682,7 @@ class DBase:
 		
 		print('exploration ends')
 		"""
+		# hacked to work for just 2D on empty database to test exploration
 		#exp_coords = [[0.5,0.5],[0.7449, 0.9691],[0.9133, 0.2899],[0.0593, 0.6771],[0.2877, 0.0699],[0.1363, 0.3539],[0.7212, 0.7534], [0.8909, 0.6088],[0.3824, 0.8916],[0.6083, 0.1271], [0,0], [1,1], [0,1], [1,0]]
 		exp_coords = [[0.5,0.5]]
 		
