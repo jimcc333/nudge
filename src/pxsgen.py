@@ -12,12 +12,24 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
+#
+#
+#  Inputs:
+#  	1. enrichment
+#
+#
 #  
-#  Naming 
+#  Notes:
+#	- Does not use fuel composition: just enrichment
+#	- All inputs are [0,1]
+#
+#
+#
+#
 
-from objects import *
+from objects import xsgenParams, Library
 import os
-
+import random
 import numpy as np
 
 
@@ -26,7 +38,10 @@ def main(args):
 	print('Placeholder xsgen program')
 	
 	
+	# Inputs and constants
+	lib = Library('blank', 'blank', args[1], 1, False)
 	
+	outputs = []
 	
 	print('\n-TheEnd-')	
 	return 0

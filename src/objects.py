@@ -264,23 +264,12 @@ class Library:
 		else:
 			print('Lib #', self.number, ' input information:')
 			if(detail):
-				print('  fuel radius    : ', self.inputs.fuel_cell_radius)
-				print('  void radius    : ', self.inputs.void_cell_radius)
-				print('  clad radius    : ', self.inputs.clad_cell_radius)
-				print('  fuel density   : ', self.inputs.fuel_density)
-				print('  clad density   : ', self.inputs.clad_density)
-				print('  coolant density: ', self.inputs.cool_density)
+				print(self.inputs.geometry)
+				print(self.inputs.density)
+				print(self.inputs.other)
 			print(' Path:', self.ip_path)
 			print(' Normalized values')
 			print(self.normalized)
-			if(detail):
-				print('  clad density: ', self.norm_clad_density)
-			print('  cool density: ', self.norm_cool_density)
-			print('  enrichment  : ', self.norm_enrichment)		
-			print(' output information:')
-			print('  max prod: ', self.max_prod)
-			print('  max dest: ', self.max_dest)
-			print('  max BU  : ', self.max_BU)
 
 	def Coordinates(self, varied_ips):
 		coordinates = {}
@@ -616,16 +605,19 @@ class DBase:
 		"""
 		The algorithm should work in the following way:
 		
-		ep_vols = list(0, len(existing_points))				# Voronoi cell vol of each ep (existing point)
-		ep_cands = list(blank_point, len(existing_points))	# The best candidate for next input point near ep
+		ep_vols = list(0, len(existing_points))			# Voronoi cell vol of each ep (existing point)
+		ep_cands = list(None, len(existing_points))		# The best candidate for next input point near ep
 		
 		for rp in random_points:
 			min_dist = 1
 			for ep in existing_points:
 				if dist(rp,ep) < min_dist:
 					min_dist = dist(rp,ep)
-					rp_cell = ep	# rp is in the Voronoi cell of ep
-			
+					rp_cell = ep						# rp is in the Voronoi cell of ep
+			ep_vols[rp_cell] += 1/len(random_points)	# this rp contributes to the volume of rp_cell
+			if dist(rp_cell,rp) > dist(rp_cell, ep_cands[rp_cell]) or ep_cands[rp_cell] == None:
+				if passes_other_crit(rp):				# Catch-all, but mainly projective property check
+					ep_cands[rp_cell] = rp
 		
 		
 		
