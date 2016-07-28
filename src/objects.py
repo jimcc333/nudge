@@ -382,7 +382,8 @@ class DBase:
 								
 					if os.path.exists(ip_path):
 						inputlib = Library(database_path=paths.database_path, op_path=op_path, ip_path=ip_path, number=ip_number, scout=True)
-						self.AddLib(inputlib)
+						#TODO: fix this!!! 
+						self.slibs.append(inputlib)
 						tot_sr_libs += 1
 					else:
 						# Could continue here instead of breaking, but at this point this is better
@@ -445,18 +446,26 @@ class DBase:
 		self.dimensions = len(self.varied_ips)
 		
 	
-	# stored libraries
+	# Once normalized coords are generated, pass here to add
 	#TODO: should check if exists first
 	#TODO: should update relevant neighborhoods
-	def AddLib(self, added_lib):
-		if added_lib.scout:
-			if added_lib.number != len(self.slibs):
-				raise RuntimeError('Scout library number mismatch when adding to slibs')
-			self.slibs.append(copy.deepcopy(added_lib))
-		else:
-			if added_lib.number != len(self.flibs):
-				raise RuntimeError('Full library number mismatch when adding to slibs')
-			self.flibs.append(copy.deepcopy(added_lib))
+	def AddLib(self, norm_coords, screening):
+		# Adding a library will:
+		#	- Convert normalized coords to correct units
+		#	- Generate the input file
+		#	- Add to flib or slib list in this object
+		print('begin add lib')
+		# Dimension consistency check (note that this is techically not sufficient)
+		if len(norm_coords) != self.dimensions:
+			error_message = 'Dimensions mismatch when adding a new library to database'
+			raise RuntimeError(error_message)
+		
+		print(self.varied_ips, self.ip_ranges.density)
+		# Convert normalized to correct unit value
+		
+		
+		print('end add lib')
+		return
 	
 	#TODO: this probably isnt used and aint even right
 	def Exists(self, number):
@@ -643,7 +652,6 @@ class DBase:
 		#	- How to scale random count with database size
 		#
 		
-		
 		print('exploration begins')
 		# Get the coordinates of the current database
 		if screening:
@@ -655,12 +663,10 @@ class DBase:
 			print('Exploration - no points in database error')
 			return
 		
-		print(coords)
-		
 		# Iterate through all random points
 		rand_count = len(coords) * 100 #TODO: make this better, should probably depend on dimensions too
 		rand_points = [[random.random() for i in range(self.dimensions)] for i in range(rand_count)]
-		print('first rand point:', rand_points[0], 'len of rands:', len(rand_points))
+		#print('first rand point:', rand_points[0], 'len of rands:', len(rand_points))
 		
 		p_cand = [3,3]		# Candidate point to be selected next
 		maximin = 0			# The maximin distance of the selected point (higher better)
@@ -701,6 +707,12 @@ class DBase:
 		#print('Selected:', p_cand, ' rejected:', 100*round(fail_count/len(rand_points),3),'%')
 		
 		# Create a new library with the selected next point and add it to flibs/slibs
+		#	Convert p_cand to dict
+		cand_coords = {}
+		for counter, key in enumerate(coords[0].keys()):
+			cand_coords[key] = p_cand[counter]
+		
+		self.AddLib(cand_coords, True)
 		
 		# Add a while loop on top to repeat this as many times as p_count
 		#	-! remember to include the new point in the coordinates being considered (yea, duh)
