@@ -80,11 +80,11 @@ def main(args):
 
     for xx in np.arange(0,1,0.05):
         for yy in np.arange(0,1,0.05):
-            inputs['fuel_radius'] = xx
-            inputs['unit_cell_pitch'] = yy
+            inputs['flux'] = xx
+            inputs['enrichment'] = yy
             x.append(xx)
             y.append(yy)
-            z.append(prod_maker(inputs))
+            z.append(dest_maker(inputs))
 
     ax1.scatter(x,y,z) # s=sizes, c=colors)
 
@@ -126,6 +126,14 @@ def prod_maker(inputs):
 
     return (x2 + x4 + x5 + x6)**0.5 + x1 + x3
 
+def dest_maker(inputs):
+    x1 = 9.45**inputs['void_thickness']
+    x2 = (inputs['unit_cell_height'] + 2.12)**4.1 / 100
+    x4 = inputs['cool_density']*3.14159
+    x5 = (inputs['enrichment'] + 2)**3
+    x6 = (inputs['flux'] + 2)**2.254\
+
+    return (x6 * (x5 - x4 + x1))**0.5 - x2
 
 if __name__ == '__main__':
     import sys
