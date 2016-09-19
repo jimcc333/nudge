@@ -80,11 +80,11 @@ def main(args):
 
     for xx in np.arange(0,1,0.05):
         for yy in np.arange(0,1,0.05):
-            inputs['enrichment'] = xx
+            inputs['fuel_radius'] = xx
             inputs['unit_cell_pitch'] = yy
             x.append(xx)
             y.append(yy)
-            z.append(burnup_maker(inputs))
+            z.append(prod_maker(inputs))
 
     ax1.scatter(x,y,z) # s=sizes, c=colors)
 
@@ -115,6 +115,16 @@ def burnup_maker(inputs):
     x5 = np.sin(inputs['fuel_radius']*2)*8 + 2
 
     return ((x1 + x2 + x3 + x4 + x5)**2.3)/100 + 3*inputs['void_thickness'] + 2*inputs['clad_thickness']
+
+def prod_maker(inputs):
+    x1 = (1.5-inputs['fuel_radius'])**1.23
+    x2 = 9.45**inputs['void_thickness']
+    x3 = (np.sin(inputs['unit_cell_pitch']*12) + 1)/10
+    x4 = (2 - inputs['clad_density'])**2.1234
+    x5 = (inputs['enrichment'] + 2)**3
+    x6 = (inputs['flux'] + 1)**3.245
+
+    return (x2 + x4 + x5 + x6)**0.5 + x1 + x3
 
 
 if __name__ == '__main__':
