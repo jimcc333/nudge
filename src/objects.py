@@ -9,6 +9,8 @@ from matplotlib.mlab import PCA as mlabPCA
 from operator import attrgetter
 from scipy.spatial import distance
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 class PathNaming:
 	# A class that holds all info about the naming of system file paths
@@ -146,10 +148,15 @@ class Library:
 		# --- Normalized Values ---
 		self.normalized = {
 			'fuel_cell_radius': None,
+			'void_thickness': None,
+			'clad_thickness': None,
+			'unit_cell_pitch': None,
+			'unit_cell_height': None, 
 			'fuel_density': None,
 			'clad_density': None,
 			'cool_density': None,
 			'enrichment': None,
+			'flux': None
 		}
 		
 		# Read input
@@ -320,6 +327,7 @@ class DBase:
 	def __init__(self, paths):		
 		# Read database, assuming software may have been interrupted and
 		#	the folder may have some inputs and outputs 
+		self.paths = paths
 		
 		if not os.path.isdir(paths.database_path):
 			raise RuntimeError('The database path does not exist')
@@ -601,6 +609,79 @@ class DBase:
 		"""
 
 	
+	# INCOMPLETE
+	# Creates the initial set of inputs before exploration begins
+	def InitialExploration(self):
+		if len(self.flibs) > 0:
+			return
+		print(self.paths.database_path, self.paths.FR_Output_folder, self.paths.FR_Input_folder)
+		dbase = self.paths.database_path
+		output_path = dbase + self.paths.FR_Output_folder + "/" + self.paths.fr_prefix + "0"
+		#lib0 = Library(dbase, self.paths.FR_Output_folder, self.paths.FR_Input_folder, 0, False)
+		#self.AddLib(lib0)
+		if self.dimensions == 1:
+			print("D = 1")
+	
+	# Finds the coordinates of next point to sample
+	# hacked to work for just 2D on empty database to test exploration
+	def Exploration(self):
+		# generate initial points
+		exp_coords = [[0.5,0.5],[0,0], [1,1], [0,1], [1,0]]
+		
+		rand_count = 200
+		
+		rand_points = [[round(random.random(),4) for i in range(2)] for i in range(rand_count)]
+		p_cand = [3,3]
+		maximin = 0
+		fail_count = 0
+		
+		for rand in rand_points:
+			#print('checking point', rand)
+			projection_fail = False
+			min_tot = 10
+			for p in exp_coords:
+				tot_dist = 0
+				for d in range(2):
+					dist = (rand[d] - p[d])**2
+					if dist < 0.01:
+						projection_fail = True
+						#print('  failed point, dist:', dist)
+					else:
+						tot_dist += dist
+				if projection_fail:
+					fail_count += 1
+					break
+				tot_dist = (tot_dist)**0.5
+				#print('  total distance:', tot_dist, ' min distance:', min_tot)
+				if tot_dist < min_tot:
+					#print('  assigned new min_tot')
+					min_tot = tot_dist
+			if min_tot > maximin and not projection_fail:
+				#print('assigned new maximin')
+				maximin = min_tot
+				p_cand = rand
+		
+		print('next:', p_cand, ' maximin:', maximin, '  failed(%):', 100*fail_count/rand_count)
+		
+		x = [i[0] for i in exp_coords]
+		y = [i[1] for i in exp_coords]
+		
+		rx = [i[0] for i in rand_points]
+		ry = [i[1] for i in rand_points]
+		
+		fig, ax = plt.subplots()
+		ax.set_xlim([-0.1,1.1])
+		ax.set_ylim([-0.1,1.1])
+		sizes = 10
+		ax.scatter(x, y, s=200, c='b')
+		ax.scatter(rx, ry, s=20, c='g')
+		ax.scatter(p_cand[0], p_cand[1], s=200, c='r')
+		ax.grid(True)
+		#fig.tight_layout()
+		plt.show()
+					
+						
+			
 	def EstVoronoi(self, s_mult = 500):
 		"""
 		The algorithm should work in the following way:

@@ -120,7 +120,11 @@ def main(args):
 	
 	database.Print()
 	
-	# Scouting input creation
+	# Space-filling design
+	if len(database.slibs) == 0 and len(database.flibs) == 0:
+		#slib_count = input('How many screening libraries should be created? \n')
+		
+		database.Exploration()
 	
 	
 	'''
