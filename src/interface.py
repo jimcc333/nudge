@@ -88,7 +88,7 @@ class Screen:
 	
 	# Initializes the screen (with correct background
 	def InitScreen(self):
-		self.PaintBackground(colors.bg.black) # Paints the background color
+		#self.PaintBackground(colors.bg.black) # Paints the background color
 		self.Header()
 	
 	# Prints the header

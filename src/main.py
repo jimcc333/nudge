@@ -34,7 +34,7 @@
 #
 #	Terms:
 #		- Library number: indicated as [number]. Unique number for input-output pair. Starts at zero.
-#		- Library progress: scout:[0:1), full=1
+#		- Library progress: screening:[0:1), full=1
 #		- Scout library: A library thats run in a short time and that has curtailed outputs
 #		- Metric: Names of inputs that libraries get interpolated on
 #		- Coordinates: the normalized ([0,1]) metrics with only the varied ones so that dbase dimensions match coordinate dimensions
@@ -47,8 +47,8 @@
 #		2 Initialize database
 #			- If there are inputs, read them; or create the input folders
 #				- Attempt to read the output of an input if available
-#		3 Scouting
-#			- Run basecase as scout run
+#		3 Screening
+#			- Run basecase as screening run
 #			- Estimate total time, ask if ok to proceed (improve estimate in the background)
 #			- Monte-Carlo inv-norml dist point sampling
 #				- Multi-d domain cropping
@@ -62,9 +62,10 @@
 #			- Repeat until stop criteria met
 #
 #	Flags:
-#		-g (guided): start NUDGE in guided mode 
+#		-m (manual): start NUDGE in manual mode 
 #		-d (database): used for the database path
 #		-h (help):  help screen
+#		-x (xsgen): command to run xsgen
 #
 #
 #	Notes:
@@ -100,31 +101,34 @@ def main(args):
 	# Initialize screen
 	screen.InitScreen()
 	
-	# Take user inputs
-	# 	Initialize paths
-	try:
-		paths = PathNaming(database_path = args[args.index('-d')+1])
-	except ValueError:
-		usr_path = input('No database path found, please enter full path to database: \n')
-		paths = PathNaming(database_path = usr_path)
-	# 	Check xsgen run command
-	try:
-		paths.xsgen_command = args[args.index('-x')+1]
-	except ValueError:
-		pass
-	
-	# Initiate database
-	database = DBase(paths)		# Read all available inputs and outputs in the folder
-	database.UpdateMetrics()	# Update database data about the library inputs, outputs, and states
-	screen.UpdateInfo(database)	# Print new info on screen
-	
-	database.Print()
-	
-	# Space-filling design
-	if len(database.slibs) == 0 and len(database.flibs) == 0:
-		#slib_count = input('How many screening libraries should be created? \n')
+	# Manual mode check
+	if '-m' not in args:
+		# Take user inputs
+		# 	Initialize paths
+		try:
+			paths = PathNaming(database_path = args[args.index('-d')+1])
+		except ValueError:
+			usr_path = input('No database path found, please enter full path to database: \n')
+			paths = PathNaming(database_path = usr_path)
+		# 	Check xsgen run command
+		try:
+			paths.xsgen_command = args[args.index('-x')+1]
+		except ValueError:
+			pass
 		
-		database.Exploration()
+		# Initiate database
+		database = DBase(paths)		# Read all available inputs and outputs in the folder
+		database.UpdateMetrics()	# Update database data about the library inputs, outputs, and states
+		screen.UpdateInfo(database)	# Print new info on screen
+		
+		database.Print()
+	else:
+		# Manual mode
+		usr_path = 'db2/'
+		paths = PathNaming(database_path = usr_path)
+		database = DBase(paths)	
+		database.UpdateMetrics()
+		database.Exploration(screening = True)
 	
 	
 	'''

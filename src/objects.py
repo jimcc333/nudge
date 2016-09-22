@@ -624,45 +624,68 @@ class DBase:
 	
 	# Finds the coordinates of next point to sample
 	# hacked to work for just 2D on empty database to test exploration
-	def Exploration(self):
-		# generate initial points
-		exp_coords = [[0.5,0.5],[0,0], [1,1], [0,1], [1,0]]
+	def Exploration(self, p_count = 1, screening = False):
+		# Need to figure out:
+		#	- How to scale random count with database size
+		#
 		
-		rand_count = 200
 		
-		rand_points = [[round(random.random(),4) for i in range(2)] for i in range(rand_count)]
-		p_cand = [3,3]
-		maximin = 0
-		fail_count = 0
+		print('exploration begins')
+		# Get the coordinates of the current database
+		if screening:
+			coords = [i.Coordinates(self.varied_ips) for i in self.slibs]
+		else:
+			coords = [i.Coordinates(self.varied_ips) for i in self.flibs]
 		
-		for rand in rand_points:
-			#print('checking point', rand)
-			projection_fail = False
-			min_tot = 10
-			for p in exp_coords:
-				tot_dist = 0
-				for d in range(2):
-					dist = (rand[d] - p[d])**2
-					if dist < 0.01:
-						projection_fail = True
-						#print('  failed point, dist:', dist)
-					else:
-						tot_dist += dist
-				if projection_fail:
-					fail_count += 1
-					break
-				tot_dist = (tot_dist)**0.5
-				#print('  total distance:', tot_dist, ' min distance:', min_tot)
-				if tot_dist < min_tot:
-					#print('  assigned new min_tot')
-					min_tot = tot_dist
-			if min_tot > maximin and not projection_fail:
-				#print('assigned new maximin')
-				maximin = min_tot
-				p_cand = rand
+		# Iterate through all random points
 		
-		print('next:', p_cand, ' maximin:', maximin, '  failed(%):', 100*fail_count/rand_count)
+		# Create a new library with the selected next point and add it to flibs/slibs
 		
+		# Add a while loop on top to repeat this as many times as p_count
+		#	-! remember to include the new point in the coordinates being considered (yea, duh)
+		
+		
+		print('exploration ends')
+		"""
+		#exp_coords = [[0.5,0.5],[0.7449, 0.9691],[0.9133, 0.2899],[0.0593, 0.6771],[0.2877, 0.0699],[0.1363, 0.3539],[0.7212, 0.7534], [0.8909, 0.6088],[0.3824, 0.8916],[0.6083, 0.1271], [0,0], [1,1], [0,1], [1,0]]
+		exp_coords = [[0.5,0.5]]
+		
+		rand_count = 20
+		while len(exp_coords) < 13:
+			rand_points = [[round(random.random(),4) for i in range(2)] for i in range(rand_count)]
+			p_cand = [3,3]
+			maximin = 0
+			fail_count = 0
+			for rand in rand_points:
+				#print('checking point', rand)
+				projection_fail = False
+				min_tot = 10
+				for p in exp_coords:
+					tot_dist = 0
+					for d in range(2):
+						dist = (rand[d] - p[d])**2
+						if dist < 0.0001:
+							projection_fail = True
+							#print('  failed point, dist:', dist)
+						else:
+							tot_dist += dist
+					if projection_fail:
+						fail_count += 1
+						break
+					tot_dist = (tot_dist)**0.5
+					#print('  total distance:', tot_dist, ' min distance:', min_tot)
+					if tot_dist < min_tot:
+						#print('  assigned new min_tot')
+						min_tot = tot_dist
+				if min_tot > maximin and not projection_fail:
+					#print('assigned new maximin')
+					maximin = min_tot
+					p_cand = rand
+			exp_coords.append(p_cand)
+		
+			print('next:', p_cand, ' maximin:', maximin, '  failed(%):', 100*fail_count/rand_count)
+		"""
+		'''
 		x = [i[0] for i in exp_coords]
 		y = [i[1] for i in exp_coords]
 		
@@ -673,13 +696,16 @@ class DBase:
 		ax.set_xlim([-0.1,1.1])
 		ax.set_ylim([-0.1,1.1])
 		sizes = 10
+		labels = [i for i in range(len(x))]
 		ax.scatter(x, y, s=200, c='b')
-		ax.scatter(rx, ry, s=20, c='g')
-		ax.scatter(p_cand[0], p_cand[1], s=200, c='r')
+		#ax.scatter(rx, ry, s=20, c='g')
+		#ax.scatter(p_cand[0], p_cand[1], s=200, c='r')
 		ax.grid(True)
 		#fig.tight_layout()
+		for i, txt in enumerate(labels):
+			ax.annotate(txt, (x[i],y[i]), xytext = (x[i]-0.03,y[i]+0.03))
 		plt.show()
-					
+		'''	
 						
 			
 	def EstVoronoi(self, s_mult = 500):
