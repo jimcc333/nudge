@@ -127,12 +127,48 @@ def main(args):
 	else:
 		# Manual mode
 		usr_path = 'db4/'
+		
+		# Standard startup stuff
 		paths = PathNaming(database_path = usr_path)
 		database = DBase(paths)	
 		database.UpdateMetrics()
 		database.Print()
+		
+		# Add some initial points
 		database.InitialExploration(True)
-	
+		
+		# Perform exploration
+		database.Exploration(True)
+		database.Exploration(True)
+		database.Exploration(True)
+		database.Exploration(True)
+		database.Exploration(True)
+		database.Exploration(True)
+		database.Exploration(True)
+		database.Exploration(True)
+		
+		
+		x = []
+		y = []
+		z = []
+		for lib in database.slibs:
+			x.append(lib.normalized['fuel_density'])
+			y.append(lib.normalized['clad_density'])
+			z.append(lib.normalized['cool_density'])
+				
+		fig1 = plt.figure()
+		ax = fig1.add_subplot(111, projection='3d')
+		ax.set_xlim([-0.05,1.05])
+		ax.set_ylim([-0.05,1.05])
+		ax.set_zlim([-0.05,1.05])
+		ax.set_xlabel("Fuel Density")
+		ax.set_ylabel("Clad Density")
+		ax.set_zlabel("Cool Density")
+		#sizes = 1
+		ax.scatter(x, y, z, s = 100)
+		ax.grid(True)
+		#fig.tight_layout()
+		plt.show()		
 	
 	'''
 	calccount = 0

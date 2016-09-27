@@ -24,7 +24,7 @@ unit_cell_height
 # Density inputs
 fuel_density 0.5
 clad_density 0.5
-cool_density
+cool_density 0.5
 
 # Others
 flux

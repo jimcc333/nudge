@@ -483,7 +483,10 @@ class DBase:
 		# Read it in database
 		new_lib = Library(self.paths.database_path, op_path, ip_path, lib_number, screening)
 		self.slibs.append(new_lib) if screening else self.flibs.append(new_lib)
-		
+		if screening:
+			self.UpdateMetrics(screening = screening, libs = [self.slibs[-1]])
+		else:
+			self.UpdateMetrics(screening = screening, libs = [self.flibs[-1]])
 		return
 	
 	#TODO: this probably isnt used and aint even right
@@ -503,11 +506,25 @@ class DBase:
 			
 			self.data_mat = np.column_stack((self.np_prods, self.np_dests, self.np_BUs))
 			self.pca_mat = mlabPCA(self.data_mat)	# PCA matrix 
-		
-	def UpdateMetrics(self):
+	
+	# A catch-all to update data
+	def UpdateMetrics(self, screening = None, libs = None):
 		if len(self.slibs) == 0 and len(self.flibs) == 0:
 			return
-		# work in progress
+		
+		# Figure out what to update
+		if libs != None:
+			pass
+		else:
+			if screening == None:
+				libs = self.slibs + self.flibs
+			else:
+				libs = self.slibs if screening else self.flibs
+		
+		# Update normalized values
+		for lib in libs:
+			for ip in self.varied_ips:
+				lib.normalized[ip] = lib.inputs.xsgen[ip]			
 		
 	
 	""" 
@@ -616,19 +633,18 @@ class DBase:
 			for ip in self.varied_ips:
 				coords[ip] = val
 			self.AddLib(coords, screening)
+		
+		# Update metrics
+		self.UpdateMetrics()
 	
 	# Finds the coordinates of next point to sample
 	def Exploration(self, screening = False):
-		# p_count: number of points to find
-		
-		print('exploration begins')
 		# Get the coordinates of the current database
 		if screening:
 			coords = [i.Coordinates(self.varied_ips) for i in self.slibs]
 		else:
 			coords = [i.Coordinates(self.varied_ips) for i in self.flibs]
 		if len(coords) == 0:
-			#TODO: add basecase lib to database appropriately, this is probably done before this is called
 			print('Exploration - no points in database error')
 			return
 		
@@ -647,6 +663,7 @@ class DBase:
 			for p in coords:
 				tot_dist = 0
 				p_list = list(p.values())		# Python3 guarantees the order will be consistent if dict not altered
+				
 				for d in range(self.dimensions):
 					dist = (rand[d] - p_list[d])**2	# Cartesian distance will be calculated with this
 					if dist < self.proj_threshold:	# Projection check
@@ -683,7 +700,6 @@ class DBase:
 		
 		self.AddLib(cand_coords, True)
 		
-		print('exploration ends')
 		'''
 		x = [i[0] for i in exp_coords]
 		y = [i[1] for i in exp_coords]
@@ -822,6 +838,7 @@ class DBase:
 		
 	def Print(self):
 		print('Database screening ips:', len(self.slibs), ' full ips:', len(self.flibs))
+		print('  Dimensions:', self.dimensions)
 		print("Database screening run ranges: ")
 		print("  Fuel radius range:  ", self.range_fuel_radius)
 		print("  Fuel density range: ", self.range_fuel_density)
