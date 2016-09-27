@@ -35,76 +35,25 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 def main(args):
-	os.system('cls' if os.name == 'nt' else 'clear')
-	print('Placeholder xsgen program')
+	print('---Placeholder XSgen program---')
 	
-	# Inputs and constants
-	#lib = Library('blank', 'blank', args[1], 1, False)
-
-	inputs = {
-		'fuel_radius': None,	# 1
-		'void_thickness': None,	 # 2
-		'clad_thickness': None,	 # 3
-		'unit_cell_pitch': None,	# 4
-		'unit_cell_height': None,   # 5
-		'fuel_density': None,	   # 6
-		'clad_density': None,	   # 7
-		'cool_density': None,	   # 8
-		'enrichment': None,			# 9
-		'flux': None			   # 10
-	}
-
-	outputs = {
-		'burnup': None,		 # 9, 1, 6, 3, 4, 5
-		'neutron_prod': None,   # 10, 7, 2, 8, 1, 9
-		'neutron_dest': None	# 10, 8, 3, 7, 4, 9
-	}
-
-	#print('inputs: ', inputs)
-
-	# assign(inputs, 0.5)
-	randomize(inputs)
-
-	print(inputs)
-
-	# Burnup
-	outputs['burnup'] = burnup_maker(inputs)
-
-
-
-	fig1 = plt.figure()
-	ax1 = fig1.add_subplot(111, projection='3d')
-	x = []
-	y = []
-	A = []
-	B = []
-	C = []
-	z = []
-
-	for xx in np.arange(0,1,0.01):
-		for yy in np.arange(0,1,0.03):
-			inputs['enrichment'] = xx
-			inputs['flux'] = yy
-			x.append(xx)
-			y.append(yy)
-			A.append(burnup_maker(inputs))
-			B.append(prod_maker(inputs))
-			C.append(dest_maker(inputs))
+	if len(args) != 3:
+		print('Please use "pxsgen input_location output_destination" format')
+		return
 	
-	z = A
+	# Read inputs
+	lib = Library('blank', args[2], args[1], 0, False)
 
-	A = (A - min(A)) / max(A)
-	B = (B - min(B)) / max(B)
-	C = (C - min(C)) / max(C)
+	# Write outputs
+	outputs = ''
+	outputs = 'burnup = ' + str(burnup_maker(lib.inputs.xsgen)) + '\n'\
+			  + 'neutron_prod = ' + str(prod_maker(lib.inputs.xsgen)) + '\n'\
+			  + 'neutron_dest = ' + str(dest_maker(lib.inputs.xsgen)) + '\n'
 	
-	#z = A + B + C
+	with open(args[2], 'w') as openfile:
+		openfile.write(outputs)
 	
-	ax1.scatter(x,y,z) # s=sizes, c=colors)
-
-	ax1.set_xlim([0,1])
-	ax1.set_ylim([1,0])
-	#ax1.set_zlim([0,1])
-	plt.show()
+	print('Generated output')
 
 	print('\n-TheEnd-')
 	return 0
@@ -126,18 +75,18 @@ def burnup_maker(inputs):
 	x2 = (2.5635 - inputs['cool_density'])**2.12
 	x3 = (3 - inputs['clad_density'])**2.1234
 	x4 = (0.5+inputs['fuel_density'])**3.01
-	x5 = np.sin(inputs['fuel_radius']*2)*8 + 2
+	x5 = np.sin(inputs['fuel_cell_radius']*2)*8 + 2
 	x6 = 8 - ((inputs['flux'] - 0.71)*2)**4
-	x7 = 3*inputs['void_thickness'] + 2*inputs['clad_thickness'] + random.random()
+	x7 = 3*inputs['void_cell_radius'] + 2*inputs['clad_cell_radius'] + random.random()
 	
 	random.seed()
 
 	return ((x1 + x2 + x3 + x4 + x5 + x6)**2.3)/100 + x7
 
 def prod_maker(inputs):
-	random.seed(inputs['fuel_radius']*inputs['clad_density']*1245)
-	x1 = (1.5-inputs['fuel_radius'])**1.23
-	x2 = 9.45**inputs['void_thickness']
+	random.seed(inputs['fuel_cell_radius']*inputs['clad_density']*1245)
+	x1 = (1.5-inputs['fuel_cell_radius'])**1.23
+	x2 = 9.45**inputs['void_cell_radius']
 	x3 = (np.sin(inputs['unit_cell_pitch']*12) + 1)/10
 	x4 = (2 - inputs['clad_density'])**2.1234
 	x5 = (inputs['enrichment'] + 2)**3
@@ -149,8 +98,8 @@ def prod_maker(inputs):
 	return (x2 + x4 + x5 + x6)**0.5 + x1 + x3 + x7
 
 def dest_maker(inputs):
-	random.seed(inputs['clad_thickness']*inputs['cool_density']*1245)
-	x1 = 9.45**inputs['void_thickness']
+	random.seed(inputs['clad_cell_radius']*inputs['cool_density']*1245)
+	x1 = 9.45**inputs['void_cell_radius']
 	x2 = (inputs['unit_cell_height'] + 2.12)**4.1 / 100
 	x4 = inputs['cool_density']*3.14159
 	x5 = (inputs['enrichment'] + 2)**3
