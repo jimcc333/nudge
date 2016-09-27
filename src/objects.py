@@ -317,11 +317,9 @@ class DBase:
 		
 		# Read database inputs
 		self.ReadInput(paths.database_path + paths.dbase_input)
-		print('reading basecase')
 		
 		# Read basecase input
 		self.ReadBase(paths.database_path + paths.base_input)
-		print('read basecase')
 		
 		# Check to see if there's a screening library input folder
 		if os.path.exists(paths.database_path + paths.SR_Input_folder):
@@ -355,11 +353,7 @@ class DBase:
 						tot_sr_libs += 1
 					else:
 						# Could continue here instead of breaking, but at this point this is better
-						break
-		else:
-			# If there are no inputs, the first one is basecase
-			print(self.basefile)
-			
+						break			
 			
 		#TODO: also read full input libs
 		
@@ -423,15 +417,13 @@ class DBase:
 			self.basefile = bfile.read()	
 	
 	# Once normalized coords are generated, pass here to add
-	#TODO: should check if exists first
-	#TODO: should update relevant neighborhoods
 	#TODO: outputting in correct units
 	def AddLib(self, norm_coords, screening):
 		# Adding a library will:
 		#	- Convert normalized coords to correct units
 		#	- Generate the input file
 		#	- Add to flib or slib list in this object
-		print('begin add lib')
+		
 		# Dimension consistency check (note that this is techically not sufficient)
 		if len(norm_coords) != self.dimensions:
 			error_message = 'Dimensions mismatch when adding a new library to database'
@@ -439,9 +431,7 @@ class DBase:
 		
 		# Convert normalized to correct unit value
 		new_inputs = self.basecase.inputs.xsgen
-		print(new_inputs)
 		for key, value in norm_coords.items():
-			print(key, value)
 			new_inputs[key] = value #* self.basecase.inputs.xsgen[key]
 		
 		# Check if input exists
@@ -463,7 +453,6 @@ class DBase:
 					'/' + str(lib_number) + '.py'
 			op_path = self.paths.database_path + self.paths.FR_Output_folder +\
 					'/' + str(lib_number) + '.py'
-		print(source_path, ip_path)
 		
 		# Make input file from basecase file
 		ipfile = self.basefile
@@ -495,7 +484,6 @@ class DBase:
 		new_lib = Library(self.paths.database_path, op_path, ip_path, lib_number, screening)
 		self.slibs.append(new_lib) if screening else self.flibs.append(new_lib)
 		
-		print('end add lib')
 		return
 	
 	#TODO: this probably isnt used and aint even right
@@ -521,54 +509,6 @@ class DBase:
 			return
 		# work in progress
 		
-		# Delete old data
-		self.max_prods.clear()
-		self.max_dests.clear()
-		self.max_BUs.clear()
-			
-		# Rebuild lib values
-		self.complete_slibs = 0
-		for i in self.slibs:
-			if i.completed:
-				self.max_prods.append(i.max_prod)
-				self.max_dests.append(i.max_dest)
-				self.max_BUs.append(i.max_BU)
-				
-				self.complete_slibs += 1
-		
-		#TODO: have a class to handle metrics
-		# Update the range of metrics
-		self.range_fuel_radius[0] = min([i.inputs.xsgen['fuel_cell_radius'] for i in self.slibs])
-		self.range_fuel_radius[1] = max([i.inputs.xsgen['fuel_cell_radius'] for i in self.slibs])
-		
-		self.range_fuel_density[0] = min([i.inputs.xsgen['fuel_density'] for i in self.slibs])
-		self.range_fuel_density[1] = max([i.inputs.xsgen['fuel_density'] for i in self.slibs])
-		
-		self.range_clad_density[0] = min([i.inputs.xsgen['clad_density'] for i in self.slibs])
-		self.range_clad_density[1] = max([i.inputs.xsgen['clad_density'] for i in self.slibs])
-		
-		self.range_cool_density[0] = min([i.inputs.xsgen['cool_density'] for i in self.slibs])
-		self.range_cool_density[1] = max([i.inputs.xsgen['cool_density'] for i in self.slibs])
-		
-		self.range_enrichment[0] = min([i.inputs.xsgen['enrichment'] for i in self.slibs])
-		self.range_enrichment[1] = max([i.inputs.xsgen['enrichment'] for i in self.slibs])
-		
-		# Update the metrics in libraries
-		for lib in self.slibs:
-			lib.normalized['fuel_cell_radius'] = (lib.inputs.xsgen['fuel_cell_radius'] - self.range_fuel_radius[0]) / \
-									(self.range_fuel_radius[1] - self.range_fuel_radius[0])
-									
-			lib.normalized['fuel_density'] = (lib.inputs.xsgen['fuel_density'] - self.range_fuel_density[0]) / \
-									(self.range_fuel_density[1] - self.range_fuel_density[0])
-									
-			lib.normalized['clad_density'] = (lib.inputs.xsgen['clad_density'] - self.range_clad_density[0]) / \
-									(self.range_clad_density[1] - self.range_clad_density[0])
-									
-			lib.normalized['cool_density'] = (lib.inputs.xsgen['cool_density'] - self.range_cool_density[0]) / \
-									(self.range_cool_density[1] - self.range_cool_density[0])
-									
-			lib.normalized['enrichment'] = (lib.inputs.xsgen['enrichment'] - self.range_enrichment[0]) / \
-									(self.range_enrichment[1] - self.range_enrichment[0])
 	
 	""" 
 	#TODO: needs to be rewritten for compatibility
@@ -663,8 +603,6 @@ class DBase:
 		return interpolated_lib
 		"""
 
-	
-	# INCOMPLETE
 	# Creates the initial set of inputs before exploration begins
 	def InitialExploration(self, screening):
 		# Make sure this is really initial
@@ -672,7 +610,12 @@ class DBase:
 		if points > 0:
 			return
 		
-		
+		# Assign all dimensions 0, 0.5, and 1 to create 3 input libs
+		coords = {}
+		for val in [0, 0.5, 1]:
+			for ip in self.varied_ips:
+				coords[ip] = val
+			self.AddLib(coords, screening)
 	
 	# Finds the coordinates of next point to sample
 	def Exploration(self, screening = False):

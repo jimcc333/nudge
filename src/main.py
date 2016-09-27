@@ -131,7 +131,7 @@ def main(args):
 		database = DBase(paths)	
 		database.UpdateMetrics()
 		database.Print()
-		
+		database.InitialExploration(True)
 	
 	
 	'''

@@ -25,8 +25,8 @@ clad_cell_radius = 0.475
 unit_cell_pitch  = 0.65635 * 2.0
 unit_cell_height = 0.1
 
-fuel_density = 1
-clad_density = 0.23                    # Cladding Density
+fuel_density = 0.5
+clad_density = 0.5                    # Cladding Density
 cool_density = 0.73                         # Coolant Density
 
 #fuel_specific_power = 40.0 / 1000.0   # Power garnered from fuel [W / g]
