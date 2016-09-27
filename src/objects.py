@@ -317,14 +317,16 @@ class DBase:
 		
 		# Read database inputs
 		self.ReadInput(paths.database_path + paths.dbase_input)
+		print('reading basecase')
 		
 		# Read basecase input
 		self.ReadBase(paths.database_path + paths.base_input)
+		print('read basecase')
 		
-		# Check to see if there's a scout library input folder
+		# Check to see if there's a screening library input folder
 		if os.path.exists(paths.database_path + paths.SR_Input_folder):
 			tot_sfiles = len(os.listdir(paths.database_path + paths.SR_Input_folder))
-		# If the input scout library folder doesn't exist create it
+		# If the input screening library folder doesn't exist create it
 		else:
 			os.mkdir(paths.database_path + paths.SR_Input_folder)
 			tot_sfiles = 0
@@ -332,12 +334,13 @@ class DBase:
 		# Check to see if there's a full library input folder
 		if os.path.exists(paths.database_path + paths.FR_Input_folder):
 			tot_ffiles = len(os.listdir(paths.database_path + paths.FR_Input_folder))
-		# If the input scout library folder doesn't exist create it
+		# If the input full library folder doesn't exist create it
 		else:
 			os.mkdir(paths.database_path + paths.FR_Input_folder)
 			tot_ffiles = 0
 		
 		tot_sr_libs = 0
+		
 		# If there are files SR_Inputs, read them
 		if tot_sfiles > 0:
 			for ip_number in range(tot_sfiles):
@@ -352,7 +355,12 @@ class DBase:
 						tot_sr_libs += 1
 					else:
 						# Could continue here instead of breaking, but at this point this is better
-						break	
+						break
+		else:
+			# If there are no inputs, the first one is basecase
+			print(self.basefile)
+			
+			
 		#TODO: also read full input libs
 		
 		# If there's no output folder, create it
@@ -360,7 +368,6 @@ class DBase:
 			os.mkdir(paths.database_path + paths.SR_Output_folder)
 		if not os.path.exists(paths.database_path + paths.FR_Output_folder):
 			os.mkdir(paths.database_path + paths.FR_Output_folder)
-						
 	
 	def ReadInput(self, ip_path):
 		# Make sure it's there
@@ -407,8 +414,9 @@ class DBase:
 	#TODO: basecase output and general numbering will need to be thought-out
 	def ReadBase(self, path):
 		database_path = self.paths.database_path
-		op_path = database_path + self.paths.FR_Output_folder
+		op_path = database_path + self.paths.FR_Output_folder + '/basecase'
 		self.basecase = Library(database_path, op_path, path, 0, False)
+		
 		# Also save this file to write new inputs later
 		self.basefile = None
 		with open(path, 'r') as bfile:
@@ -476,6 +484,8 @@ class DBase:
 								str(len(base_line)) + ' instances of: ' + key
 				raise RuntimeError(error_message)
 			ipfile = ipfile.replace(base_line[0], key + ' = ' + str(value))		
+		
+		#TODO: make necessary change if screening
 		
 		# Write out the file
 		with open(ip_path, 'w') as openfile: # bad naming here
@@ -656,22 +666,17 @@ class DBase:
 	
 	# INCOMPLETE
 	# Creates the initial set of inputs before exploration begins
-	def InitialExploration(self):
-		if len(self.flibs) > 0:
+	def InitialExploration(self, screening):
+		# Make sure this is really initial
+		points = len(self.slibs) if screening else len(self.flibs)
+		if points > 0:
 			return
-		print(self.paths.database_path, self.paths.FR_Output_folder, self.paths.FR_Input_folder)
-		dbase = self.paths.database_path
-		output_path = dbase + self.paths.FR_Output_folder + "/" + self.paths.fr_prefix + "0"
-		#lib0 = Library(dbase, self.paths.FR_Output_folder, self.paths.FR_Input_folder, 0, False)
-		#self.AddLib(lib0)
-		if self.dimensions == 1:
-			print("D = 1")
+		
+		
 	
 	# Finds the coordinates of next point to sample
-	def Exploration(self, p_count = 1, screening = False):
-		# Need to figure out:
-		#	- How to scale random count with database size
-		#
+	def Exploration(self, screening = False):
+		# p_count: number of points to find
 		
 		print('exploration begins')
 		# Get the coordinates of the current database
@@ -735,51 +740,7 @@ class DBase:
 		
 		self.AddLib(cand_coords, True)
 		
-		# Add a while loop on top to repeat this as many times as p_count
-		#	-! remember to include the new point in the coordinates being considered (yea, duh)
-		
-		
 		print('exploration ends')
-		"""
-		# hacked to work for just 2D on empty database to test exploration
-		#exp_coords = [[0.5,0.5],[0.7449, 0.9691],[0.9133, 0.2899],[0.0593, 0.6771],[0.2877, 0.0699],[0.1363, 0.3539],[0.7212, 0.7534], [0.8909, 0.6088],[0.3824, 0.8916],[0.6083, 0.1271], [0,0], [1,1], [0,1], [1,0]]
-		exp_coords = [[0.5,0.5]]
-		
-		rand_count = 20
-		while len(exp_coords) < 13:
-			rand_points = [[round(random.random(),4) for i in range(2)] for i in range(rand_count)]
-			p_cand = [3,3]
-			maximin = 0
-			fail_count = 0
-			for rand in rand_points:
-				#print('checking point', rand)
-				projection_fail = False
-				min_tot = 10
-				for p in exp_coords:
-					tot_dist = 0
-					for d in range(2):
-						dist = (rand[d] - p[d])**2
-						if dist < 0.0001:
-							projection_fail = True
-							#print('  failed point, dist:', dist)
-						else:
-							tot_dist += dist
-					if projection_fail:
-						fail_count += 1
-						break
-					tot_dist = (tot_dist)**0.5
-					#print('  total distance:', tot_dist, ' min distance:', min_tot)
-					if tot_dist < min_tot:
-						#print('  assigned new min_tot')
-						min_tot = tot_dist
-				if min_tot > maximin and not projection_fail:
-					#print('assigned new maximin')
-					maximin = min_tot
-					p_cand = rand
-			exp_coords.append(p_cand)
-		
-			print('next:', p_cand, ' maximin:', maximin, '  failed(%):', 100*fail_count/rand_count)
-		"""
 		'''
 		x = [i[0] for i in exp_coords]
 		y = [i[1] for i in exp_coords]

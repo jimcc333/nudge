@@ -126,13 +126,12 @@ def main(args):
 		database.Print()
 	else:
 		# Manual mode
-		usr_path = 'db2/'
+		usr_path = 'db4/'
 		paths = PathNaming(database_path = usr_path)
 		database = DBase(paths)	
 		database.UpdateMetrics()
 		database.Print()
-		database.Exploration(screening = True)
-		database.Print()
+		
 	
 	
 	'''
