@@ -17,6 +17,7 @@ class PathNaming:
 	def __init__(self, database_path = "/home/cem/nudge/db_dbtest1/"):
 		self.database_path = database_path
 		self.xsgen_command = 'xsgen --rc'
+		self.pxsgen_command = 'python3 src/pxsgen.py'
 		
 		self.base_input = 'basecase.py'		# This file is used as the base case for the database
 		self.dbase_input = 'inputs.txt'		# Used for database creation inputs
@@ -131,8 +132,8 @@ class Library:
 		# --- Normalized Values ---
 		self.normalized = {
 			'fuel_cell_radius': None,
-			'void_thickness': None,
-			'clad_thickness': None,
+			'void_cell_radius': None,
+			'clad_cell_radius': None,
 			'unit_cell_pitch': None,
 			'unit_cell_height': None, 
 			'fuel_density': None,
@@ -178,7 +179,7 @@ class Library:
 			if items[0] == "NEUT_DEST":
 				self.max_dest += float(items[len(items)-1]) * frac
 			if items[0] == "BUd":
-				self.max_BU += sum( [float(i) for i in items[1:]] ) * frac
+				self.max_BU += sum( [float(i) for i in items[2:]] ) * frac
 		doc.close()
 		
 	def ReadInput(self, ip_path):
@@ -343,8 +344,9 @@ class DBase:
 		if tot_sfiles > 0:
 			for ip_number in range(tot_sfiles):
 					ip_path = paths.database_path + paths.SR_Input_folder + '/' + str(ip_number) +'.py'
-					op_path = paths.database_path + paths.SR_Output_folder + '/' + paths.xsgen_prefix \
-								+ paths.sr_prefix + str(ip_number) + '/' + paths.xsgen_op_folder
+					#TODO: op_path will need to be updated to work with xsgen
+					op_path = paths.database_path + paths.SR_Output_folder + '/' + str(ip_number) + '_p.py'
+					#+ paths.xsgen_prefix + paths.sr_prefix + str(ip_number) + '/' + paths.xsgen_op_folder
 								
 					if os.path.exists(ip_path):
 						inputlib = Library(database_path=paths.database_path, op_path=op_path, ip_path=ip_path, number=ip_number, scout=True)

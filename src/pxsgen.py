@@ -46,9 +46,9 @@ def main(args):
 
 	# Write outputs
 	outputs = ''
-	outputs = 'burnup = ' + str(burnup_maker(lib.inputs.xsgen)) + '\n'\
-			  + 'neutron_prod = ' + str(prod_maker(lib.inputs.xsgen)) + '\n'\
-			  + 'neutron_dest = ' + str(dest_maker(lib.inputs.xsgen)) + '\n'
+	outputs = 'BUd = ' + str(burnup_maker(lib.inputs.xsgen)) + '\n'\
+			  + 'NEUT_PROD = ' + str(prod_maker(lib.inputs.xsgen)) + '\n'\
+			  + 'NEUT_DEST = ' + str(dest_maker(lib.inputs.xsgen)) + '\n'
 	
 	with open(args[2], 'w') as openfile:
 		openfile.write(outputs)

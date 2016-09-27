@@ -84,8 +84,11 @@
 from objects import *
 from interface import *
 import os
+import subprocess
 
 import numpy as np
+import pandas as pd
+import seaborn as sns
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -126,7 +129,7 @@ def main(args):
 		database.Print()
 	else:
 		# Manual mode
-		usr_path = 'db4/'
+		usr_path = '/home/cem/nudge/db5/'
 		
 		# Standard startup stuff
 		paths = PathNaming(database_path = usr_path)
@@ -138,16 +141,56 @@ def main(args):
 		database.InitialExploration(True)
 		
 		# Perform exploration
-		database.Exploration(True)
-		database.Exploration(True)
-		database.Exploration(True)
-		database.Exploration(True)
-		database.Exploration(True)
-		database.Exploration(True)
-		database.Exploration(True)
-		database.Exploration(True)
+		for i in range(100):
+			#database.Exploration(True)
+			pass
 		
+		# Run the new inputs
+		for i in range(len(database.slibs)):
+			shell_arg = database.paths.pxsgen_command + ' ' + \
+						database.slibs[i].ip_path + ' ' +\
+						database.slibs[i].op_path
+			#subprocess.run(shell_arg, shell=True)
+			database.slibs[i].ReadOutput(0, database.slibs[i].op_path, 1)	
 		
+		print(database.varied_ips)
+		print(database.slibs[0].normalized)
+		# Find correlation matrix
+		x1 = []
+		x2 = []
+		x3 = []
+		x4 = []
+		x5 = []
+		x6 = []
+		x7 = []
+		x8 = []
+		x9 = []
+		x10 = []
+		y1 = []
+		y2 = []
+		y3 = []
+		
+		for lib in database.slibs:
+			x1.append(lib.normalized['fuel_density'])
+			x2.append(lib.normalized['clad_density'])
+			x3.append(lib.normalized['cool_density'])
+			x4.append(lib.normalized['fuel_cell_radius'])
+			x5.append(lib.normalized['void_cell_radius'])
+			x6.append(lib.normalized['clad_cell_radius'])
+			x7.append(lib.normalized['unit_cell_pitch'])
+			x8.append(lib.normalized['unit_cell_height'])
+			x9.append(lib.normalized['enrichment'])
+			x10.append(lib.normalized['flux'])
+			y1.append(lib.max_BU)
+			y2.append(lib.max_prod)
+			y3.append(lib.max_dest)
+		
+		print(x5)
+		
+		a = np.array([x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, y1, y2, y3])
+		corr = np.corrcoef(a)
+		print(corr)
+		"""
 		x = []
 		y = []
 		z = []
@@ -155,7 +198,8 @@ def main(args):
 			x.append(lib.normalized['fuel_density'])
 			y.append(lib.normalized['clad_density'])
 			z.append(lib.normalized['cool_density'])
-				
+		
+		
 		fig1 = plt.figure()
 		ax = fig1.add_subplot(111, projection='3d')
 		ax.set_xlim([-0.05,1.05])
@@ -169,7 +213,7 @@ def main(args):
 		ax.grid(True)
 		#fig.tight_layout()
 		plt.show()		
-	
+		"""
 	'''
 	calccount = 0
 	for i in range(calccount):
@@ -193,16 +237,6 @@ def main(args):
 	plt.show()
 	'''
 	
-	#os.system(str(paths.xsgen_command))
-	
-	#database.UpdateNeigbors()
-	#database.UpdateNeigbors(slib=0)
-	
-	#database.PCA()
-	
-	#database.EstLib(database.slibs[8:10], 	t_enrichment=0.01, t_cool_density=0.99)
-	
-		
 	
 
 	'''
@@ -234,26 +268,6 @@ def main(args):
 	ax1.set_zlim([0,1])
 	plt.show()
 	'''
-	"""
-	fig2 = plt.figure()
-	ax2 = fig2.add_subplot(111, projection='3d')
-	ax2.scatter(database.pca_mat.Y[:,0], database.pca_mat.Y[:,1], database.pca_mat.Y[:,2])
-	ax2.set_xlabel("PC1")
-	ax2.set_ylabel("PC2")
-	ax2.set_zlabel("PC3")
-	
-	fig3 = plt.figure()
-	ax3 = fig3.add_subplot(111, projection='3d')
-	# Size by PC1 value
-	print(database.pca_mat.Y[:,0])
-	s = (database.pca_mat.Y[:,0]+2) **2 * 10	
-	print(s)
-	ax3.scatter(database.fuel_cell_radius, database.enrichment, database.clad_cell_thickness, s=s)
-	ax3.set_xlabel("Fuel Radius")
-	ax3.set_ylabel("Enrichment")
-	ax3.set_zlabel("Clad Thickness")
-	plt.show()
-	"""
 	
 	print('\n-TheEnd-')
 	#input('')
