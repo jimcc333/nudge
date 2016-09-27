@@ -1,0 +1,30 @@
+# Database input template
+# A work in progress
+
+
+# Input variable ranges. Use following format (without the initial '# '):
+# [input_variable][space][var]
+#  Where [var] is the plus/minus variation of the input variable in the units of the variable
+# Do not enter a [var] or delete the input variable to have it constant
+#
+# -----------------------------------------------------------------------
+
+
+# Composition inputs
+922350
+922380
+
+# Geometry inputs
+fuel_cell_radius
+void_thickness
+clad_thickness
+unit_cell_pitch
+unit_cell_height
+
+# Density inputs
+fuel_density 0.5
+clad_density 0.5
+cool_density
+
+# Others
+flux
