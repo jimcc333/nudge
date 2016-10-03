@@ -154,7 +154,9 @@ def main(args):
 				database.slibs[i].ReadOutput(0, database.slibs[i].op_path, 1)
 
 		# Find neighbors
-		database.update_neighbors()
+		database.generate_neighbors()
+		print('lib 0 score:', database.flibs[0].neighborhood.neighbor_score)
+		#database.update_neighbors()
 
 		# Plot data
 		x = []

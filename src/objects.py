@@ -86,18 +86,24 @@ class xsgenParams:
 
 class Neighborhood:
 	# A class that holds information about the sample point neighborhood
-	#	Neighborhoods are used to calculate gradients of points
-	#	A library does not need outputs to have a fully defined neighborhood
+	# Neighborhoods are used to calculate gradients of points
+	# A library does not need outputs to have a fully defined neighborhood
 
 	def __init__(self, p_coords, lib_numbers, coordinates):
-		self.p_coords = p_coords
-		self.lib_numbers = lib_numbers
-		self.cohesion = 1	# C=1 implies all points are as far away as possible
-		self.adhesion = 0	# A=1 implies all points are on the same spot
-		self.coordinates = coordinates
-		self.CalculateScore()
+		self.p_coords = p_coords			# Coordinates of the center point
+		self.lib_numbers = lib_numbers		# flib numbers of libraries forming the neighbors
+		self.coordinates = coordinates		# (normalized) coordinates of the neighbors
+		self.cohesion = 1					# C=1 implies all points are as far away as possible
+		self.adhesion = 0					# A=1 implies all points are on the same spot
+		self.neighbor_score = 0				# The neighborhood score
+		self.calculate_score()
 
-	def CalculateScore(self):
+	def calculate_score(self):
+		# Check if center is in its own neighbors
+		if self.p_coords in self.coordinates:
+			error_message = 'Point given in its own neighborhood for point ' + str(self.p_coords)
+			raise RuntimeError(error_message)
+
 		# Cohesion: avrg(distance(coord, center))
 		distances = []
 		p = [value for value in self.p_coords.values()]
@@ -121,7 +127,8 @@ class Neighborhood:
 		self.adhesion = np.mean(distances)
 
 		# Neighborhood score: A/(sqrt(2)*C^2)
-		self.neighbor_score = self.adhesion / ( (self.cohesion**2)*math.sqrt(2))
+		self.neighbor_score = self.adhesion / ((self.cohesion**2)*math.sqrt(2))
+
 
 class Library:
 	""" A class that holds library information """
@@ -246,13 +253,11 @@ class Library:
 			print(' Normalized values')
 			print(self.normalized)
 
-	def Coordinates(self, varied_ips):
+	def coordinates(self, varied_ips):
 		coordinates = {}
-
 		for key, value in self.normalized.items():
 			if key in varied_ips:
 				coordinates[key] = value
-
 		return coordinates
 
 
@@ -349,6 +354,7 @@ class DBase:
 			tot_ffiles = 0
 
 		tot_sr_libs = 0
+		tot_fr_libs = 0
 
 		# If there are files SR_Inputs, read them
 		if tot_sfiles > 0:
@@ -367,7 +373,24 @@ class DBase:
 						# Could continue here instead of breaking, but at this point this is better
 						break
 
-		#TODO: also read full input libs
+		# If there are files FR_Inputs, read them
+		if tot_ffiles > 0:
+			for ip_number in range(tot_ffiles):
+				ip_path = paths.database_path + paths.FR_Input_folder + paths.slash + str(ip_number) + '.py'
+				# TODO: op_path will need to be updated to work with xsgen
+				op_path = paths.database_path + paths.SR_Output_folder + paths.slash + str(
+					ip_number) + '_p.py'
+				# + paths.xsgen_prefix + paths.sr_prefix + str(ip_number) + '/' + paths.xsgen_op_folder
+
+				if os.path.exists(ip_path):
+					inputlib = Library(database_path=paths.database_path, op_path=op_path, ip_path=ip_path,
+										number=ip_number, scout=True)
+					# TODO: fix this!!!
+					self.flibs.append(inputlib)
+					tot_fr_libs += 1
+				else:
+					# Could continue here instead of breaking, but at this point this is better
+					break
 
 		# If there's no output folder, create it
 		if not os.path.exists(paths.database_path + paths.SR_Output_folder):
@@ -788,8 +811,23 @@ class DBase:
 		for i in p_vol: print(round(i,6), end=' ')
 		return p_vol
 
-	# Updates the neighborhoods of flibs in database
-	def update_neighbors(self, flib=None):
+	# Generates all neighborhoods after exploration
+	def generate_neighbors(self):
+		print('generating neighbors')
+		# Go through all full libraries and generate initial neighborhood
+		for i, lib in enumerate(self.flibs):
+			#TODO: will need to update the initial neighborhood guess
+			initial_neighbors = list(range(self.dimensions*2))
+			# Avoid passing the lib in its own neighborhood
+			if i in initial_neighbors:
+				initial_neighbors[i] = self.dimensions*2
+			neighbor_libs = [self.flibs[i] for i in initial_neighbors]
+			neighbor_coordinates = [lib.coordinates(self.varied_ips) for lib in neighbor_libs]
+			lib.neighborhood = Neighborhood(lib.coordinates(self.varied_ips), initial_neighbors, neighbor_coordinates)
+
+
+	# Updates the neighborhoods of flib in database
+	def update_neighbors(self, flib):
 		# Updates the neighbors of flib only if index given
 
 		if len(self.flibs) < self.dimensions * 2 + 2:
@@ -799,14 +837,14 @@ class DBase:
 		# Only update the neighbors of flib if given
 		if flib != None:
 			# Save current neighborhood information
-			current_score = self.slib_neighbors[slib].neighbor_score
-			current_n_neighbors = self.slib_neighbors[slib].lib_numbers
-			current_coords = self.slibs[slib].Coordinates(self.varied_ips)
-			current_neighborhood = self.slib_neighbors[slib]
+			current_score = self.slib_neighbors[flib].neighbor_score
+			current_n_neighbors = self.slib_neighbors[flib].lib_numbers
+			current_coords = self.slibs[flib].Coordinates(self.varied_ips)
+			current_neighborhood = self.slib_neighbors[flib]
 
 			# Create a list of all candidate libraries
 			list1 = list(range(len(self.slibs)))
-			list1.remove(slib)
+			list1.remove(flib)
 			# Iterate through each combination
 			total_iters = len(itertools.combinations(list1, self.dimensions*2))
 			current_iter = 0
@@ -823,7 +861,7 @@ class DBase:
 					current_n_neighbors = subset
 					current_coords = new_neighborhood.p_coords
 					current_neighborhood = new_neighborhood
-			self.slib_neighbors[slib] = current_neighborhood
+			self.slib_neighbors[flib] = current_neighborhood
 			return
 
 		# Go through each slib and update its neighborhood
