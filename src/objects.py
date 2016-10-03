@@ -824,69 +824,43 @@ class DBase:
 			neighbor_libs = [self.flibs[i] for i in initial_neighbors]
 			neighbor_coordinates = [lib.coordinates(self.varied_ips) for lib in neighbor_libs]
 			lib.neighborhood = Neighborhood(lib.coordinates(self.varied_ips), initial_neighbors, neighbor_coordinates)
+			# Go through all combinations and pick best neighborhood for each point
+			self.update_neighbors(lib)
 
 
 	# Updates the neighborhoods of flib in database
 	def update_neighbors(self, flib):
-		# Updates the neighbors of flib only if index given
-
 		if len(self.flibs) < self.dimensions * 2 + 2:
 			# Not enough libs to construct neighborhoods
 			return
 
-		# Only update the neighbors of flib if given
-		if flib != None:
-			# Save current neighborhood information
-			current_score = self.slib_neighbors[flib].neighbor_score
-			current_n_neighbors = self.slib_neighbors[flib].lib_numbers
-			current_coords = self.slibs[flib].Coordinates(self.varied_ips)
-			current_neighborhood = self.slib_neighbors[flib]
+		# Save current neighborhood information
+		current_score = flib.neighborhood.neighbor_score
+		current_coords = flib.neighborhood.p_coords
+		current_neighborhood = flib.neighborhood.lib_numbers
 
-			# Create a list of all candidate libraries
-			list1 = list(range(len(self.slibs)))
-			list1.remove(flib)
-			# Iterate through each combination
-			total_iters = len(itertools.combinations(list1, self.dimensions*2))
-			current_iter = 0
-			for subset in itertools.combinations(list1, self.dimensions*2):
-				current_iter += 1
-				n_coordinates = []
-				for i in subset:
-					n_coordinates.append(self.slibs[i].Coordinates(self.varied_ips))
-				new_neighborhood = Neighborhood(current_coords, subset, n_coordinates)
-				# Update the current data if new has better score
-				if current_score < new_neighborhood.neighbor_score:
-					current_score = new_neighborhood.neighbor_score
-					print(current_score, subset, 100*current_iter/total_iters,'%')
-					current_n_neighbors = subset
-					current_coords = new_neighborhood.p_coords
-					current_neighborhood = new_neighborhood
-			self.slib_neighbors[flib] = current_neighborhood
-			return
+		# Create a list of all candidate libraries
+		cand_list = list(range(len(self.flibs)))
+		cand_list.remove(flib.number)
 
-		# Go through each slib and update its neighborhood
-		for lib in self.slibs:
-			#print('Updating the neighborhood of lib', lib.number)
-
-			# Lib doesn't have a defined neighborhood
-			if len(self.slib_neighbors) <= lib.number:
-				#print(' Constructing an initial neighborhood for lib', lib.number)
-				neighbors = list(range(len(self.slibs)))
-				neighbors = neighbors[:lib.number] + neighbors[lib.number+1:]
-				# selection could be improved, but I predict it never will be worth it (esp if there's saved state data)
-				if len(neighbors) > self.dimensions*2:
-					neighbors = neighbors[:self.dimensions*2]
-				n_coordinates = []
-				for i in neighbors:
-					n_coordinates.append(self.slibs[i].Coordinates(self.varied_ips))
-				#print('coordinates:', n_coordinates)
-				self.slib_neighbors.append(Neighborhood(lib.Coordinates(self.varied_ips), neighbors, n_coordinates))
-
-			# Compare the current library score to all other possible options
-
-
-
-			#TODO: pass the new libs and only check them
+		# Iterate through each combination
+		# total_iters = len(list(itertools.combinations(cand_list, self.dimensions*2)))
+		current_iter = 0
+		for subset in itertools.combinations(cand_list, self.dimensions*2):
+			current_iter += 1
+			n_coordinates = []
+			for i in subset:
+				n_coordinates.append(self.flibs[i].coordinates(self.varied_ips))
+			new_neighborhood = Neighborhood(current_coords, subset, n_coordinates)
+			# Update the current data if new has better score
+			if current_score < new_neighborhood.neighbor_score:
+				#TODO: this could be improved, information already saved in new_neighborhood
+				current_score = new_neighborhood.neighbor_score
+				# print(current_score, subset, round(100*current_iter/total_iters),'%')
+				current_coords = new_neighborhood.p_coords
+				current_neighborhood = new_neighborhood
+		flib.neighborhood = current_neighborhood
+		return
 
 
 	def Print(self):
