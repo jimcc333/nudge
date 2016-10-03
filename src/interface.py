@@ -1,4 +1,4 @@
-	
+
 
 
 class colors:
@@ -43,18 +43,18 @@ class colors:
 		purple='\033[45m'
 		cyan='\033[46m'
 		lightgrey='\033[47m'
-		
-		
-		
+
+
+
 
 class Screen:
 	"""
 	Handles the output screen in NUDGE
-	
+
 	The top header is always displayed
-	
+
 	"""
-	
+
 	def __init__(self):
 		self.lines = 24
 		self.bottom_buffer = 1
@@ -63,7 +63,7 @@ class Screen:
 		self.current_line = 3
 		self.header = '----------------- NUDGE: NUclear Database GEneration software -----------------'
 		return
-	
+
 	def PaintBackground(self, color, lines=None, width=None):
 		if lines == None: lines = self.lines
 		if width == None: width = self.width
@@ -78,30 +78,30 @@ class Screen:
 		if y >= self.lines: y = 255
 		if x <= 0: x = 0
 		if y <= 0: y = 0
-		
+
 		HORIZ = str(x)
 		VERT = str(y)
-		
+
 		# Plot the text at the starting at position HORIZ, VERT...
 		print(color + "\033["+VERT+";"+HORIZ+"f" + text)
 		self.current_line += 1
-	
+
 	# Initializes the screen (with correct background
 	def InitScreen(self):
 		#self.PaintBackground(colors.bg.black) # Paints the background color
 		self.Header()
-	
+
 	# Prints the header
 	def Header(self):
 		self.PrintAt(self.header, 0,0, colors.fg.cyan)
 		print(colors.fg.green)
-		
+
 	# Prints the help screen
 	def HelpScreen(self):
 		help_text = 'NUDGE is used to generate xsgen libraries using scout runs and global surrogate modeling' \
 					+ '\n -g (guided): start NUDGE in guided mode \n -d (database): used for the database path \n -h (help):  help screen'
 		print(help_text)
-	
+
 	def UpdateInfo(self, database):
 		self.complete_slibs = str(database.complete_slibs)
 		self.slibs = str(len(database.slibs))
@@ -115,19 +115,19 @@ class Screen:
 		text = 'Varied inputs: ' + str(database.varied_ips)
 		self.PrintAt(text, 2, 3, color=colors.fg.lightblue)
 		print(colors.fg.green)
-	
+
 	def Clean(self):
 		self.InitScreen()
 		self.UpdateInfo()
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+
+
+
+
+
+
+
+
+
+
+
+
