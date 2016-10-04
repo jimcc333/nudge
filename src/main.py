@@ -90,110 +90,111 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+
 def main(args):
-	os.system('cls' if os.name == 'nt' else 'clear')
+    os.system('cls' if os.name == 'nt' else 'clear')
 
-	screen = Screen()
+    screen = Screen()
 
-	# Check if help is requested
-	if '-h' in args:
-		screen.HelpScreen()
-		return
+    # Check if help is requested
+    if '-h' in args:
+        screen.HelpScreen()
+        return
 
-	# Initialize screen
-	screen.InitScreen()
+    # Initialize screen
+    screen.InitScreen()
 
-	# Manual mode check
-	if '-m' not in args:
-		# Take user inputs
-		# 	Initialize paths
-		try:
-			paths = PathNaming(os.name, database_path = args[args.index('-d')+1])
-		except ValueError:
-			usr_path = input('No database path found, please enter full path to database: \n')
-			paths = PathNaming(database_path = usr_path)
-		# 	Check xsgen run command
-		try:
-			paths.xsgen_command = args[args.index('-x')+1]
-		except ValueError:
-			pass
+    # Manual mode check
+    if '-m' not in args:
+        # Take user inputs
+        # 	Initialize paths
+        try:
+            paths = PathNaming(os.name, database_path = args[args.index('-d')+1])
+        except ValueError:
+            usr_path = input('No database path found, please enter full path to database: \n')
+            paths = PathNaming(database_path = usr_path)
+        # 	Check xsgen run command
+        try:
+            paths.xsgen_command = args[args.index('-x')+1]
+        except ValueError:
+            pass
 
-		# Initiate database
-		database = DBase(paths)		# Read all available inputs and outputs in the folder
-		database.UpdateMetrics()	# Update database data about the library inputs, outputs, and states
-		screen.UpdateInfo(database)	# Print new info on screen
+        # Initiate database
+        database = DBase(paths)		# Read all available inputs and outputs in the folder
+        database.UpdateMetrics()	# Update database data about the library inputs, outputs, and states
+        screen.UpdateInfo(database)	# Print new info on screen
 
-		database.Print()
-	else:
-		# Manual mode
-		usr_path = 'C:\\Users\\Cem\\Documents\\nudge\\db4\\'
+        database.Print()
+    else:
+        # Manual mode
+        usr_path = 'C:\\Users\\Cem\\Documents\\nudge\\db4\\'
 
-		# Standard startup stuff
-		paths = PathNaming(os.name, database_path = usr_path)
-		database = DBase(paths)
-		database.UpdateMetrics()
-		database.Print()
-
-
-		# Add some initial points
-		database.InitialExploration(True)
-
-		# Perform exploration
-		for i in range(7):
-			#database.Exploration(True)
-			pass
-
-		# Run the new inputs
-		for i in range(len(database.slibs)):
-			shell_arg = database.paths.pxsgen_command + ' ' + \
-						database.slibs[i].ip_path + ' ' +\
-						database.slibs[i].op_path
-			if not os.path.exists(database.slibs[i].op_path):
-				subprocess.run(shell_arg, shell=True)
-				database.slibs[i].ReadOutput(0, database.slibs[i].op_path, 1)
-
-		# Find neighbors
-		database.generate_neighbors()
-
-		# Plot data
-		x = []
-		y = []
-		z = []
-		for lib in database.slibs:
-			x.append(lib.normalized['fuel_density'])
-			y.append(lib.normalized['clad_density'])
-			z.append(lib.normalized['cool_density'])
+        # Standard startup stuff
+        paths = PathNaming(os.name, database_path = usr_path)
+        database = DBase(paths)
+        database.UpdateMetrics()
+        database.Print()
 
 
-		fig1 = plt.figure()
-		ax = fig1.add_subplot(111, projection='3d')
-		ax.set_xlim([-0.05,1.05])
-		ax.set_ylim([-0.05,1.05])
-		ax.set_zlim([-0.05,1.05])
-		ax.set_xlabel("Fuel Density")
-		ax.set_ylabel("Clad Density")
-		ax.set_zlabel("Cool Density")
-		#sizes = 1
-		ax.scatter(x, y, s = 100)
-		ax.grid(True)
-		#fig.tight_layout()
-		#plt.show()
+        # Add some initial points
+        database.InitialExploration(True)
 
-		'''
-		# Find correlation matrix
-		a = np.array([x1, x2, ..., xd, y1, y2, y3])
-		corr = np.corrcoef(a)
-		print(corr)
-		'''
+        # Perform exploration
+        for i in range(7):
+            #database.Exploration(True)
+            pass
+
+        # Run the new inputs
+        for i in range(len(database.slibs)):
+            shell_arg = database.paths.pxsgen_command + ' ' + \
+                        database.slibs[i].ip_path + ' ' +\
+                        database.slibs[i].op_path
+            if not os.path.exists(database.slibs[i].op_path):
+                subprocess.run(shell_arg, shell=True)
+                database.slibs[i].ReadOutput(0, database.slibs[i].op_path, 1)
+
+        # Find neighbors
+        database.generate_neighbors()
+
+        # Plot data
+        x = []
+        y = []
+        z = []
+        for lib in database.slibs:
+            x.append(lib.normalized['fuel_density'])
+            y.append(lib.normalized['clad_density'])
+            z.append(lib.normalized['cool_density'])
+
+
+        fig1 = plt.figure()
+        ax = fig1.add_subplot(111, projection='3d')
+        ax.set_xlim([-0.05,1.05])
+        ax.set_ylim([-0.05,1.05])
+        ax.set_zlim([-0.05,1.05])
+        ax.set_xlabel("Fuel Density")
+        ax.set_ylabel("Clad Density")
+        ax.set_zlabel("Cool Density")
+        #sizes = 1
+        ax.scatter(x, y, s = 100)
+        ax.grid(True)
+        #fig.tight_layout()
+        #plt.show()
+
+        '''
+        # Find correlation matrix
+        a = np.array([x1, x2, ..., xd, y1, y2, y3])
+        corr = np.corrcoef(a)
+        print(corr)
+        '''
 
 
 
-	print('\n-TheEnd-')
-	#input('')
-	screen.PrintAt(colors.reset,y=screen.lines-1)
+    print('\n-TheEnd-')
+    #input('')
+    screen.PrintAt(colors.reset,y=screen.lines-1)
 
 
-	return 0
+    return 0
 
 if __name__ == '__main__':
     import sys
