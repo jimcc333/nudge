@@ -157,8 +157,11 @@ def main(args):
         for lib in database.flibs:
             print('Lib', lib.number, 'neighbors:', lib.neighborhood.lib_numbers)
 
-        # Find gradients
+        # Find ranks
         database.generate_ranks()
+        sizes = database.voronoi()
+        sizes_l = [i*5000 for i in sizes]
+        print(sizes)
 
         # Plot data
         x = []
@@ -174,15 +177,20 @@ def main(args):
         fig, ax = plt.subplots()
         ax.set_xlim([-0.1,1.1])
         ax.set_ylim([-0.1,1.1])
-        sizes = 10
         labels = [i for i in range(len(x))]
-        ax.scatter(x, y, s=200, c='b')
         #ax.scatter(rx, ry, s=20, c='g')
         #ax.scatter(p_cand[0], p_cand[1], s=200, c='r')
         ax.grid(True)
-        #fig.tight_layout()
+        fig.tight_layout()
+        color_l = []
         for i, txt in enumerate(labels):
-            ax.annotate(str(txt)+', '+str(round(database.flibs[i].neighborhood.nonlinearity)), (x[i],y[i]), xytext = (x[i]-0.03,y[i]+0.03))
+            label_i = 'p'+str(txt)+', v:'+str(sizes[i])+'\n nonlin:'+str(round(database.flibs[i].neighborhood.nonlinearity,1))
+            if i != 2:
+                ax.annotate(label_i, (x[i],y[i]), xytext = (x[i]-0.07,y[i]+0.05))
+            else:
+                ax.annotate(label_i, (x[i], y[i]), xytext=(x[i] - 0.1, y[i] - 0.1))
+            color_l.append(database.flibs[i].neighborhood.nonlinearity)
+        ax.scatter(x, y, s=sizes_l, c=color_l)
         plt.show()
 
         '''

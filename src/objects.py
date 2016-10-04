@@ -779,8 +779,8 @@ class DBase:
         plt.show()
         '''
 
-
-    def EstVoronoi(self, s_mult = 500):
+    # Finds the estimate of voronoi cell sizes in database
+    def voronoi(self, s_mult = 500):
         """
         The algorithm should work in the following way:
 
@@ -797,11 +797,6 @@ class DBase:
             if dist(rp_cell,rp) > dist(rp_cell, ep_cands[rp_cell]) or ep_cands[rp_cell] == None:
                 if passes_other_crit(rp):				# Catch-all, but mainly projective property check
                     ep_cands[rp_cell] = rp
-
-
-
-
-
         """
         # For the set of input points in d dimensional space,
         # generates samples number of random points. For each random
@@ -809,9 +804,9 @@ class DBase:
         # Voronoi cell volume approximation.
         # Also for each
         # Uses the info to estimate voronoi cell volume of points in p_coords.
-        samples = len(self.slibs) * s_mult
-        p_coords = [i.Coordinates(self.varied_ips) for i in self.slibs]
-        p_vol = [0 for i in range(len(self.slibs))]
+        samples = len(self.flibs) * s_mult
+        p_coords = [i.coordinates(self.varied_ips) for i in self.flibs]
+        p_vol = [0] * len(self.flibs)
         dimensions = len(p_coords[0])
 
         # Create samples number of random coordinates
