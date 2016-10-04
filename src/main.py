@@ -79,7 +79,6 @@
 #
 #
 #
-#TODO: updatemetrics fails when a variable isnt varied by a divide by zero error
 
 from objects import *
 from interface import *
