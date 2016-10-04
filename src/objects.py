@@ -6,7 +6,6 @@ import random
 
 import numpy as np
 from matplotlib.mlab import PCA as mlabPCA
-from operator import attrgetter
 from scipy.spatial import distance
 
 import matplotlib.pyplot as plt
@@ -96,6 +95,8 @@ class Neighborhood:
         self.cohesion = 1					# C=1 implies all points are as far away as possible
         self.adhesion = 0					# A=1 implies all points are on the same spot
         self.neighbor_score = 0				# The neighborhood score
+        self.outputs = []                   # The outputs of the neighbors (assigned after neighborhood is built)
+        self.nonlinearity = 0               # The nonlinearity score of the neighborhood (needs outputs)
         self.calculate_score()
 
     def calculate_score(self):
@@ -128,6 +129,29 @@ class Neighborhood:
 
         # Neighborhood score: A/(sqrt(2)*C^2)
         self.neighbor_score = self.adhesion / ((self.cohesion**2)*math.sqrt(2))
+
+    # Calculates the gradient based on neighbor outputs
+    def calculate_nonlinearity(self):
+        # Check if outputs are there (lazily)
+        if len(self.outputs) == 0:
+            print('No outputs of neighborhood')
+            return
+
+        # Generate matrix A
+        A = []
+        for lib_dict in self.coordinates:
+            row = []
+            for key, value in lib_dict.items():
+                row.append(value-self.p_coords[key])
+            A.append(row)
+
+        # Solve the linear equation
+        matrix_A = np.array(A)
+        vector_b = np.array(self.outputs)
+        gradient = np.linalg.lstsq(matrix_A, vector_b.transpose())[0]
+
+        # Find nonlinearity score using gradient
+
 
 
 class Library:
@@ -163,6 +187,7 @@ class Library:
         # Read input
         self.ReadInput(ip_path)
 
+        # Read output if exists
         #TODO: pass combining fractions (frac) better
         if os.path.isdir(op_path):
             self.completed = True
@@ -172,16 +197,15 @@ class Library:
 
             u238_file = op_path + "/922380.txt"
             self.ReadOutput("U235", u238_file, 0.96)
-
-            #print("Completed reading scout output #" + str(number))
+        elif os.path.exists(op_path):
+            self.completed = True
+            self.read_output("pxsgen", op_path, 1)
         else:
             self.completed = False
-
             #TODO: read full run output
             #TODO: add library to queue
 
-
-    def ReadOutput(self, nuclide, file_path, frac):
+    def read_output(self, nuclide, file_path, frac):
         try:
             doc = open(file_path, "r")
         except IOError:
@@ -308,7 +332,6 @@ class DBase:
 
     range_enrichment = [1,0]
 
-
     def __init__(self, paths):
         # Read database, assuming software may have been interrupted and
         #	the folder may have some inputs and outputs
@@ -361,7 +384,7 @@ class DBase:
             for ip_number in range(tot_sfiles):
                     ip_path = paths.database_path + paths.SR_Input_folder + paths.slash + str(ip_number) +'.py'
                     #TODO: op_path will need to be updated to work with xsgen
-                    op_path = paths.database_path + paths.SR_Output_folder + paths.slash + str(ip_number) + '_p.py'
+                    op_path = paths.database_path + paths.SR_Output_folder + paths.slash + str(ip_number) + '.py'
                     #+ paths.xsgen_prefix + paths.sr_prefix + str(ip_number) + '/' + paths.xsgen_op_folder
 
                     if os.path.exists(ip_path):
@@ -378,8 +401,7 @@ class DBase:
             for ip_number in range(tot_ffiles):
                 ip_path = paths.database_path + paths.FR_Input_folder + paths.slash + str(ip_number) + '.py'
                 # TODO: op_path will need to be updated to work with xsgen
-                op_path = paths.database_path + paths.SR_Output_folder + paths.slash + str(
-                    ip_number) + '_p.py'
+                op_path = paths.database_path + paths.FR_Output_folder + paths.slash + str(ip_number) + '.py'
                 # + paths.xsgen_prefix + paths.sr_prefix + str(ip_number) + '/' + paths.xsgen_op_folder
 
                 if os.path.exists(ip_path):
@@ -459,7 +481,7 @@ class DBase:
         #	- Generate the input file
         #	- Add to flib or slib list in this object
 
-        # Dimension consistency check (note that this is techically not sufficient)
+        # Dimension consistency check (note that this is technically not sufficient)
         if len(norm_coords) != self.dimensions:
             error_message = 'Dimensions mismatch when adding a new library to database'
             raise RuntimeError(error_message)
@@ -476,18 +498,15 @@ class DBase:
                 return
 
         # Create paths
-        lib_number = len(self.slibs)
-        source_path = self.paths.database_path + self.paths.base_input
+        lib_number = len(self.flibs)
         if screening:
-            ip_path = self.paths.database_path + self.paths.SR_Input_folder +\
-                    self.paths.slash + str(lib_number) + '.py'
-            op_path = self.paths.database_path + self.paths.SR_Output_folder +\
-                    self.paths.slash + str(lib_number) + '.py'
+            lib_number = len(self.slibs)
+        if screening:
+            ip_path = self.paths.database_path + self.paths.SR_Input_folder + self.paths.slash + str(lib_number) + '.py'
+            op_path = self.paths.database_path + self.paths.SR_Output_folder + self.paths.slash + str(lib_number)+'.py'
         else:
-            ip_path = self.paths.database_path + self.paths.FR_Input_folder +\
-                    self.paths.slash + str(lib_number) + '.py'
-            op_path = self.paths.database_path + self.paths.FR_Output_folder +\
-                    self.paths.slash + str(lib_number) + '.py'
+            ip_path = self.paths.database_path + self.paths.FR_Input_folder + self.paths.slash + str(lib_number) + '.py'
+            op_path = self.paths.database_path + self.paths.FR_Output_folder + self.paths.slash + str(lib_number)+'.py'
 
         # Make input file from basecase file
         ipfile = self.basefile
@@ -656,7 +675,7 @@ class DBase:
         """
 
     # Creates the initial set of inputs before exploration begins
-    def InitialExploration(self, screening):
+    def initial_exploration(self, screening):
         # Make sure this is really initial
         points = len(self.slibs) if screening else len(self.flibs)
         if points > 0:
@@ -673,12 +692,12 @@ class DBase:
         self.UpdateMetrics()
 
     # Finds the coordinates of next point to sample
-    def Exploration(self, screening = False):
+    def exploration(self, screening=False):
         # Get the coordinates of the current database
         if screening:
-            coords = [i.Coordinates(self.varied_ips) for i in self.slibs]
+            coords = [i.coordinates(self.varied_ips) for i in self.slibs]
         else:
-            coords = [i.Coordinates(self.varied_ips) for i in self.flibs]
+            coords = [i.coordinates(self.varied_ips) for i in self.flibs]
         if len(coords) == 0:
             print('Exploration - no points in database error')
             return
@@ -861,6 +880,22 @@ class DBase:
                 current_neighborhood = new_neighborhood
         flib.neighborhood = current_neighborhood
         return
+
+    # Finds the gradient of all flibs
+    def generate_ranks(self):
+        # Go through all flibs
+        for lib in self.flibs:
+            # Update outputs
+            self.neighbor_outputs(lib)     # Updates the outputs of the library
+            lib.neighborhood.calculate_nonlinearity()
+
+    # Places the output data to the neighborhood of lib
+    def neighbor_outputs(self, lib):
+        outputs = []
+        for i in lib.neighborhood.lib_numbers:
+            #TODO: in the future this will access combined output
+            outputs.append(self.flibs[i].max_BU)
+        lib.neighborhood.outputs = outputs
 
 
     def Print(self):

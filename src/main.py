@@ -127,7 +127,7 @@ def main(args):
         database.Print()
     else:
         # Manual mode
-        usr_path = 'C:\\Users\\Cem\\Documents\\nudge\\db4\\'
+        usr_path = 'C:\\Users\\cb39852\\Documents\\nudge\\db4\\'
 
         # Standard startup stuff
         paths = PathNaming(os.name, database_path = usr_path)
@@ -135,13 +135,12 @@ def main(args):
         database.UpdateMetrics()
         database.Print()
 
-
         # Add some initial points
-        database.InitialExploration(True)
+        #database.initial_exploration(True)
 
         # Perform exploration
         for i in range(7):
-            #database.Exploration(True)
+            #database.exploration(True)
             pass
 
         # Run the new inputs
@@ -151,10 +150,15 @@ def main(args):
                         database.slibs[i].op_path
             if not os.path.exists(database.slibs[i].op_path):
                 subprocess.run(shell_arg, shell=True)
-                database.slibs[i].ReadOutput(0, database.slibs[i].op_path, 1)
+                database.slibs[i].read_output(0, database.slibs[i].op_path, 1)
 
         # Find neighbors
         database.generate_neighbors()
+        for lib in database.flibs:
+            print('Lib', lib.number, 'neighbors:', lib.neighborhood.lib_numbers)
+
+        # Find gradients
+        database.generate_ranks()
 
         # Plot data
         x = []
@@ -168,9 +172,9 @@ def main(args):
 
         fig1 = plt.figure()
         ax = fig1.add_subplot(111, projection='3d')
-        ax.set_xlim([-0.05,1.05])
-        ax.set_ylim([-0.05,1.05])
-        ax.set_zlim([-0.05,1.05])
+        ax.set_xlim([-0.05, 1.05])
+        ax.set_ylim([-0.05, 1.05])
+        ax.set_zlim([-0.05, 1.05])
         ax.set_xlabel("Fuel Density")
         ax.set_ylabel("Clad Density")
         ax.set_zlabel("Cool Density")
