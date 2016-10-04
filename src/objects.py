@@ -173,6 +173,11 @@ class Library:
         self.max_dest = 0
         self.max_BU = 0
 
+        self.voronoi_size = 0           # The Voronoi cell size of the library
+        self.furthest_point = []        # The furthest found point within the Voronoi cell
+        self.furthest_point_dist = 0    # The distance of the furthest point
+        self.rank = 0                   # The rank of the library, used during exploitation
+
         # --- Normalized Values ---
         self.normalized = {
             'fuel_cell_radius': None,
@@ -339,6 +344,7 @@ class DBase:
         # Read database, assuming software may have been interrupted and
         #	the folder may have some inputs and outputs
         self.paths = paths
+        self.voronoi_sizes = []         # Voronoi cell sizes of points in the database
 
         if not os.path.isdir(paths.database_path):
             error_message = 'The database path does not exist. Looking for: ' \
@@ -809,28 +815,40 @@ class DBase:
         p_vol = [0] * len(self.flibs)
         dimensions = len(p_coords[0])
 
+        # Reset furthest points within Voronoi cells for each lib
+        for lib in self.flibs:
+            # Setting the furthest point to the point itself effectively resets it: any point will be further
+            lib.furthest_point = lib.coordinates(self.varied_ips)
+
         # Create samples number of random coordinates
         #random.seed(1) #TODO: remove this line eventually
         s_coords = 	[[random.random() for i in range(dimensions)] for i in range(samples)]
 
-        for s in s_coords:
+        for s in s_coords:      # Random point, s
             min_dist = 9999
-            p_closest = p_coords[0]
-            for p in p_coords:
-            # Save the index and its distance if its closest
+            p_closest = 0       # The point in the database closest to the given random point
+            for p in p_coords:  # Point in database, p
+                # Save the index and its distance if its closest
                 x1 = [value for value in p.values()]
-                if min_dist > distance.euclidean(x1,s):
-                    min_dist = distance.euclidean(x1,s)
+                distance_s = distance.euclidean(x1, s)
+                if min_dist > distance_s:
+                    min_dist = distance_s
                     p_closest = p_coords.index(p)
             p_vol[p_closest] += 1.0
+            # Update furthest point
+            if min_dist > self.flibs[p_closest].furthest_point_dist:
+                self.flibs[p_closest].furthest_point_dist = min_dist
+                self.flibs[p_closest].furthest_point = s
+
 
         p_vol = [i/samples for i in p_vol]
-        for i in p_vol: print(round(i,6), end=' ')
-        return p_vol
+
+        self.voronoi_sizes = p_vol
+        for i, lib in enumerate(self.flibs):
+            lib.voronoi_size = p_vol[i]
 
     # Generates all neighborhoods after exploration
     def generate_neighbors(self):
-        print('generating neighbors')
         # Go through all full libraries and generate initial neighborhood
         for i, lib in enumerate(self.flibs):
             #TODO: will need to update the initial neighborhood guess
@@ -881,11 +899,23 @@ class DBase:
 
     # Finds the gradient of all flibs
     def generate_ranks(self):
+        # Estimate voronoi cell sizes
+        self.voronoi()      #TODO: in the future this will be optimized
+
         # Go through all flibs
         for lib in self.flibs:
             # Update outputs
-            self.neighbor_outputs(lib)     # Updates the outputs of the library
+            self.neighbor_outputs(lib)
+
+            # Find nonlinearity score
             lib.neighborhood.calculate_nonlinearity()
+
+        # Go through all libs again now that nonlinearity scores are found
+        total_nonlinearity = sum([lib.neighborhood.nonlinearity for lib in self.flibs])
+        for lib in self.flibs:
+            # Calculate rank
+            lib.rank = lib.voronoi_size + lib.neighborhood.nonlinearity / total_nonlinearity
+
 
     # Places the output data to the neighborhood of lib
     def neighbor_outputs(self, lib):

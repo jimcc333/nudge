@@ -154,14 +154,20 @@ def main(args):
 
         # Find neighbors
         database.generate_neighbors()
-        for lib in database.flibs:
-            print('Lib', lib.number, 'neighbors:', lib.neighborhood.lib_numbers)
-
+        print('generated neighbors')
         # Find ranks
         database.generate_ranks()
-        sizes = database.voronoi()
-        sizes_l = [i*5000 for i in sizes]
-        print(sizes)
+        print('found ranks')
+        # Find point with highest rank
+        highest_rank = 0
+        for lib in database.flibs:
+            if highest_rank < lib.rank:
+                highest_rank = lib.rank
+                next_lib = lib
+
+        print('next point near:', next_lib.number, ' ', next_lib.coordinates(database.varied_ips))
+        print(' next point to sample', next_lib.furthest_point)
+
 
         # Plot data
         x = []
@@ -171,8 +177,9 @@ def main(args):
             x.append(lib.normalized['fuel_density'])
             y.append(lib.normalized['clad_density'])
             z.append(lib.normalized['cool_density'])
-            print(i, lib.neighborhood.nonlinearity)
-
+            print(i, lib.rank)
+        x.append(next_lib.furthest_point[0])
+        y.append(next_lib.furthest_point[1])
 
         fig, ax = plt.subplots()
         ax.set_xlim([-0.1,1.1])
@@ -183,14 +190,16 @@ def main(args):
         ax.grid(True)
         fig.tight_layout()
         color_l = []
+
         for i, txt in enumerate(labels):
-            label_i = 'p'+str(txt)+', v:'+str(sizes[i])+'\n nonlin:'+str(round(database.flibs[i].neighborhood.nonlinearity,1))
-            if i != 2:
-                ax.annotate(label_i, (x[i],y[i]), xytext = (x[i]-0.07,y[i]+0.05))
+            #label_i = 'p'+str(txt)+', v:'+str(sizes[i])+'\n nonlin:'+str(round(database.flibs[i].neighborhood.nonlinearity,1))
+            label_i = 'p'+str(txt)
+            if i < len(database.flibs):
+                color_l.append(database.flibs[i].neighborhood.nonlinearity)
             else:
-                ax.annotate(label_i, (x[i], y[i]), xytext=(x[i] - 0.1, y[i] - 0.1))
-            color_l.append(database.flibs[i].neighborhood.nonlinearity)
-        ax.scatter(x, y, s=sizes_l, c=color_l)
+                label_i = 'NEXT'
+            ax.annotate(label_i, (x[i],y[i]), xytext = (x[i]-0.07,y[i]+0.05))
+        ax.scatter(x, y, s=200, c='b')
         plt.show()
 
         '''
