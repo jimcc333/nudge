@@ -95,6 +95,7 @@ class Neighborhood:
         self.cohesion = 1					# C=1 implies all points are as far away as possible
         self.adhesion = 0					# A=1 implies all points are on the same spot
         self.neighbor_score = 0				# The neighborhood score
+        self.p_output = None                # The output of the center point
         self.outputs = []                   # The outputs of the neighbors (assigned after neighborhood is built)
         self.nonlinearity = 0               # The nonlinearity score of the neighborhood (needs outputs)
         self.calculate_score()
@@ -138,11 +139,11 @@ class Neighborhood:
             return
 
         # Generate matrix A
-        A = []
+        A = []      # This is the matrix so that the center point is in the origin
         for lib_dict in self.coordinates:
             row = []
             for key, value in lib_dict.items():
-                row.append(value-self.p_coords[key])
+                row.append(value-self.p_coords[key])    # Coordinates of center subtracted to make it in origin
             A.append(row)
 
         # Solve the linear equation
@@ -151,7 +152,9 @@ class Neighborhood:
         gradient = np.linalg.lstsq(matrix_A, vector_b.transpose())[0]
 
         # Find nonlinearity score using gradient
-
+        self.nonlinearity = 0
+        for i, point in enumerate(A):
+            self.nonlinearity += abs(self.p_output - vector_b[i] + np.dot(gradient, point))
 
 
 class Library:
@@ -896,6 +899,7 @@ class DBase:
             #TODO: in the future this will access combined output
             outputs.append(self.flibs[i].max_BU)
         lib.neighborhood.outputs = outputs
+        lib.neighborhood.p_output = lib.max_BU
 
 
     def Print(self):

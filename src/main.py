@@ -164,25 +164,26 @@ def main(args):
         x = []
         y = []
         z = []
-        for lib in database.slibs:
+        for i, lib in enumerate(database.flibs):
             x.append(lib.normalized['fuel_density'])
             y.append(lib.normalized['clad_density'])
             z.append(lib.normalized['cool_density'])
+            print(i, lib.neighborhood.nonlinearity)
 
 
-        fig1 = plt.figure()
-        ax = fig1.add_subplot(111, projection='3d')
-        ax.set_xlim([-0.05, 1.05])
-        ax.set_ylim([-0.05, 1.05])
-        ax.set_zlim([-0.05, 1.05])
-        ax.set_xlabel("Fuel Density")
-        ax.set_ylabel("Clad Density")
-        ax.set_zlabel("Cool Density")
-        #sizes = 1
-        ax.scatter(x, y, s = 100)
+        fig, ax = plt.subplots()
+        ax.set_xlim([-0.1,1.1])
+        ax.set_ylim([-0.1,1.1])
+        sizes = 10
+        labels = [i for i in range(len(x))]
+        ax.scatter(x, y, s=200, c='b')
+        #ax.scatter(rx, ry, s=20, c='g')
+        #ax.scatter(p_cand[0], p_cand[1], s=200, c='r')
         ax.grid(True)
         #fig.tight_layout()
-        #plt.show()
+        for i, txt in enumerate(labels):
+            ax.annotate(str(txt)+', '+str(round(database.flibs[i].neighborhood.nonlinearity)), (x[i],y[i]), xytext = (x[i]-0.03,y[i]+0.03))
+        plt.show()
 
         '''
         # Find correlation matrix
