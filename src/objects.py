@@ -3,6 +3,7 @@ import copy
 import math
 import itertools
 import random
+import subprocess
 
 import numpy as np
 from matplotlib.mlab import PCA as mlabPCA
@@ -589,99 +590,46 @@ class DBase:
             for ip in self.varied_ips:
                 lib.normalized[ip] = lib.inputs.xsgen[ip]
 
-
-    """
-    #TODO: needs to be rewritten for compatibility
     # Uses inverse distance weighing to find library at target (t_) metrics
-    def EstLib(self, neighbor_libs, alpha=0.5, t_fuel_radius=-1, t_fuel_density=-1, t_clad_density=-1, \
-                t_cool_density=-1, t_enrichment=-1):
+    def interpolate_lib(self, neighbor_libs, norm_coords, alpha=5):
         # Notes:
         # 	- The passed variables need to be normalized [0,1]
-        print('Begining workflow to interpolate a library')
+        if len(neighbor_libs) == 1:
+            print('Warning! Only 1 library passed for interpolation')
+            return neighbor_libs[0]
 
         # Read parameters and store them in metrics lists
-        t_metrics = []
-        lib_metrics =[]
-        lib_metrics_names = []
+        t_coords = {}
+        for key, value in norm_coords.items():
+            if value != None:
+                t_coords[key] = value
 
-        if t_fuel_radius >= 0 and t_fuel_radius <= 1:
-            metrics = []
-            for lib in neighbor_libs:
-                metrics.append(lib.inputs.norm_fuel_radius)
-            lib_metrics.append(metrics)
-            lib_metrics_names.append('Norm Fuel Rad:')
-            t_metrics.append(t_fuel_radius)
-
-        if t_fuel_density >= 0 and t_fuel_density <= 1:
-            metrics = []
-            for lib in neighbor_libs:
-                metrics.append(lib.inputs.norm_fuel_density)
-            lib_metrics.append(metrics)
-            lib_metrics_names.append('Norm Fuel Dens:')
-            t_metrics.append(t_fuel_density)
-
-        if t_clad_density >= 0 and t_clad_density <= 1:
-            metrics = []
-            for lib in neighbor_libs:
-                metrics.append(lib.inputs.norm_clad_density)
-            lib_metrics.append(metrics)
-            lib_metrics_names.append('Norm Clad Dens:')
-            t_metrics.append(t_clad_density)
-
-        if t_cool_density >= 0 and t_cool_density <= 1:
-            metrics = []
-            for lib in neighbor_libs:
-                metrics.append(lib.inputs.norm_cool_density)
-            lib_metrics.append(metrics)
-            lib_metrics_names.append('Norm Cool Dens:')
-            t_metrics.append(t_cool_density)
-
-        if t_enrichment >= 0 and t_enrichment <= 1:
-            metrics = []
-            for lib in neighbor_libs:
-                metrics.append(lib.inputs.norm_enrichment)
-            lib_metrics.append(metrics)
-            lib_metrics_names.append('Norm Enrichment:')
-            t_metrics.append(t_enrichment)
-
-        if len(lib_metrics) < 0:
-            print('Error, no parameters for interpolation.')
-            return
-        if len(lib_metrics[0]) < 1:
-            print('Error, not enough libraries for interpolation')
-            return
-
-        print(' Parameters')
-        for i in range(len(lib_metrics_names)):
-            print('  ', lib_metrics_names[i], t_metrics[i])
-        print(' Libraries for interpolation: ', len(lib_metrics[0]))
-
-        # Calculate distances
+        # Calculate distances from each neighbor_lib
         lib_distances = []
 
-        for lib_i in range(len(lib_metrics[0])):
-            distance = 1
-            for met_i in range(len(lib_metrics)):
-                met_dist = 1-(lib_metrics[met_i][lib_i] - t_metrics[met_i])**2
-                #TODO: make this a global treshold variable or return the matching lib
-                if met_dist == 0:
-                    met_dist = 0.0001**2
-                distance *= met_dist
-            distance = distance**(alpha/2)
-            lib_distances.append(distance)
+        for lib in neighbor_libs:
+            distance_lib = 1
+            for key, value in t_coords.items():
+                dim_dist = 1 - (value - lib.normalized[key]) ** 2
+                if dim_dist == 0:  # TODO: fix this to make it global var
+                    dim_dist = 0.0001 ** 2
+                distance_lib *= dim_dist
+            distance_lib **= (alpha / 2)
+            lib_distances.append(distance_lib)
         tot_dist = sum(lib_distances)
 
-        # Interpolate library
-        interpolated_lib = Library("x","x",-1)
+        # Generate interpolated library object
+        interpolated_lib = copy.deepcopy(neighbor_libs[0])
+        interpolated_lib.Reset()
+        for key, value in t_coords.items():
+            interpolated_lib.normalized[key] = value
+
         for lib_i, lib in enumerate(neighbor_libs):
             interpolated_lib.max_prod += lib.max_prod * lib_distances[lib_i] / tot_dist
             interpolated_lib.max_dest += lib.max_dest * lib_distances[lib_i] / tot_dist
-            interpolated_lib.max_BU   += lib.max_BU * lib_distances[lib_i] / tot_dist
+            interpolated_lib.max_BU += lib.max_BU * lib_distances[lib_i] / tot_dist
 
-        interpolated_lib.Print()
-        print(' Library interpolation complete')
         return interpolated_lib
-        """
 
     # Creates the initial set of inputs before exploration begins
     def initial_exploration(self, screening):
@@ -937,8 +885,57 @@ class DBase:
             next_point[key] = self.flibs[max_rank_i].furthest_point[i]
         self.AddLib(next_point, False)
 
+    # Runs pxsgen on all waiting inputs and adds result to database
+    def run_pxsgen(self, exploitation):
+        if exploitation:
+            for i in range(len(self.slibs)):
+                shell_arg = self.paths.pxsgen_command + ' ' + self.slibs[i].ip_path + ' ' + self.slibs[i].op_path
+                if not os.path.exists(self.slibs[i].op_path):
+                    subprocess.run(shell_arg, shell=True)
+                    self.slibs[i].read_output(0, self.slibs[i].op_path, 1)
+        else:
+            for i in range(len(self.flibs)):
+                shell_arg = self.paths.pxsgen_command + ' ' + self.flibs[i].ip_path + ' ' + self.flibs[i].op_path
+                if not os.path.exists(self.flibs[i].op_path):
+                    subprocess.run(shell_arg, shell=True)
+                    self.flibs[i].read_output(0, self.flibs[i].op_path, 1)
 
-    def Print(self):
+    # Estimates the error of the database using leave-1-out method
+    # INCOMLETE
+    def estimate_error(self):
+        # TODO: screening check
+        tot_error = 0
+        for i in range(len(self.flibs)):
+            int_lib = self.interpolate_lib(self.slibs[:i] + self.slibs[i + 1:], self.slibs[i].normalized)
+            tot_error += 100 * abs(self.slibs[i].max_BU - int_lib.max_BU) / self.slibs[i].max_BU
+        tot_error /= len(self.slibs)
+
+    # Generates new points for the purpose of finding database error
+    def find_error(self):
+        # Generate random points for database
+        rand_count = 3000 * self.dimensions
+        values = copy.deepcopy(self.slibs[0].inputs.xsgen)
+        rand_points = [copy.copy(values) for i in range(rand_count)]
+
+        for i in range(rand_count):
+            for key in self.varied_ips:
+                rand_points[i][key] = random.random()
+
+        # Iterate through points to find error of each
+        tot_error = 0
+        for rand in rand_points:
+            rand_varied = {}
+            for key in self.varied_ips:
+                rand_varied[key] = rand[key]
+            int_lib = self.interpolate_lib(self.slibs, rand_varied)
+            lib_BU = int_lib.max_BU
+            real_BU = burnup_maker(rand)
+            tot_error += 100 * abs(real_BU - lib_BU) / real_BU
+        tot_error /= rand_count
+        print('Real error:', round(tot_error, 2), '%')
+
+    # Prints information about database
+    def print(self):
         print('Database screening ips:', len(self.slibs), ' full ips:', len(self.flibs))
         print('  Dimensions:', self.dimensions)
         print("Database screening run ranges: ")
@@ -951,7 +948,21 @@ class DBase:
         #print("  Max desds: ", self.max_dests)
         #print("  Max BUs  : ", self.max_BUs)
 
+# copied from pxsgen, delete later
+def burnup_maker(inputs):
+    random.seed(inputs['enrichment'] * inputs['flux'] * 1245)
 
+    x1 = (2 + inputs['enrichment']) ** 3
+    x2 = (2.5635 - inputs['cool_density']) ** 2.12
+    x3 = (3 - inputs['clad_density']) ** 2.1234
+    x4 = (0.5 + inputs['fuel_density']) ** 3.01
+    x5 = np.sin(inputs['fuel_cell_radius'] * 2) * 8 + 2
+    x6 = 8 - ((inputs['flux'] - 0.71) * 2) ** 4
+    x7 = 3 * inputs['void_cell_radius'] + 2 * inputs['clad_cell_radius'] + random.random()
+
+    random.seed()
+
+    return ((x1 + x2 + x3 + x4 + x5 + x6) ** 2.3) / 100 + x7
 
 
 

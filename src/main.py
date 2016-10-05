@@ -83,7 +83,6 @@
 from objects import *
 from interface import *
 import os
-import subprocess
 
 import numpy as np
 
@@ -109,10 +108,10 @@ def main(args):
         # Take user inputs
         # 	Initialize paths
         try:
-            paths = PathNaming(os.name, database_path = args[args.index('-d')+1])
+            paths = PathNaming(os.name, database_path=args[args.index('-d')+1])
         except ValueError:
             usr_path = input('No database path found, please enter full path to database: \n')
-            paths = PathNaming(database_path = usr_path)
+            paths = PathNaming(os.name, database_path=usr_path)
         # 	Check xsgen run command
         try:
             paths.xsgen_command = args[args.index('-x')+1]
@@ -124,16 +123,16 @@ def main(args):
         database.UpdateMetrics()	# Update database data about the library inputs, outputs, and states
         screen.UpdateInfo(database)	# Print new info on screen
 
-        database.Print()
+        database.print()
     else:
         # Manual mode
         usr_path = 'C:\\Users\\cb39852\\Documents\\nudge\\db4\\'
 
         # Standard startup stuff
-        paths = PathNaming(os.name, database_path = usr_path)
+        paths = PathNaming(os.name, database_path=usr_path)
         database = DBase(paths)
         database.UpdateMetrics()
-        database.Print()
+        database.print()
 
         # Add some initial points
         #database.initial_exploration(True)
@@ -143,16 +142,8 @@ def main(args):
             #database.exploration(True)
             pass
 
-        # Run the new inputs
-        for i in range(len(database.slibs)):
-            shell_arg = database.paths.pxsgen_command + ' ' + \
-                        database.slibs[i].ip_path + ' ' +\
-                        database.slibs[i].op_path
-            if not os.path.exists(database.slibs[i].op_path):
-                subprocess.run(shell_arg, shell=True)
-                database.slibs[i].read_output(0, database.slibs[i].op_path, 1)
-
-        database.exploitation()
+        #database.exploitation()
+        database.run_pxsgen(True)
 
         '''
         # Plot data
