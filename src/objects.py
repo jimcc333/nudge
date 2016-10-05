@@ -862,7 +862,6 @@ class DBase:
             # Go through all combinations and pick best neighborhood for each point
             self.update_neighbors(lib)
 
-
     # Updates the neighborhoods of flib in database
     def update_neighbors(self, flib):
         if len(self.flibs) < self.dimensions * 2 + 2:
@@ -916,7 +915,6 @@ class DBase:
             # Calculate rank
             lib.rank = lib.voronoi_size + lib.neighborhood.nonlinearity / total_nonlinearity
 
-
     # Places the output data to the neighborhood of lib
     def neighbor_outputs(self, lib):
         outputs = []
@@ -925,6 +923,19 @@ class DBase:
             outputs.append(self.flibs[i].max_BU)
         lib.neighborhood.outputs = outputs
         lib.neighborhood.p_output = lib.max_BU
+
+    # Exploitation loop, generates next point based on outputs
+    def exploitation(self):
+        # Find neighbors
+        self.generate_neighbors()
+        # Find ranks
+        self.generate_ranks()
+        # Find the point with highest rank and add it
+        max_rank_i = [lib.rank for lib in self.flibs].index(max(lib.rank for lib in self.flibs))
+        next_point = {}
+        for i, key in enumerate(self.varied_ips):
+            next_point[key] = self.flibs[max_rank_i].furthest_point[i]
+        self.AddLib(next_point, False)
 
 
     def Print(self):

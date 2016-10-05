@@ -152,23 +152,9 @@ def main(args):
                 subprocess.run(shell_arg, shell=True)
                 database.slibs[i].read_output(0, database.slibs[i].op_path, 1)
 
-        # Find neighbors
-        database.generate_neighbors()
-        print('generated neighbors')
-        # Find ranks
-        database.generate_ranks()
-        print('found ranks')
-        # Find point with highest rank
-        highest_rank = 0
-        for lib in database.flibs:
-            if highest_rank < lib.rank:
-                highest_rank = lib.rank
-                next_lib = lib
+        database.exploitation()
 
-        print('next point near:', next_lib.number, ' ', next_lib.coordinates(database.varied_ips))
-        print(' next point to sample', next_lib.furthest_point)
-
-
+        '''
         # Plot data
         x = []
         y = []
@@ -201,6 +187,7 @@ def main(args):
             ax.annotate(label_i, (x[i],y[i]), xytext = (x[i]-0.07,y[i]+0.05))
         ax.scatter(x, y, s=200, c='b')
         plt.show()
+        '''
 
         '''
         # Find correlation matrix
