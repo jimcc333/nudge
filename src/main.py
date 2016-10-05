@@ -145,6 +145,9 @@ def main(args):
         #database.exploitation()
         database.run_pxsgen(True)
 
+        database.estimate_error()
+        database.find_error()
+
         '''
         # Plot data
         x = []

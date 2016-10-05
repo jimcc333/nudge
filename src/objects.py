@@ -293,6 +293,17 @@ class Library:
                 coordinates[key] = value
         return coordinates
 
+    # Resets variables that are not used for calculations and outputs
+    def reset(self):
+        self.max_BU = 0
+        self.max_prod = 0
+        self.max_dest = 0
+        self.ip_path = 'x'
+        self.op_path = 'x'
+        self.number = 'x'
+        self.inputs = xsgenParams()
+        for i in self.normalized:
+            i = None
 
 class DBase:
     """
@@ -620,7 +631,7 @@ class DBase:
 
         # Generate interpolated library object
         interpolated_lib = copy.deepcopy(neighbor_libs[0])
-        interpolated_lib.Reset()
+        interpolated_lib.reset()
         for key, value in t_coords.items():
             interpolated_lib.normalized[key] = value
 
@@ -906,15 +917,16 @@ class DBase:
         # TODO: screening check
         tot_error = 0
         for i in range(len(self.flibs)):
-            int_lib = self.interpolate_lib(self.slibs[:i] + self.slibs[i + 1:], self.slibs[i].normalized)
-            tot_error += 100 * abs(self.slibs[i].max_BU - int_lib.max_BU) / self.slibs[i].max_BU
-        tot_error /= len(self.slibs)
+            int_lib = self.interpolate_lib(self.flibs[:i] + self.flibs[i + 1:], self.flibs[i].normalized)
+            tot_error += 100 * abs(self.flibs[i].max_BU - int_lib.max_BU) / self.flibs[i].max_BU
+        tot_error /= len(self.flibs)
+        print('Estimated error is:', round(tot_error,2), '%')
 
     # Generates new points for the purpose of finding database error
     def find_error(self):
         # Generate random points for database
         rand_count = 3000 * self.dimensions
-        values = copy.deepcopy(self.slibs[0].inputs.xsgen)
+        values = copy.deepcopy(self.flibs[0].inputs.xsgen)
         rand_points = [copy.copy(values) for i in range(rand_count)]
 
         for i in range(rand_count):
@@ -927,7 +939,7 @@ class DBase:
             rand_varied = {}
             for key in self.varied_ips:
                 rand_varied[key] = rand[key]
-            int_lib = self.interpolate_lib(self.slibs, rand_varied)
+            int_lib = self.interpolate_lib(self.flibs, rand_varied)
             lib_BU = int_lib.max_BU
             real_BU = burnup_maker(rand)
             tot_error += 100 * abs(real_BU - lib_BU) / real_BU
