@@ -239,7 +239,7 @@ class Library:
         try:
             doc = open(ip_path, "r")
         except IOError:
-            print("Could not open ", file_path)
+            print("Could not open ", ip_path)
             return
 
         max_lines = 500
@@ -354,20 +354,27 @@ class DBase:
 
     def __init__(self, paths):
         # Read database, assuming software may have been interrupted and
-        #	the folder may have some inputs and outputs
+        # the folder may have some inputs and outputs
         self.paths = paths
         self.voronoi_sizes = []         # Voronoi cell sizes of points in the database
+        self.est_error_max = []
+        self.est_error_min = []
+        self.est_error_mean = []
+        self.database_error = []
 
+        # Check that database path exists
         if not os.path.isdir(paths.database_path):
             error_message = 'The database path does not exist. Looking for: ' \
                              + paths.database_path
             raise RuntimeError(error_message)
 
+        # Check that database input file exists
         if not os.path.exists(paths.database_path + paths.dbase_input):
             error_message = 'The database input file does not exist. Looking for: ' \
                             + paths.database_path + paths.dbase_input
             raise RuntimeError(error_message)
 
+        # Check that basecase input exists
         if not os.path.exists(paths.database_path + paths.base_input):
             error_message = 'The database base-case input file does not exist. Looking for: ' \
                             + paths.database_path + paths.base_input
@@ -375,7 +382,7 @@ class DBase:
 
         self.name = paths.database_name
 
-        # Read database inputs
+        # Read database input file
         self.ReadInput(paths.database_path + paths.dbase_input)
 
         # Read basecase input
@@ -409,12 +416,12 @@ class DBase:
                     #+ paths.xsgen_prefix + paths.sr_prefix + str(ip_number) + '/' + paths.xsgen_op_folder
 
                     if os.path.exists(ip_path):
-                        inputlib = Library(database_path=paths.database_path, op_path=op_path, ip_path=ip_path, number=ip_number, scout=True)
-                        #TODO: fix this!!!
-                        self.slibs.append(inputlib)
+                        inputlib = Library(database_path=paths.database_path, op_path=op_path, ip_path=ip_path,
+                                           number=ip_number, scout=True)
+                        self.slibs.append(copy.deepcopy(inputlib))
                         tot_sr_libs += 1
                     else:
-                        # Could continue here instead of breaking, but at this point this is better
+                        # Stops reading inputs if they're not sequential. This will overwrite inputs
                         break
 
         # If there are files FR_Inputs, read them
@@ -602,7 +609,7 @@ class DBase:
                 lib.normalized[ip] = lib.inputs.xsgen[ip]
 
     # Uses inverse distance weighing to find library at target (t_) metrics
-    def interpolate_lib(self, neighbor_libs, norm_coords, alpha=5):
+    def interpolate_lib(self, neighbor_libs, norm_coords, alpha=500):
         # Notes:
         # 	- The passed variables need to be normalized [0,1]
         if len(neighbor_libs) == 1:
@@ -720,7 +727,7 @@ class DBase:
         for counter, key in enumerate(coords[0].keys()):
             cand_coords[key] = p_cand[counter]
 
-        self.AddLib(cand_coords, True)
+        self.AddLib(cand_coords, screening)
 
         '''
         x = [i[0] for i in exp_coords]
@@ -818,15 +825,37 @@ class DBase:
             neighbor_libs = [self.flibs[i] for i in initial_neighbors]
             neighbor_coordinates = [lib.coordinates(self.varied_ips) for lib in neighbor_libs]
             lib.neighborhood = Neighborhood(lib.coordinates(self.varied_ips), initial_neighbors, neighbor_coordinates)
+
+            print('z:', lib.neighborhood)
             # Go through all combinations and pick best neighborhood for each point
+            print(' Building neighbors of point', i, 'of', len(self.flibs)-1)
             self.update_neighbors(lib)
+
+        print('y:', self.flibs[0].neighborhood)
 
     # Updates the neighborhoods of flib in database
     def update_neighbors(self, flib):
+        print('update neighbors')
+
+        print('a:', flib.neighborhood)
         if len(self.flibs) < self.dimensions * 2 + 2:
             # Not enough libs to construct neighborhoods
+            print('not enough flibs in database for update_neighbors')
             return
 
+        try:
+            flib.neighborhood
+        except AttributeError:
+            initial_neighbors = list(range(self.dimensions * 2))
+            # Avoid passing the lib in its own neighborhood
+            if flib.number in initial_neighbors:
+                initial_neighbors[flib.number] = self.dimensions * 2
+            neighbor_libs = [self.flibs[i] for i in initial_neighbors]
+            neighbor_coordinates = [lib.coordinates(self.varied_ips) for lib in neighbor_libs]
+            print('aa:', flib.neighborhood)
+            flib.neighborhood = Neighborhood(flib.coordinates(self.varied_ips), initial_neighbors, neighbor_coordinates)
+
+        print('b:', self.flibs[0].neighborhood)
         # Save current neighborhood information
         current_score = flib.neighborhood.neighbor_score
         current_coords = flib.neighborhood.p_coords
@@ -852,17 +881,19 @@ class DBase:
                 # print(current_score, subset, round(100*current_iter/total_iters),'%')
                 current_coords = new_neighborhood.p_coords
                 current_neighborhood = new_neighborhood
+        print('cur neigh',current_neighborhood)
         flib.neighborhood = current_neighborhood
-        return
 
     # Finds the gradient of all flibs
     def generate_ranks(self):
+        print('x:', self.flibs[0].neighborhood)
         # Estimate voronoi cell sizes
         self.voronoi()      #TODO: in the future this will be optimized
-
+        print('end voronoi')
         # Go through all flibs
         for lib in self.flibs:
             # Update outputs
+            print(lib.neighborhood)
             self.neighbor_outputs(lib)
 
             # Find nonlinearity score
@@ -877,6 +908,9 @@ class DBase:
     # Places the output data to the neighborhood of lib
     def neighbor_outputs(self, lib):
         outputs = []
+        print('lib')
+        print(lib.neighborhood)
+        print('lib numbers:', lib.neighborhood.lib_numbers)
         for i in lib.neighborhood.lib_numbers:
             #TODO: in the future this will access combined output
             outputs.append(self.flibs[i].max_BU)
@@ -885,15 +919,36 @@ class DBase:
 
     # Exploitation loop, generates next point based on outputs
     def exploitation(self):
-        # Find neighbors
-        self.generate_neighbors()
+        # Check if neighbors are found
+        try:
+            self.flibs[0].neighborhood
+        except AttributeError:
+            print('Building initial neighborhoods (this may take a while)')
+            self.generate_neighbors()
+
+            print('y:', self.flibs[0].neighborhood)
+
+        print('y:', self.flibs[0].neighborhood)
+        # Update neighbors, start by newest point
+        try:
+            self.flibs[-1].neighborhood
+        except AttributeError:
+            print(' Building neighborhood of new point')
+            self.update_neighbors(self.flibs[-1])
+            # Update the neighbors of new points neighbors
+            for i in self.flibs[-1].neighborhood.lib_numbers:
+                print(' Updating neighbors of new points neighbors')
+                self.update_neighbors(self.flibs[i])
+
         # Find ranks
+        print(' generating ranks')
         self.generate_ranks()
         # Find the point with highest rank and add it
         max_rank_i = [lib.rank for lib in self.flibs].index(max(lib.rank for lib in self.flibs))
         next_point = {}
         for i, key in enumerate(self.varied_ips):
             next_point[key] = self.flibs[max_rank_i].furthest_point[i]
+        print('adding next point')
         self.AddLib(next_point, False)
 
     # Runs pxsgen on all waiting inputs and adds result to database
@@ -912,15 +967,21 @@ class DBase:
                     self.flibs[i].read_output(0, self.flibs[i].op_path, 1)
 
     # Estimates the error of the database using leave-1-out method
-    # INCOMLETE
     def estimate_error(self):
         # TODO: screening check
-        tot_error = 0
+        lib_errors = []
         for i in range(len(self.flibs)):
             int_lib = self.interpolate_lib(self.flibs[:i] + self.flibs[i + 1:], self.flibs[i].normalized)
-            tot_error += 100 * abs(self.flibs[i].max_BU - int_lib.max_BU) / self.flibs[i].max_BU
-        tot_error /= len(self.flibs)
-        print('Estimated error is:', round(tot_error,2), '%')
+            try:
+                lib_errors.append(100 * abs(self.flibs[i].max_BU - int_lib.max_BU) / self.flibs[i].max_BU)
+            except ZeroDivisionError:
+                return
+        print('Estimated average error:', round(sum(lib_errors)/max(len(lib_errors), 1), 2), '%')
+        print('Estimated maximum error:', round(max(lib_errors), 2), '%')
+        print('Estimated minimum error:', round(min(lib_errors), 2), '%')
+        self.est_error_mean.append(round(sum(lib_errors)/max(len(lib_errors), 1), 2))
+        self.est_error_max.append(round(max(lib_errors), 2))
+        self.est_error_min.append(round(min(lib_errors), 2))
 
     # Generates new points for the purpose of finding database error
     def find_error(self):
@@ -945,6 +1006,7 @@ class DBase:
             tot_error += 100 * abs(real_BU - lib_BU) / real_BU
         tot_error /= rand_count
         print('Real error:', round(tot_error, 2), '%')
+        self.database_error.append(round(tot_error, 2))
 
     # Prints information about database
     def print(self):
@@ -959,6 +1021,7 @@ class DBase:
         #print("  Max prods: ", self.max_prods)
         #print("  Max desds: ", self.max_dests)
         #print("  Max BUs  : ", self.max_BUs)
+
 
 # copied from pxsgen, delete later
 def burnup_maker(inputs):

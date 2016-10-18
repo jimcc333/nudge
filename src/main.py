@@ -126,7 +126,7 @@ def main(args):
         database.print()
     else:
         # Manual mode
-        usr_path = 'C:\\Users\\cb39852\\Documents\\nudge\\db4\\'
+        usr_path = 'C:\\Users\\cb39852\\Documents\\nudge\\db1\\'
 
         # Standard startup stuff
         paths = PathNaming(os.name, database_path=usr_path)
@@ -135,18 +135,35 @@ def main(args):
         database.print()
 
         # Add some initial points
-        #database.initial_exploration(True)
+        database.initial_exploration(False)
 
         # Perform exploration
-        for i in range(7):
-            #database.exploration(True)
-            pass
+        for i in range(0):
+            print('generating point', len(database.flibs))
+            database.exploration(False)
+            database.run_pxsgen(False)
+            database.estimate_error()
+            database.find_error()
+
+        # Perform exploitation
+        for i in range(25):
+            print('generating point (exploitation)', len(database.flibs))
+            database.exploitation()
+            database.run_pxsgen(False)
+            database.estimate_error()
+            database.find_error()
+
+        # Write errors
+        ip_path = usr_path + 'errors.txt'
+        with open(ip_path, 'w') as openfile:  # bad naming here
+            openfile.write('max errors\n' + str(database.est_error_max))
+            openfile.write('\nmin errors\n' + str(database.est_error_min))
+            openfile.write('\nmean errors\n' + str(database.est_error_mean))
+            openfile.write('\nreal errors\n' + str(database.database_error))
 
         #database.exploitation()
-        database.run_pxsgen(True)
 
-        database.estimate_error()
-        database.find_error()
+
 
         '''
         # Plot data
