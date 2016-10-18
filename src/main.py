@@ -112,7 +112,7 @@ def main(args):
         database.run_pxsgen(False)
 
         # Perform exploration
-        for i in range(0):
+        for i in range(15):
             print('Generating point', len(database.flibs))
             database.exploration(False)
             database.run_pxsgen(False)
@@ -120,21 +120,21 @@ def main(args):
             database.find_error()
 
         # Perform exploitation
-        for i in range(10):
+        for i in range(15):
             print('Generating point (exploitation)', len(database.flibs))
             database.exploitation()
             database.run_pxsgen(False)
             database.estimate_error()
             database.find_error()
-        """"
+
         # Write errors
         ip_path = usr_path + 'errors.txt'
         with open(ip_path, 'w') as openfile:  # bad naming here
-            openfile.write('max errors\n' + str(database.est_error_max))
-            openfile.write('\nmin errors\n' + str(database.est_error_min))
-            openfile.write('\nmean errors\n' + str(database.est_error_mean))
-            openfile.write('\nreal errors\n' + str(database.database_error))
-        """
+            openfile.write('max errors\n' + str(database.est_error_max).replace(',', ''))
+            openfile.write('\nmin errors\n' + str(database.est_error_min).replace(',', ''))
+            openfile.write('\nmean errors\n' + str(database.est_error_mean).replace(',', ''))
+            openfile.write('\nreal errors\n' + str(database.database_error).replace(',', ''))
+
 
         '''
         # Plot data

@@ -167,7 +167,6 @@ class DBase:
         # Convert normalized to correct unit value
         new_inputs = copy.copy(self.basecase.inputs.xsgen)
         for i, key in enumerate(sorted(self.varied_ips)):
-            print(i, key, norm_coords)
             new_inputs[key] = norm_coords[i] #* self.basecase.inputs.xsgen[key]
 
         # Check if input exists
@@ -232,9 +231,6 @@ class DBase:
                 lib_errors.append(100 * abs(self.flibs[i].max_BU - int_lib.max_BU) / self.flibs[i].max_BU)
             except ZeroDivisionError:
                 return
-        print('Estimated average error:', round(sum(lib_errors)/max(len(lib_errors), 1), 2), '%')
-        print('Estimated maximum error:', round(max(lib_errors), 2), '%')
-        print('Estimated minimum error:', round(min(lib_errors), 2), '%')
         self.est_error_mean.append(round(sum(lib_errors)/max(len(lib_errors), 1), 2))
         self.est_error_max.append(round(max(lib_errors), 2))
         self.est_error_min.append(round(min(lib_errors), 2))
@@ -267,11 +263,9 @@ class DBase:
                 self.update_neighbors(self.flibs[i])
 
         # Find ranks
-        print(' generating ranks')
         self.generate_ranks()
         # Find the point with highest rank and add it
         max_rank_i = [lib.rank for lib in self.flibs].index(max(lib.rank for lib in self.flibs))
-        print('adding next point')
         self.add_lib(self.flibs[max_rank_i].furthest_point, False)
 
     # Finds the coordinates of next point to sample
@@ -351,7 +345,6 @@ class DBase:
             real_BU = burnup_maker(rand)
             tot_error += 100 * abs(real_BU - lib_BU) / real_BU
         tot_error /= rand_count
-        print('Real error:', round(tot_error, 2), '%')
         self.database_error.append(round(tot_error, 2))
 
     # Generates all neighborhoods after exploration
@@ -381,14 +374,12 @@ class DBase:
 
     # Finds the gradient of all flibs
     def generate_ranks(self):
-        print('x:', self.flibs[0].neighborhood)
         # Estimate voronoi cell sizes
         self.voronoi()      #TODO: in the future this will be optimized
-        print('end voronoi')
+
         # Go through all flibs
         for lib in self.flibs:
             # Update outputs
-            print(lib.neighborhood, 'number:', lib.number)
             self.neighbor_outputs(lib)
 
             # Find nonlinearity score
@@ -567,7 +558,6 @@ class DBase:
 
     # Updates the neighborhoods of flib in database
     def update_neighbors(self, flib):
-        print('begin update neighbors')
         if len(self.flibs) < self.dimensions * 2 + 2:
             # Not enough libs to construct neighborhoods
             print('Not enough flibs in database for update_neighbors')
@@ -587,7 +577,6 @@ class DBase:
 
         # Save current neighborhood information
         current_score = 0
-        print('       current score:', current_score)
         current_coords = flib.neighborhood.p_coords
         current_neighborhood = flib.neighborhood.lib_numbers
 
@@ -613,7 +602,6 @@ class DBase:
                 current_neighborhood = copy.deepcopy(new_neighborhood)
 
         flib.neighborhood = copy.deepcopy(current_neighborhood)
-        print('  returned neighborhood:', flib.neighborhood)
 
     # Finds the estimate of voronoi cell sizes in database
     def voronoi(self, s_mult = 500):

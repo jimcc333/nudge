@@ -51,9 +51,6 @@ def main(args):
     with open(args[2], 'w') as openfile:
         openfile.write(outputs)
 
-    print('Generated output')
-
-    print('\n-TheEnd-')
     return 0
 
 
