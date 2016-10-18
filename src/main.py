@@ -37,9 +37,9 @@
 #       - Library progress: screening:[0:1), full=1
 #       - Screening library: A library that's run in a short time and that has curtailed outputs
 #       - Metric: Names of inputs that libraries get interpolated on
-#       - Coordinates: the normalized ([0,1]) input array with only the varied inputs
+#       - Coordinates: the normalized ([0,1]) input array with only the varied inputs, order based on sorting
 #       - Neighborhood: Determined by inputs, the "closest" libs to a given lib (for gradient estimation)
-#       - Voronoi cell:
+#       - Voronoi cell: The hyper-dimensional "volume" made by points closest to target point
 #
 #
 #   Workflow:
@@ -109,6 +109,7 @@ def main(args):
 
         # Add some initial points
         database.initial_exploration(False)
+        database.run_pxsgen(False)
 
         # Perform exploration
         for i in range(0):
@@ -119,13 +120,13 @@ def main(args):
             database.find_error()
 
         # Perform exploitation
-        for i in range(5):
+        for i in range(10):
             print('Generating point (exploitation)', len(database.flibs))
             database.exploitation()
             database.run_pxsgen(False)
             database.estimate_error()
             database.find_error()
-
+        """"
         # Write errors
         ip_path = usr_path + 'errors.txt'
         with open(ip_path, 'w') as openfile:  # bad naming here
@@ -133,7 +134,7 @@ def main(args):
             openfile.write('\nmin errors\n' + str(database.est_error_min))
             openfile.write('\nmean errors\n' + str(database.est_error_mean))
             openfile.write('\nreal errors\n' + str(database.database_error))
-
+        """
 
         '''
         # Plot data

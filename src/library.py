@@ -63,7 +63,7 @@ class Library:
     # Returns the normalized [0,1] array of varied inputs (order REALLY matters here)
     def coordinates(self, varied_ips):
         coordinates = []
-        for key, value in self.normalized.items():
+        for key, value in sorted(self.normalized.items()):
             if key in varied_ips:
                 coordinates.append(value)
         return coordinates

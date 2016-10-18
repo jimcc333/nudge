@@ -165,9 +165,10 @@ class DBase:
             raise RuntimeError(error_message)
 
         # Convert normalized to correct unit value
-        new_inputs = self.basecase.inputs.xsgen
-        for key, value in norm_coords.items():
-            new_inputs[key] = value #* self.basecase.inputs.xsgen[key]
+        new_inputs = copy.copy(self.basecase.inputs.xsgen)
+        for i, key in enumerate(sorted(self.varied_ips)):
+            print(i, key, norm_coords)
+            new_inputs[key] = norm_coords[i] #* self.basecase.inputs.xsgen[key]
 
         # Check if input exists
         for lib in (self.slibs if screening else self.flibs):
@@ -270,12 +271,8 @@ class DBase:
         self.generate_ranks()
         # Find the point with highest rank and add it
         max_rank_i = [lib.rank for lib in self.flibs].index(max(lib.rank for lib in self.flibs))
-        next_point = {}
-        for i, key in enumerate(self.varied_ips):
-            print(i, key, (self.flibs[max_rank_i].furthest_point))
-            next_point[key] = self.flibs[max_rank_i].furthest_point[i]
         print('adding next point')
-        self.add_lib(next_point, False)
+        self.add_lib(self.flibs[max_rank_i].furthest_point, False)
 
     # Finds the coordinates of next point to sample
     def exploration(self, screening=False):
@@ -302,10 +299,9 @@ class DBase:
             min_tot = 10
             for p in coords:
                 tot_dist = 0
-                p_list = list(p.values())		# Python3 guarantees the order will be consistent if dict not altered
 
                 for d in range(self.dimensions):
-                    dist = (rand[d] - p_list[d])**2	# Cartesian distance will be calculated with this
+                    dist = (rand[d] - p[d])**2	# Cartesian distance will be calculated with this
                     if dist < self.proj_threshold:	# Projection check
                         projection_fail = True
                         #print('  failed point, dist:', dist)
@@ -330,15 +326,8 @@ class DBase:
                 print('Increasing projection threshold to', self.proj_threshold, 'fail rate was at',
                       round(fail_count/(counter+1), 3))
 
-        #print('Selected:', p_cand, ' rejected:', 100*round(fail_count/len(rand_points),3),'%')
-
         # Create a new library with the selected next point and add it to flibs/slibs
-        # Convert p_cand to dict
-        cand_coords = {}
-        for counter, key in enumerate(coords[0].keys()):
-            cand_coords[key] = p_cand[counter]
-
-        self.add_lib(cand_coords, screening)    # Also updates metrics
+        self.add_lib(p_cand, screening)    # Also updates metrics
 
     # Generates new points for the purpose of finding database error
     def find_error(self):
@@ -420,10 +409,8 @@ class DBase:
             return
 
         # Assign all dimensions 0, 0.5, and 1 to create 3 initial input libs
-        coords = {}
         for val in [0, 0.5, 1]:
-            for ip in self.varied_ips:
-                coords[ip] = val
+            coords = [val for i in range(self.dimensions)]
             self.add_lib(coords, screening)
 
         # Update metrics
@@ -574,7 +561,7 @@ class DBase:
 
         # Update normalized values
         for lib in libs:
-            for ip in self.varied_ips:
+            for ip in self.basecase.inputs.xsgen.keys():
                 #TODO: assigning normalized values will need to be fixed for xsgen
                 lib.normalized[ip] = lib.inputs.xsgen[ip]
 
@@ -671,8 +658,7 @@ class DBase:
             p_closest = 0       # The point in the database closest to the given random point
             for p in p_coords:  # Point in database, p
                 # Save the index and its distance if its closest
-                x1 = [value for value in p.values()]
-                distance_s = distance.euclidean(x1, s)
+                distance_s = distance.euclidean(p, s)
                 if min_dist > distance_s:
                     min_dist = distance_s
                     p_closest = p_coords.index(p)

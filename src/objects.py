@@ -102,10 +102,8 @@ class Neighborhood:
 
         # Cohesion: avrg(distance(coord, center))
         distances = []
-        p = [value for value in self.p_coords.values()]
         for coord in self.coordinates:
-            x = [value for value in coord.values()]
-            distances.append(distance.euclidean(p,x))
+            distances.append(distance.euclidean(self.p_coords, coord))
         self.cohesion = np.mean(distances)
 
         # Adhesion: avrg(min(distance(coord1,coord2)))
@@ -115,9 +113,7 @@ class Neighborhood:
         for lib1 in range(tot_libs):
             for lib2 in range(tot_libs):
                 if lib1 != lib2:
-                    x1 = [value for value in self.coordinates[lib1].values()]
-                    x2 = [value for value in self.coordinates[lib2].values()]
-                    lib_distances.append(distance.euclidean(x1,x2))
+                    lib_distances.append(distance.euclidean(self.coordinates[lib1], self.coordinates[lib2]))
             distances.append(min(lib_distances))
             lib_distances.clear()
         self.adhesion = np.mean(distances)
@@ -134,10 +130,10 @@ class Neighborhood:
 
         # Generate matrix A
         A = []      # This is the matrix so that the center point is in the origin
-        for lib_dict in self.coordinates:
+        for neighbor_coords in self.coordinates:
             row = []
-            for key, value in lib_dict.items():
-                row.append(value-self.p_coords[key])    # Coordinates of center subtracted to make it in origin
+            for i, value in enumerate(neighbor_coords):
+                row.append(value - self.p_coords[i])    # Coordinates of center subtracted to make it in origin
             A.append(row)
 
         # Solve the linear equation
