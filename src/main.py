@@ -15,115 +15,88 @@
 #  GNU General Public License for more details.
 #
 #  Naming and standards:
-#	The database folder should contain:
-#		- /SR_Inputs 				folder containing all scouting inputs
-#			- [number].py			input file for scout library [number]
-#		- /FR_Inputs 				folder containing all full run inputs
-#			- [number].py			input file for full library [number]
-#		- /SR_Outputs				folder for all scouting output libraries
-#			- /build-[number] 		this number must match the one in SR_Inputs
-#				- /brightlite0		created by xsgen
-#					- [nucid].txt	output for [nucid] nuclide of input [number]
-#		- /FR_Outputs				folder for all full library outputs
-#			- /build-[number] 		this number must match the one in FR_Inputs
-#				- /brightlite0		created by xsgen
-#					- [nucid].txt	output for [nucid] nuclide of input [number]
-#		- basecase.py				xsgen input file containing base-case values
-#		- inputs.txt				file containing database inputs
+#   The database folder should contain:
+#       - /SR_Inputs 				folder containing all screening inputs
+#           - [number].py			input file for scout library [number]
+#       - /FR_Inputs 				folder containing all full run inputs
+#           - [number].py			input file for full library [number]
+#       - /SR_Outputs				folder for all screening output libraries
+#           - /build-[number] 		this number must match the one in SR_Inputs
+#               - /brightlite0		created by xsgen
+#                   - [nucid].txt	output for [nucid] nuclide of input [number]
+#       - /FR_Outputs				folder for all full library outputs
+#           - /build-[number] 		this number must match the one in FR_Inputs
+#               - /brightlite0		created by xsgen
+#                   - [nucid].txt	output for [nucid] nuclide of input [number]
+#       - basecase.py				xsgen input file containing base-case values
+#       - inputs.txt				file containing database inputs
 #
 #
-#	Terms:
-#		- Library number: indicated as [number]. Unique number for input-output pair. Starts at zero.
-#		- Library progress: screening:[0:1), full=1
-#		- Scout library: A library thats run in a short time and that has curtailed outputs
-#		- Metric: Names of inputs that libraries get interpolated on
-#		- Coordinates: the normalized ([0,1]) metrics with only the varied ones so that dbase dimensions match coordinate dimensions
-#		- Neighborhood: Determined by inputs, the "closest" libs to a given lib (for gradient estimation)
-#		- Voronoi cell:
+#   Terms:
+#       - Library number: indicated as [number]. Unique number for input-output pair. Starts at zero.
+#       - Library progress: screening:[0:1), full=1
+#       - Scout library: A library thats run in a short time and that has curtailed outputs
+#       - Metric: Names of inputs that libraries get interpolated on
+#       - Coordinates: the normalized ([0,1]) metrics with only the varied ones so that dbase dimensions match coordinate dimensions
+#       - Neighborhood: Determined by inputs, the "closest" libs to a given lib (for gradient estimation)
+#       - Voronoi cell:
 #
 #
-#	Workflow:
-#		1 Start UI and read command line arguments
-#		2 Initialize database
-#			- If there are inputs, read them; or create the input folders
-#				- Attempt to read the output of an input if available
-#		3 Screening
-#			- Run basecase as screening run
-#			- Estimate total time, ask if ok to proceed (improve estimate in the background)
-#			- Monte-Carlo inv-norml dist point sampling
-#				- Multi-d domain cropping
-#				- Scout topography map
-#		4 Exploration
-#			- Run basecase, space-filling points
-#		5 Exploitation
-#			- Find highest scored points and inputs near them
-#			- Run new points
-#			- Estimate max error
-#			- Repeat until stop criteria met
+#   Workflow:
+#       1 Start UI and read command line arguments
+#       2 Initialize database
+#           - If there are inputs, read them; or create the input folders
+#               - Attempt to read the output of an input if available
+#       3 Screening
+#           - Run basecase as screening run
+#           - Estimate total time, ask if ok to proceed (improve estimate in the background)
+#           - Monte-Carlo inv-norml dist point sampling
+#               - Multi-d domain cropping
+#               - Scout topography map
+#       4 Exploration
+#           - Run basecase, space-filling points
+#       5 Exploitation
+#           - Find highest scored points and inputs near them
+#           - Run new points
+#           - Estimate max error
+#           - Repeat until stop criteria met
 #
-#	Flags:
-#		-m (manual): start NUDGE in manual mode
-#		-d (database): used for the database path
-#		-h (help):  help screen
-#		-x (xsgen): command to run xsgen
+#   Flags:
+#       -m (manual): start NUDGE in manual mode
+#       -d (database): used for the database path
+#       -h (help):  help screen
+#       -x (xsgen): command to run xsgen
 #
 #
-#	Notes:
-#		- Folder structure and naming chosen to be simple and intuitive. This enables users to copy-paste
-#		  their existing libraries and easily allow NUDGE to use it in a given database
-#		- xsgen inputs include void and cladding radius, NUDGE also uses thickness in inputs and some workflow
-#		- Creation of new library: 1) Generate input file, 2) Initiate library, 3) Add library object to database
-#		- Constant inputs will be assigned the value in basecase, which will be the 0th library in database
-#		- Dicts in the xsgen input file (initial heavy metal) should be written so that each item is in a new line
-#		- During the Voronoi cell volume calculation, best points to use as inputs during the next-batch are saved too
+#   Notes:
+#       - Folder structure and naming chosen to be simple and intuitive. This enables users to copy-paste
+#           their existing libraries and easily allow NUDGE to use it in a given database
+#       - xsgen inputs include void and cladding radius, NUDGE also uses thickness in inputs and some workflow
+#       - Creation of new library: 1) Generate input file, 2) Initiate library, 3) Add library object to database
+#       - Constant inputs will be assigned the value in basecase, which will be the 0th library in database
+#       - Dicts in the xsgen input file (initial heavy metal) should be written so that each item is in a new line
+#       - During the Voronoi cell volume calculation, best points to use as inputs during the next-batch are saved too
 #
 #
 #
 
-from objects import *
-from interface import *
 import os
 
-import numpy as np
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+from objects import PathNaming
+from dbase import DBase
 
 
 def main(args):
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    screen = Screen()
-
     # Check if help is requested
     if '-h' in args:
-        screen.HelpScreen()
         return
-
-    # Initialize screen
-    screen.InitScreen()
 
     # Manual mode check
     if '-m' not in args:
-        # Take user inputs
-        # 	Initialize paths
-        try:
-            paths = PathNaming(os.name, database_path=args[args.index('-d')+1])
-        except ValueError:
-            usr_path = input('No database path found, please enter full path to database: \n')
-            paths = PathNaming(os.name, database_path=usr_path)
-        # 	Check xsgen run command
-        try:
-            paths.xsgen_command = args[args.index('-x')+1]
-        except ValueError:
-            pass
-
-        # Initiate database
-        database = DBase(paths)		# Read all available inputs and outputs in the folder
-        database.UpdateMetrics()	# Update database data about the library inputs, outputs, and states
-        screen.UpdateInfo(database)	# Print new info on screen
-
-        database.print()
+        #TODO: have non-manual mode
+        pass
     else:
         # Manual mode
         usr_path = 'C:\\Users\\cb39852\\Documents\\nudge\\db1\\'
@@ -131,9 +104,9 @@ def main(args):
         # Standard startup stuff
         paths = PathNaming(os.name, database_path=usr_path)
         database = DBase(paths)
-        database.UpdateMetrics()
+        database.update_metrics()
         database.print()
-
+        """"
         # Add some initial points
         database.initial_exploration(False)
 
@@ -160,10 +133,7 @@ def main(args):
             openfile.write('\nmin errors\n' + str(database.est_error_min))
             openfile.write('\nmean errors\n' + str(database.est_error_mean))
             openfile.write('\nreal errors\n' + str(database.database_error))
-
-        #database.exploitation()
-
-
+        """
 
         '''
         # Plot data
@@ -207,12 +177,7 @@ def main(args):
         print(corr)
         '''
 
-
-
     print('\n-TheEnd-')
-    #input('')
-    screen.PrintAt(colors.reset,y=screen.lines-1)
-
 
     return 0
 
