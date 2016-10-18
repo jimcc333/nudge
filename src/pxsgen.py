@@ -27,12 +27,9 @@
 #
 #
 
-from objects import xsgenParams, Library
-import os
+from library import Library
 import random
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 
 def main(args):

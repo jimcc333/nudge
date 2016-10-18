@@ -35,9 +35,9 @@
 #   Terms:
 #       - Library number: indicated as [number]. Unique number for input-output pair. Starts at zero.
 #       - Library progress: screening:[0:1), full=1
-#       - Scout library: A library thats run in a short time and that has curtailed outputs
+#       - Screening library: A library that's run in a short time and that has curtailed outputs
 #       - Metric: Names of inputs that libraries get interpolated on
-#       - Coordinates: the normalized ([0,1]) metrics with only the varied ones so that dbase dimensions match coordinate dimensions
+#       - Coordinates: the normalized ([0,1]) input array with only the varied inputs
 #       - Neighborhood: Determined by inputs, the "closest" libs to a given lib (for gradient estimation)
 #       - Voronoi cell:
 #
@@ -106,21 +106,21 @@ def main(args):
         database = DBase(paths)
         database.update_metrics()
         database.print()
-        """"
+
         # Add some initial points
         database.initial_exploration(False)
 
         # Perform exploration
         for i in range(0):
-            print('generating point', len(database.flibs))
+            print('Generating point', len(database.flibs))
             database.exploration(False)
             database.run_pxsgen(False)
             database.estimate_error()
             database.find_error()
 
         # Perform exploitation
-        for i in range(25):
-            print('generating point (exploitation)', len(database.flibs))
+        for i in range(5):
+            print('Generating point (exploitation)', len(database.flibs))
             database.exploitation()
             database.run_pxsgen(False)
             database.estimate_error()
@@ -133,7 +133,7 @@ def main(args):
             openfile.write('\nmin errors\n' + str(database.est_error_min))
             openfile.write('\nmean errors\n' + str(database.est_error_mean))
             openfile.write('\nreal errors\n' + str(database.database_error))
-        """
+
 
         '''
         # Plot data

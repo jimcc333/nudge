@@ -6,7 +6,7 @@ class Library:
     """ A class that holds library information """
 
     def __init__(self, database_path, op_path, ip_path, number, scout):
-
+        # Library constant and inputs
         self.database_path = database_path  # Path to the database
         self.ip_path = ip_path  # Path of the input file
         self.op_path = op_path  # path to the library folder w/ Bright-lite formatted .txt files in it
@@ -14,16 +14,18 @@ class Library:
         self.scout = scout      # True/False whether it is a scout library
         self.inputs = xsgenParams()
 
-        self.max_prod = 0
-        self.max_dest = 0
-        self.max_BU = 0
+        # Library output information
+        self.max_prod = 0       # Maximum neutron production value in library
+        self.max_dest = 0       # Maximum neutron destruction value in library
+        self.max_BU = 0         # Maximum burnup in library
 
+        # Library analysis values from database
         self.voronoi_size = 0           # The Voronoi cell size of the library
         self.furthest_point = []        # The furthest found point within the Voronoi cell
         self.furthest_point_dist = 0    # The distance of the furthest point
         self.rank = 0                   # The rank of the library, used during exploitation
 
-        # --- Normalized Values ---
+        # --- Normalized Input Values ---
         self.normalized = {
             'fuel_cell_radius': None,
             'void_cell_radius': None,
@@ -46,23 +48,24 @@ class Library:
             self.completed = True
 
             u235_file = op_path + "/922350.txt"
-            self.read_output("U235", u235_file, 0.04)
+            self.read_output(u235_file, 0.04)
 
             u238_file = op_path + "/922380.txt"
-            self.read_output("U235", u238_file, 0.96)
+            self.read_output(u238_file, 0.96)
         elif os.path.exists(op_path):
             self.completed = True
-            self.read_output("pxsgen", op_path, 1)
+            self.read_output(op_path, 1)
         else:
             self.completed = False
             #TODO: read full run output
             #TODO: add library to queue
 
+    # Returns the normalized [0,1] array of varied inputs (order REALLY matters here)
     def coordinates(self, varied_ips):
-        coordinates = {}
+        coordinates = []
         for key, value in self.normalized.items():
             if key in varied_ips:
-                coordinates[key] = value
+                coordinates.append(value)
         return coordinates
 
     def print(self, detail=0):
@@ -121,7 +124,8 @@ class Library:
                                     ' has inconsistency between enrichment and given mass compositions'
                     raise RuntimeError(error_message)
 
-    def read_output(self, nuclide, file_path, frac):
+    # Reads the xsgen output of library
+    def read_output(self, file_path, frac):
         try:
             doc = open(file_path, "r")
         except IOError:
@@ -136,7 +140,7 @@ class Library:
             if items[0] == "NEUT_DEST":
                 self.max_dest += float(items[len(items)-1]) * frac
             if items[0] == "BUd":
-                self.max_BU += sum( [float(i) for i in items[2:]] ) * frac
+                self.max_BU += sum([float(i) for i in items[2:]]) * frac
         doc.close()
 
     # Resets variables that are not used for calculations and outputs

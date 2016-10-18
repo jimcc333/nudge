@@ -9,7 +9,8 @@ from matplotlib.mlab import PCA as mlabPCA
 from scipy.spatial import distance
 
 from library import Library
-from objects import xsgenParams
+from objects import xsgenParams, Neighborhood
+from pxsgen import burnup_maker
 
 """
 A class that handles all generated libraries
@@ -61,10 +62,10 @@ class DBase:
         self.np_BUs = None              # numpy array of burnup values
         self.data_mat = []              # numpy data matrix of neutron prod/dest and BU
         self.pca_mat = None             # numpy PCA matrix
-        self.est_error_max = []         # Estimated maximum database error
-        self.est_error_min = []         # Estimated minimum database error
-        self.est_error_mean = []        # Estimated mean database error
-        self.database_error = []        # "True" database error calculated using generated test points
+        self.est_error_max = []         # Estimated maximum database error vector
+        self.est_error_min = []         # Estimated minimum database error vector
+        self.est_error_mean = []        # Estimated mean database error vector
+        self.database_error = []        # "True" database error vector calculated using generated test points
 
         # Check that database path exists
         if not os.path.isdir(paths.database_path):
@@ -239,6 +240,12 @@ class DBase:
 
     # Exploitation loop, generates next point based on outputs
     def exploitation(self):
+        # Check if there are enough libraries
+        if len(self.flibs) < self.dimensions * 2 + 2:
+            # Not enough libs to construct neighborhoods
+            print('Not enough flibs in database for exploitation')
+            return
+
         # Check if neighbors are found
         try:
             self.flibs[0].neighborhood
@@ -246,9 +253,6 @@ class DBase:
             print('Building initial neighborhoods (this may take a while)')
             self.generate_neighbors()
 
-            print('y:', self.flibs[0].neighborhood)
-
-        print('y:', self.flibs[0].neighborhood)
         # Update neighbors, start by newest point
         try:
             self.flibs[-1].neighborhood
@@ -256,8 +260,9 @@ class DBase:
             print(' Building neighborhood of new point')
             self.update_neighbors(self.flibs[-1])
             # Update the neighbors of new points neighbors
+            print(' Updating neighbors of new points neighbors')
             for i in self.flibs[-1].neighborhood.lib_numbers:
-                print(' Updating neighbors of new points neighbors')
+                print('  Updating neighbors of lib', self.flibs[i].number)
                 self.update_neighbors(self.flibs[i])
 
         # Find ranks
@@ -267,6 +272,7 @@ class DBase:
         max_rank_i = [lib.rank for lib in self.flibs].index(max(lib.rank for lib in self.flibs))
         next_point = {}
         for i, key in enumerate(self.varied_ips):
+            print(i, key, (self.flibs[max_rank_i].furthest_point))
             next_point[key] = self.flibs[max_rank_i].furthest_point[i]
         print('adding next point')
         self.add_lib(next_point, False)
@@ -332,7 +338,7 @@ class DBase:
         for counter, key in enumerate(coords[0].keys()):
             cand_coords[key] = p_cand[counter]
 
-        self.add_lib(cand_coords, screening)
+        self.add_lib(cand_coords, screening)    # Also updates metrics
 
     # Generates new points for the purpose of finding database error
     def find_error(self):
@@ -364,20 +370,25 @@ class DBase:
         # Go through all full libraries and generate initial neighborhood
         for i, lib in enumerate(self.flibs):
             #TODO: will need to update the initial neighborhood guess
+
+            # Check if there are enough libraries
+            if len(self.flibs) < self.dimensions * 2 + 2:
+                # Not enough libs to construct neighborhoods
+                print('Not enough flibs in database for generate_neighbors')
+                return
+
             initial_neighbors = list(range(self.dimensions*2))
             # Avoid passing the lib in its own neighborhood
             if i in initial_neighbors:
                 initial_neighbors[i] = self.dimensions*2
+
             neighbor_libs = [self.flibs[i] for i in initial_neighbors]
             neighbor_coordinates = [lib.coordinates(self.varied_ips) for lib in neighbor_libs]
             lib.neighborhood = Neighborhood(lib.coordinates(self.varied_ips), initial_neighbors, neighbor_coordinates)
 
-            print('z:', lib.neighborhood)
             # Go through all combinations and pick best neighborhood for each point
             print(' Building neighbors of point', i, 'of', len(self.flibs)-1)
             self.update_neighbors(lib)
-
-        print('y:', self.flibs[0].neighborhood)
 
     # Finds the gradient of all flibs
     def generate_ranks(self):
@@ -388,7 +399,7 @@ class DBase:
         # Go through all flibs
         for lib in self.flibs:
             # Update outputs
-            print(lib.neighborhood)
+            print(lib.neighborhood, 'number:', lib.number)
             self.neighbor_outputs(lib)
 
             # Find nonlinearity score
@@ -405,9 +416,10 @@ class DBase:
         # Make sure this is really initial
         points = len(self.slibs) if screening else len(self.flibs)
         if points > 0:
+            print('Initial exploration method called, but there are already libraries in database')
             return
 
-        # Assign all dimensions 0, 0.5, and 1 to create 3 input libs
+        # Assign all dimensions 0, 0.5, and 1 to create 3 initial input libs
         coords = {}
         for val in [0, 0.5, 1]:
             for ip in self.varied_ips:
@@ -461,9 +473,6 @@ class DBase:
     # Places the output data to the neighborhood of lib
     def neighbor_outputs(self, lib):
         outputs = []
-        print('lib')
-        print(lib.neighborhood)
-        print('lib numbers:', lib.neighborhood.lib_numbers)
         for i in lib.neighborhood.lib_numbers:
             #TODO: in the future this will access combined output
             outputs.append(self.flibs[i].max_BU)
@@ -523,7 +532,7 @@ class DBase:
             except ValueError:
                 pass
 
-            # Check the rest of defined inputs
+            # Check the rest of (most of) defined inputs
             if len(items) == 2 and float(items[1]) > 0:
                 if items[0] in self.ip_ranges.xsgen:
                     self.ip_ranges.xsgen[items[0]] = float(items[1])
@@ -540,13 +549,14 @@ class DBase:
                 shell_arg = self.paths.pxsgen_command + ' ' + self.slibs[i].ip_path + ' ' + self.slibs[i].op_path
                 if not os.path.exists(self.slibs[i].op_path):
                     subprocess.run(shell_arg, shell=True)
-                    self.slibs[i].read_output(0, self.slibs[i].op_path, 1)
+                    self.slibs[i].read_output(self.slibs[i].op_path, 1)
         else:
             for i in range(len(self.flibs)):
                 shell_arg = self.paths.pxsgen_command + ' ' + self.flibs[i].ip_path + ' ' + self.flibs[i].op_path
                 if not os.path.exists(self.flibs[i].op_path):
                     subprocess.run(shell_arg, shell=True)
-                    self.flibs[i].read_output(0, self.flibs[i].op_path, 1)
+                    self.flibs[i].read_output(self.flibs[i].op_path, 1)
+        self.update_metrics()
 
     # A catch-all to update data
     def update_metrics(self, screening=None, libs=None):
@@ -565,33 +575,32 @@ class DBase:
         # Update normalized values
         for lib in libs:
             for ip in self.varied_ips:
+                #TODO: assigning normalized values will need to be fixed for xsgen
                 lib.normalized[ip] = lib.inputs.xsgen[ip]
 
     # Updates the neighborhoods of flib in database
     def update_neighbors(self, flib):
-        print('update neighbors')
-
-        print('a:', flib.neighborhood)
+        print('begin update neighbors')
         if len(self.flibs) < self.dimensions * 2 + 2:
             # Not enough libs to construct neighborhoods
-            print('not enough flibs in database for update_neighbors')
+            print('Not enough flibs in database for update_neighbors')
             return
 
         try:
             flib.neighborhood
         except AttributeError:
+            # Stupidly guess initial neighbors
             initial_neighbors = list(range(self.dimensions * 2))
             # Avoid passing the lib in its own neighborhood
             if flib.number in initial_neighbors:
                 initial_neighbors[flib.number] = self.dimensions * 2
             neighbor_libs = [self.flibs[i] for i in initial_neighbors]
             neighbor_coordinates = [lib.coordinates(self.varied_ips) for lib in neighbor_libs]
-            print('aa:', flib.neighborhood)
             flib.neighborhood = Neighborhood(flib.coordinates(self.varied_ips), initial_neighbors, neighbor_coordinates)
 
-        print('b:', self.flibs[0].neighborhood)
         # Save current neighborhood information
-        current_score = flib.neighborhood.neighbor_score
+        current_score = 0
+        print('       current score:', current_score)
         current_coords = flib.neighborhood.p_coords
         current_neighborhood = flib.neighborhood.lib_numbers
 
@@ -607,15 +616,17 @@ class DBase:
             for i in subset:
                 n_coordinates.append(self.flibs[i].coordinates(self.varied_ips))
             new_neighborhood = Neighborhood(current_coords, subset, n_coordinates)
+
             # Update the current data if new has better score
             if current_score < new_neighborhood.neighbor_score:
                 #TODO: this could be improved, information already saved in new_neighborhood
                 current_score = new_neighborhood.neighbor_score
                 # print(current_score, subset, round(100*current_iter/total_iters),'%')
                 current_coords = new_neighborhood.p_coords
-                current_neighborhood = new_neighborhood
-        print('cur neigh',current_neighborhood)
-        flib.neighborhood = current_neighborhood
+                current_neighborhood = copy.deepcopy(new_neighborhood)
+
+        flib.neighborhood = copy.deepcopy(current_neighborhood)
+        print('  returned neighborhood:', flib.neighborhood)
 
     # Finds the estimate of voronoi cell sizes in database
     def voronoi(self, s_mult = 500):
