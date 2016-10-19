@@ -264,8 +264,10 @@ class DBase:
 
         # Find ranks
         self.generate_ranks()
+
         # Find the point with highest rank and add it
         max_rank_i = [lib.rank for lib in self.flibs].index(max(lib.rank for lib in self.flibs))
+        print('selected lib', self.flibs[max_rank_i].number, 'point:', self.flibs[max_rank_i].furthest_point)
         self.add_lib(self.flibs[max_rank_i].furthest_point, False)
 
     # Finds the coordinates of next point to sample
@@ -604,24 +606,7 @@ class DBase:
         flib.neighborhood = copy.deepcopy(current_neighborhood)
 
     # Finds the estimate of voronoi cell sizes in database
-    def voronoi(self, s_mult = 500):
-        """
-        The algorithm should work in the following way:
-
-        ep_vols = list(0, len(existing_points))			# Voronoi cell vol of each ep (existing point)
-        ep_cands = list(None, len(existing_points))		# The best candidate for next input point near ep
-
-        for rp in random_points:
-            min_dist = 1
-            for ep in existing_points:
-                if dist(rp,ep) < min_dist:
-                    min_dist = dist(rp,ep)
-                    rp_cell = ep						# rp is in the Voronoi cell of ep
-            ep_vols[rp_cell] += 1/len(random_points)	# this rp contributes to the volume of rp_cell
-            if dist(rp_cell,rp) > dist(rp_cell, ep_cands[rp_cell]) or ep_cands[rp_cell] == None:
-                if passes_other_crit(rp):				# Catch-all, but mainly projective property check
-                    ep_cands[rp_cell] = rp
-        """
+    def voronoi(self, s_mult=500):
         # For the set of input points in d dimensional space,
         # generates samples number of random points. For each random
         # point, finds which point in p_coords is closest to it for
@@ -636,6 +621,7 @@ class DBase:
         for lib in self.flibs:
             # Setting the furthest point to the point itself effectively resets it: any point will be further
             lib.furthest_point = lib.coordinates(self.varied_ips)
+            lib.furthest_point_dist = 0
 
         # Create samples number of random coordinates
         #random.seed(1) #TODO: remove this line eventually
@@ -655,6 +641,7 @@ class DBase:
             if min_dist > self.flibs[p_closest].furthest_point_dist:
                 self.flibs[p_closest].furthest_point_dist = min_dist
                 self.flibs[p_closest].furthest_point = s
+                #print('-updated', self.flibs[p_closest].number, 'to', round(s[0], 2), round(s[1], 2), 'dist:', round(min_dist,2))
 
         p_vol = [i/samples for i in p_vol]
 
