@@ -86,28 +86,29 @@ class Neighborhood:
         self.p_coords = p_coords			# Coordinates of the center point
         self.lib_numbers = lib_numbers		# flib numbers of libraries forming the neighbors
         self.coordinates = coordinates		# (normalized) coordinates of the neighbors
-        self.highest_lib = 0                # The number of the most recent library included in neighbor combinations
         self.cohesion = 1					# C=1 implies all points are as far away as possible
         self.adhesion = 0					# A=1 implies all points are on the same spot
         self.neighbor_score = 0				# The neighborhood score
         self.p_output = None                # The output of the center point
         self.outputs = []                   # The outputs of the neighbors (assigned after neighborhood is built)
         self.nonlinearity = 0               # The nonlinearity score of the neighborhood (needs outputs)
+
         self.calculate_score()
 
+    # Calculates the neighborhood score using adhesion and cohesion criteria
     def calculate_score(self):
         # Check if center is in its own neighbors
         if self.p_coords in self.coordinates:
             error_message = 'Point given in its own neighborhood for point ' + str(self.p_coords)
             raise RuntimeError(error_message)
 
-        # Cohesion: avrg(distance(coord, center))
+        # Cohesion: average(distance(coord, center))
         distances = []
         for coord in self.coordinates:
             distances.append(distance.euclidean(self.p_coords, coord))
         self.cohesion = np.mean(distances)
 
-        # Adhesion: avrg(min(distance(coord1,coord2)))
+        # Adhesion: average(min(distance(coord1,coord2)))
         tot_libs = len(self.lib_numbers)
         distances.clear()
         lib_distances = []

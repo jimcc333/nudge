@@ -101,39 +101,58 @@ def main(args):
         # Manual mode
         usr_path = 'C:\\Users\\cb39852\\Documents\\nudge\\db1\\'
 
-        # Standard startup stuff
-        paths = PathNaming(os.name, database_path=usr_path)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\1\\')
         database = DBase(paths)
-        database.update_metrics()
-        database.print()
+        database.build(60, 0)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2\\')
+        database = DBase(paths)
+        database.build(60, 0)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\3\\')
+        database = DBase(paths)
+        database.build(60, 0)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\4\\')
+        database = DBase(paths)
+        database.build(60, 0)
 
-        # Add some initial points
-        database.initial_exploration(False)
-        database.run_pxsgen(False)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\5\\')
+        database = DBase(paths)
+        database.build(50, 10)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\6\\')
+        database = DBase(paths)
+        database.build(50, 10)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\7\\')
+        database = DBase(paths)
+        database.build(50, 10)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\8\\')
+        database = DBase(paths)
+        database.build(50, 10)
 
-        # Perform exploration
-        for i in range(20):
-            print('Generating point', len(database.flibs))
-            database.exploration(False)
-            database.run_pxsgen(False)
-            database.estimate_error()
-            database.find_error()
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\9\\')
+        database = DBase(paths)
+        database.build(40, 20)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\10\\')
+        database = DBase(paths)
+        database.build(40, 20)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\11\\')
+        database = DBase(paths)
+        database.build(40, 20)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\12\\')
+        database = DBase(paths)
+        database.build(40, 20)
 
-        # Perform exploitation
-        for i in range(20):
-            print('Generating point (exploitation)', len(database.flibs))
-            database.exploitation()
-            database.run_pxsgen(False)
-            database.estimate_error()
-            database.find_error()
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\13\\')
+        database = DBase(paths)
+        database.build(30, 30)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\14\\')
+        database = DBase(paths)
+        database.build(30, 30)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\15\\')
+        database = DBase(paths)
+        database.build(30, 30)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\16\\')
+        database = DBase(paths)
+        database.build(30, 30)
 
-        # Write errors
-        ip_path = usr_path + 'errors.txt'
-        with open(ip_path, 'w') as openfile:  # bad naming here
-            openfile.write('max errors\n' + str(database.est_error_max).replace(',', ''))
-            openfile.write('\nmin errors\n' + str(database.est_error_min).replace(',', ''))
-            openfile.write('\nmean errors\n' + str(database.est_error_mean).replace(',', ''))
-            openfile.write('\nreal errors\n' + str(database.database_error).replace(',', ''))
 
 
         '''
