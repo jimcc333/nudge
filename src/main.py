@@ -112,7 +112,7 @@ def main(args):
         database.run_pxsgen(False)
 
         # Perform exploration
-        for i in range(0):
+        for i in range(20):
             print('Generating point', len(database.flibs))
             database.exploration(False)
             database.run_pxsgen(False)
@@ -120,7 +120,7 @@ def main(args):
             database.find_error()
 
         # Perform exploitation
-        for i in range(15):
+        for i in range(20):
             print('Generating point (exploitation)', len(database.flibs))
             database.exploitation()
             database.run_pxsgen(False)

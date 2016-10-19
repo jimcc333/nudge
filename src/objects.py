@@ -86,6 +86,7 @@ class Neighborhood:
         self.p_coords = p_coords			# Coordinates of the center point
         self.lib_numbers = lib_numbers		# flib numbers of libraries forming the neighbors
         self.coordinates = coordinates		# (normalized) coordinates of the neighbors
+        self.highest_lib = 0                # The number of the most recent library included in neighbor combinations
         self.cohesion = 1					# C=1 implies all points are as far away as possible
         self.adhesion = 0					# A=1 implies all points are on the same spot
         self.neighbor_score = 0				# The neighborhood score

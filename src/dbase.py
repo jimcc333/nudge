@@ -254,20 +254,22 @@ class DBase:
         try:
             self.flibs[-1].neighborhood
         except AttributeError:
-            print(' Building neighborhood of new point')
+            print('  Building neighborhood of new point')
             self.update_neighbors(self.flibs[-1])
             # Update the neighbors of new points neighbors
-            print(' Updating neighbors of new points neighbors')
+            print('  Updating neighbors of new points neighbors:')
             for i in self.flibs[-1].neighborhood.lib_numbers:
-                print('  Updating neighbors of lib', self.flibs[i].number)
-                self.update_neighbors(self.flibs[i])
+                print('    Updating neighbors of lib', self.flibs[i].number)
+                self.update_neighbors(self.flibs[i], considered_libs=[len(self.flibs)-1])
 
         # Find ranks
+        print('  Finding ranks of database')
         self.generate_ranks()
 
         # Find the point with highest rank and add it
         max_rank_i = [lib.rank for lib in self.flibs].index(max(lib.rank for lib in self.flibs))
-        print('selected lib', self.flibs[max_rank_i].number, 'point:', self.flibs[max_rank_i].furthest_point)
+        rounded_point = [round(i,2) for i in self.flibs[max_rank_i].furthest_point]
+        print('Selected lib', self.flibs[max_rank_i].number, 'point:', rounded_point)
         self.add_lib(self.flibs[max_rank_i].furthest_point, False)
 
     # Finds the coordinates of next point to sample
@@ -559,7 +561,7 @@ class DBase:
                 lib.normalized[ip] = lib.inputs.xsgen[ip]
 
     # Updates the neighborhoods of flib in database
-    def update_neighbors(self, flib):
+    def update_neighbors(self, flib, considered_libs=None):
         if len(self.flibs) < self.dimensions * 2 + 2:
             # Not enough libs to construct neighborhoods
             print('Not enough flibs in database for update_neighbors')
@@ -567,7 +569,7 @@ class DBase:
 
         try:
             flib.neighborhood
-        except AttributeError:
+        except AttributeError:  #TODO: this may not be necessary since it's done in generate_neighbors
             # Stupidly guess initial neighbors
             initial_neighbors = list(range(self.dimensions * 2))
             # Avoid passing the lib in its own neighborhood
@@ -583,13 +585,20 @@ class DBase:
         current_neighborhood = flib.neighborhood.lib_numbers
 
         # Create a list of all candidate libraries
-        cand_list = list(range(len(self.flibs)))
-        cand_list.remove(flib.number)
+        if considered_libs is None:
+            cand_list = list(range(len(self.flibs)))
+            cand_list.remove(flib.number)
+        else:
+            cand_list = [i for i in current_neighborhood] + considered_libs
 
         # Iterate through each combination
-        current_iter = 0
         for subset in itertools.combinations(cand_list, self.dimensions*2):
-            current_iter += 1
+            if all(i <= flib.neighborhood.highest_lib for i in subset):
+                # If every element in this subset is under previous times highest_lib, this combination has been
+                # considered before
+                print('continue')
+                continue
+
             n_coordinates = []
             for i in subset:
                 n_coordinates.append(self.flibs[i].coordinates(self.varied_ips))
@@ -603,6 +612,7 @@ class DBase:
                 current_coords = new_neighborhood.p_coords
                 current_neighborhood = copy.deepcopy(new_neighborhood)
 
+        flib.neighborhood.highest_lib = len(self.flibs) - 1  # Used to reduce the amount of candidate neighbors
         flib.neighborhood = copy.deepcopy(current_neighborhood)
 
     # Finds the estimate of voronoi cell sizes in database
