@@ -101,22 +101,17 @@ def main(args):
         # Manual mode
         usr_path = 'C:\\Users\\cb39852\\Documents\\nudge\\db1\\'
 
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\1\\')
-        database = DBase(paths)
-        database.build(60, 0)
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2\\')
-        database = DBase(paths)
-        database.build(60, 0)
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\3\\')
-        database = DBase(paths)
-        database.build(60, 0)
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\4\\')
-        database = DBase(paths)
-        database.build(60, 0)
-
         paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\5\\')
         database = DBase(paths)
         database.build(50, 10)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\9\\')
+        database = DBase(paths)
+        database.build(40, 20)
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\13\\')
+        database = DBase(paths)
+        database.build(30, 30)
+
+
         paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\6\\')
         database = DBase(paths)
         database.build(50, 10)
@@ -127,9 +122,6 @@ def main(args):
         database = DBase(paths)
         database.build(50, 10)
 
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\9\\')
-        database = DBase(paths)
-        database.build(40, 20)
         paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\10\\')
         database = DBase(paths)
         database.build(40, 20)
@@ -140,9 +132,6 @@ def main(args):
         database = DBase(paths)
         database.build(40, 20)
 
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\13\\')
-        database = DBase(paths)
-        database.build(30, 30)
         paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\14\\')
         database = DBase(paths)
         database.build(30, 30)

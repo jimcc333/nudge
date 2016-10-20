@@ -251,7 +251,7 @@ class DBase:
         # Write errors
         print('\n_________________________________________________________')
         print('-- Database complete. Writing error vectors to errors.txt')
-        ip_path = usr_path + 'errors.txt'
+        ip_path = self.paths.database_path + 'errors.txt'
         with open(ip_path, 'w') as openfile:  # bad naming here
             openfile.write('max errors\n' + str(self.est_error_max).replace(',', ''))
             openfile.write('\nmin errors\n' + str(self.est_error_min).replace(',', ''))
@@ -292,13 +292,13 @@ class DBase:
             self.flibs[-1].neighborhood
         except AttributeError:
             print('  Building neighborhood of new point')
-            considered_libs = self.flibs[-1].proximity_order[:self.dimensions * 4]
+            considered_libs = self.flibs[-1].proximity_order[:self.dimensions * 3]
             self.update_neighbors(self.flibs[-1], considered_libs=considered_libs)
             # Update the neighbors of new points neighbors
             print('  Updating neighbors of new points neighbors:')
             for i in self.flibs[-1].neighborhood.lib_numbers:
                 print('    Updating neighbors of lib', self.flibs[i].number)
-                considered_libs = self.flibs[i].proximity_order[:self.dimensions * 4]
+                considered_libs = self.flibs[i].proximity_order[:self.dimensions * 3]
                 self.update_neighbors(self.flibs[i], considered_libs=considered_libs)
 
         # Find ranks
@@ -392,6 +392,7 @@ class DBase:
 
     # Generates all neighborhoods after exploration
     def generate_neighbors(self):
+        self.update_proximity()
         # Go through all full libraries and generate initial neighborhood
         for i, lib in enumerate(self.flibs):
             #TODO: will need to update the initial neighborhood guess
@@ -413,7 +414,8 @@ class DBase:
 
             # Go through all combinations and pick best neighborhood for each point
             print(' Building neighbors of point', i, 'of', len(self.flibs)-1)
-            self.update_neighbors(lib)
+            considered_libs = lib.proximity_order[:self.dimensions * 3]
+            self.update_neighbors(lib, considered_libs=considered_libs)
 
     # Finds the gradient of all flibs
     def generate_ranks(self):
@@ -512,8 +514,8 @@ class DBase:
 
     # Prints information about database
     def print(self):
-        print('Database screening ips:', len(self.slibs), ' full ips:', len(self.flibs))
-        print('  Dimensions:', self.dimensions)
+        print('Database ', self.paths.database_path)
+        print(' Screening ips:', len(self.slibs), ' Full ips:', len(self.flibs), '  Dimensions:', self.dimensions)
 
     #TODO: basecase output and general numbering will need to be thought-out
     def read_base(self, path):
