@@ -99,50 +99,14 @@ def main(args):
         pass
     else:
         # Manual mode
-        usr_path = 'C:\\Users\\cb39852\\Documents\\nudge\\db1\\'
 
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\5\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\db4\\')
         database = DBase(paths)
-        database.build(50, 10)
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\9\\')
-        database = DBase(paths)
-        database.build(40, 20)
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\13\\')
-        database = DBase(paths)
-        database.build(30, 30)
-
-
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\6\\')
-        database = DBase(paths)
-        database.build(50, 10)
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\7\\')
-        database = DBase(paths)
-        database.build(50, 10)
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\8\\')
-        database = DBase(paths)
-        database.build(50, 10)
-
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\10\\')
-        database = DBase(paths)
-        database.build(40, 20)
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\11\\')
-        database = DBase(paths)
-        database.build(40, 20)
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\12\\')
-        database = DBase(paths)
-        database.build(40, 20)
-
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\14\\')
-        database = DBase(paths)
-        database.build(30, 30)
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\15\\')
-        database = DBase(paths)
-        database.build(30, 30)
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\16\\')
-        database = DBase(paths)
-        database.build(30, 30)
-
-
+        database.update_metrics()
+        database.estimate_error()
+        database.estimate_error(method='cubic')
+        database.find_error()
+        database.find_error(method='cubic')
 
         '''
         # Plot data

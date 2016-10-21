@@ -7,6 +7,7 @@ import subprocess
 import numpy as np
 from matplotlib.mlab import PCA as mlabPCA
 from scipy.spatial import distance
+from scipy.interpolate import griddata
 
 from library import Library
 from objects import xsgenParams, Neighborhood
@@ -56,6 +57,8 @@ class DBase:
         self.flibs = []                 # Full libraries (with and without outputs)
 
         # Database analysis
+        self.lib_inputs = []            # (d,n) matrix of varied input normalized coordinates (n: number of flibs)
+        self.lib_outputs = []           # (n) vector of library outputs
         self.voronoi_sizes = []         # Voronoi cell sizes of points in the database
         self.np_prods = None            # numpy array of neutron production values
         self.np_dests = None            # numpy array of neutron destruction values
@@ -259,18 +262,23 @@ class DBase:
             openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
 
     # Estimates the error of the database using leave-1-out method
-    def estimate_error(self):
+    def estimate_error(self, method='linear'):
         # TODO: screening check
         lib_errors = []
+        out_of_range = 0
         for i in range(len(self.flibs)):
-            int_lib = self.interpolate_lib(self.flibs[:i] + self.flibs[i + 1:], self.flibs[i].normalized)
+            interpolated = self.interpolate(self.flibs[i].coordinate, method=method, exclude=self.flibs[i].number)
+            if np.isnan(interpolated):
+                out_of_range += 1
+                continue
             try:
-                lib_errors.append(100 * abs(self.flibs[i].max_BU - int_lib.max_BU) / self.flibs[i].max_BU)
+                lib_errors.append(100 * abs(self.flibs[i].max_BU - interpolated) / self.flibs[i].max_BU)
             except ZeroDivisionError:
                 return
         self.est_error_mean.append(round(sum(lib_errors)/max(len(lib_errors), 1), 2))
         self.est_error_max.append(round(max(lib_errors), 2))
         self.est_error_min.append(round(min(lib_errors), 2))
+        print('Estimated error:', round(sum(lib_errors)/max(len(lib_errors), 1), 2), ' Points skipped:', out_of_range)
 
     # Exploitation loop, generates next point based on outputs
     def exploitation(self):
@@ -367,10 +375,10 @@ class DBase:
         self.add_lib(p_cand, screening)    # Also updates metrics
 
     # Generates new points for the purpose of finding database error
-    def find_error(self):
+    def find_error(self, method='linear'):
         # Generate random points for database
         rand_count = 3000 * self.dimensions
-        values = copy.deepcopy(self.flibs[0].inputs.xsgen)
+        values = copy.deepcopy(self.basecase.inputs.xsgen)
         rand_points = [copy.copy(values) for i in range(rand_count)]
 
         for i in range(rand_count):
@@ -379,16 +387,20 @@ class DBase:
 
         # Iterate through points to find error of each
         tot_error = 0
+        out_of_range = 0
         for rand in rand_points:
-            rand_varied = {}
+            rand_varied = []
             for key in self.varied_ips:
-                rand_varied[key] = rand[key]
-            int_lib = self.interpolate_lib(self.flibs, rand_varied)
-            lib_BU = int_lib.max_BU
+                rand_varied.append(rand[key])
+            lib_BU = self.interpolate(rand_varied, method=method)
+            if np.isnan(lib_BU):
+                out_of_range += 1
+                continue
             real_BU = burnup_maker(rand)
             tot_error += 100 * abs(real_BU - lib_BU) / real_BU
         tot_error /= rand_count
         self.database_error.append(round(tot_error, 2))
+        print('Real error:', round(tot_error, 2), ' Points skipped:', round(out_of_range/rand_count*100,1), '%')
 
     # Generates all neighborhoods after exploration
     def generate_neighbors(self):
@@ -453,46 +465,19 @@ class DBase:
         # Update metrics
         self.update_metrics()
 
-    # Uses inverse distance weighing to find library at target (t_) metrics
-    def interpolate_lib(self, neighbor_libs, norm_coords, alpha=500):
-        # Notes:
-        # - The passed variables need to be normalized [0,1]
-        if len(neighbor_libs) == 1:
-            print('Warning! Only 1 library passed for interpolation')
-            return neighbor_libs[0]
+    # Finds the interpolated output value at location using method
+    def interpolate(self, location, method='linear', exclude=None):
+        # Available methods: ‘linear’ or ‘cubic’
+        # Database metrics should be updated before running
 
-        # Read parameters and store them in metrics lists
-        t_coords = {}
-        for key, value in norm_coords.items():
-            if value is not None:
-                t_coords[key] = value
+        if exclude is not None:
+            data_matrix = copy.copy(self.lib_inputs)
+            outputs = copy.copy(self.lib_outputs)
+            data_matrix = data_matrix[:exclude] + data_matrix[exclude + 1:]
+            outputs = outputs[:exclude] + outputs[exclude + 1:]
+            return griddata(data_matrix, outputs, location, method=method).tolist()[0]
 
-        # Calculate distances from each neighbor_lib
-        lib_distances = []
-
-        for lib in neighbor_libs:
-            distance_lib = 1
-            for key, value in t_coords.items():
-                dim_dist = 1 - (value - lib.normalized[key]) ** 2
-                if dim_dist == 0:  # TODO: fix this to make it global var
-                    dim_dist = 0.0001 ** 2
-                distance_lib *= dim_dist
-            distance_lib **= (alpha / 2)
-            lib_distances.append(distance_lib)
-        tot_dist = sum(lib_distances)
-
-        # Generate interpolated library object
-        interpolated_lib = copy.deepcopy(neighbor_libs[0])
-        interpolated_lib.reset()
-        for key, value in t_coords.items():
-            interpolated_lib.normalized[key] = value
-
-        for lib_i, lib in enumerate(neighbor_libs):
-            interpolated_lib.max_prod += lib.max_prod * lib_distances[lib_i] / tot_dist
-            interpolated_lib.max_dest += lib.max_dest * lib_distances[lib_i] / tot_dist
-            interpolated_lib.max_BU += lib.max_BU * lib_distances[lib_i] / tot_dist
-
-        return interpolated_lib
+        return griddata(self.lib_inputs, self.lib_outputs, location, method=method).tolist()[0]
 
     # Places the output data to the neighborhood of lib
     def neighbor_outputs(self, lib):
@@ -605,6 +590,14 @@ class DBase:
 
         # Update library proximity values
         self.update_proximity()
+
+        # Update database coordinate matrix and output vector
+        if not screening:
+            self.lib_inputs = []
+            self.lib_outputs = []
+            for flib in self.flibs:
+                self.lib_inputs.append(flib.coordinate)
+                self.lib_outputs.append(flib.max_BU)
 
     # Updates the neighborhoods of flib in database
     def update_neighbors(self, flib, considered_libs=None):
