@@ -11,7 +11,7 @@ from scipy.interpolate import griddata
 
 from library import Library
 from objects import xsgenParams, Neighborhood
-from pxsgen import burnup_maker
+from pxsgen import burnup_maker, prod_maker, dest_maker
 
 """
 A class that handles all generated libraries
@@ -262,23 +262,29 @@ class DBase:
             openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
 
     # Estimates the error of the database using leave-1-out method
-    def estimate_error(self, method='linear'):
+    def estimate_error(self, method='linear', print_result=False):
+        # Skip if points are too few
+        if len(self.flibs) < 6:
+            return
+
         # TODO: screening check
         lib_errors = []
         out_of_range = 0
         for i in range(len(self.flibs)):
             interpolated = self.interpolate(self.flibs[i].coordinate, method=method, exclude=self.flibs[i].number)
+            real = self.flibs[i].max_BU + self.flibs[i].max_prod + self.flibs[i].max_dest
             if np.isnan(interpolated):
                 out_of_range += 1
                 continue
             try:
-                lib_errors.append(100 * abs(self.flibs[i].max_BU - interpolated) / self.flibs[i].max_BU)
+                lib_errors.append(100 * abs(real - interpolated) / real)
             except ZeroDivisionError:
                 return
         self.est_error_mean.append(round(sum(lib_errors)/max(len(lib_errors), 1), 2))
         self.est_error_max.append(round(max(lib_errors), 2))
         self.est_error_min.append(round(min(lib_errors), 2))
-        print('Estimated error:', round(sum(lib_errors)/max(len(lib_errors), 1), 2), ' Points skipped:', out_of_range)
+        if print_result:
+            print('Estimated error:', round(sum(lib_errors)/max(len(lib_errors), 1), 2), ' Points skipped:', out_of_range)
 
     # Exploitation loop, generates next point based on outputs
     def exploitation(self):
@@ -375,7 +381,11 @@ class DBase:
         self.add_lib(p_cand, screening)    # Also updates metrics
 
     # Generates new points for the purpose of finding database error
-    def find_error(self, method='linear'):
+    def find_error(self, method='linear', print_result=False):
+        # Skip if points are too few
+        if len(self.flibs) < 6:
+            return
+
         # Generate random points for database
         rand_count = 3000 * self.dimensions
         values = copy.deepcopy(self.basecase.inputs.xsgen)
@@ -390,17 +400,18 @@ class DBase:
         out_of_range = 0
         for rand in rand_points:
             rand_varied = []
-            for key in self.varied_ips:
+            for key in sorted(self.varied_ips):
                 rand_varied.append(rand[key])
-            lib_BU = self.interpolate(rand_varied, method=method)
-            if np.isnan(lib_BU):
+            interpolated = self.interpolate(rand_varied, method=method)
+            if np.isnan(interpolated):
                 out_of_range += 1
                 continue
-            real_BU = burnup_maker(rand)
-            tot_error += 100 * abs(real_BU - lib_BU) / real_BU
+            real = burnup_maker(rand) + prod_maker(rand) + dest_maker(rand)
+            tot_error += 100 * abs(real - interpolated) / real
         tot_error /= rand_count
         self.database_error.append(round(tot_error, 2))
-        print('Real error:', round(tot_error, 2), ' Points skipped:', round(out_of_range/rand_count*100,1), '%')
+        if print_result:
+            print('Real error:', round(tot_error, 2), ' Points skipped:', round(out_of_range/rand_count*100,1), '%')
 
     # Generates all neighborhoods after exploration
     def generate_neighbors(self):
@@ -484,10 +495,11 @@ class DBase:
         outputs = []
         for i in lib.neighborhood.lib_numbers:
             #TODO: in the future this will access combined output
-            outputs.append(self.flibs[i].max_BU)
+            outputs.append(self.flibs[i].max_BU + self.flibs[i].max_prod + self.flibs[i].max_dest)
         lib.neighborhood.outputs = outputs
-        lib.neighborhood.p_output = lib.max_BU
+        lib.neighborhood.p_output = lib.max_BU + lib.max_prod + lib.max_dest
 
+    #TODO: PCA method need update
     def PCA(self):
         if len(self.max_prods) > 0:
             self.np_prods = np.asarray(self.max_prods)
@@ -597,7 +609,7 @@ class DBase:
             self.lib_outputs = []
             for flib in self.flibs:
                 self.lib_inputs.append(flib.coordinate)
-                self.lib_outputs.append(flib.max_BU)
+                self.lib_outputs.append(flib.max_BU + flib.max_prod + flib.max_dest)
 
     # Updates the neighborhoods of flib in database
     def update_neighbors(self, flib, considered_libs=None):

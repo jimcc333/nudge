@@ -100,13 +100,30 @@ def main(args):
     else:
         # Manual mode
 
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\db4\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\1\\')
         database = DBase(paths)
         database.update_metrics()
-        database.estimate_error()
-        database.estimate_error(method='cubic')
-        database.find_error()
-        database.find_error(method='cubic')
+
+        database.build(50, 0)
+
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\2\\')
+        database = DBase(paths)
+        database.update_metrics()
+
+        database.build(40, 10)
+
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\3\\')
+        database = DBase(paths)
+        database.update_metrics()
+
+        database.build(30, 20)
+
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\4\\')
+        database = DBase(paths)
+        database.update_metrics()
+
+        database.build(25, 25)
+
 
         '''
         # Plot data
