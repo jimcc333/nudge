@@ -34,7 +34,11 @@ import numpy as np
 
 def main(args, x=None, y=None, z=None):
     if x is not None:
-        return f6(x, y, 0.5)
+        if y is None:
+            y = 0.5
+        if z is None:
+            z = 0.5
+        return f6(x, y, z)
     print('---Placeholder XSgen program---')
 
     if len(args) != 3:
@@ -53,7 +57,8 @@ def main(args, x=None, y=None, z=None):
     # Overwriting to switch functions
     x = lib.inputs.xsgen['fuel_density']
     y = lib.inputs.xsgen['clad_density']
-    outputs = 'BUd = ' + str(f6(x, y, 0.5)) + '\n'\
+    z = lib.inputs.xsgen['cool_density']
+    outputs = 'BUd = ' + str(f6(x, y, z)) + '\n'\
               + 'NEUT_PROD = ' + str(0) + '\n'\
               + 'NEUT_DEST = ' + str(0) + '\n'
 
