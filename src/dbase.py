@@ -11,7 +11,7 @@ from scipy.interpolate import griddata
 
 from library import Library
 from objects import xsgenParams, Neighborhood
-from pxsgen import burnup_maker, prod_maker, dest_maker
+from pxsgen import burnup_maker, prod_maker, dest_maker, main
 
 """
 A class that handles all generated libraries
@@ -306,13 +306,13 @@ class DBase:
             self.flibs[-1].neighborhood
         except AttributeError:
             print('  Building neighborhood of new point')
-            considered_libs = self.flibs[-1].proximity_order[:self.dimensions * 3]
+            considered_libs = self.flibs[-1].proximity_order[:self.dimensions * 4]
             self.update_neighbors(self.flibs[-1], considered_libs=considered_libs)
             # Update the neighbors of new points neighbors
             print('  Updating neighbors of new points neighbors:')
             for i in self.flibs[-1].neighborhood.lib_numbers:
                 print('    Updating neighbors of lib', self.flibs[i].number)
-                considered_libs = self.flibs[i].proximity_order[:self.dimensions * 3]
+                considered_libs = self.flibs[i].proximity_order[:self.dimensions * 4]
                 self.update_neighbors(self.flibs[i], considered_libs=considered_libs)
 
         # Find ranks
@@ -337,7 +337,7 @@ class DBase:
             return
 
         # Iterate through all random points
-        rand_count = len(coords) * 100 #TODO: make this better, should probably depend on dimensions too
+        rand_count = len(coords) * 5000 #TODO: make this better, should probably depend on dimensions too
         rand_points = [[random.random() for i in range(self.dimensions)] for i in range(rand_count)]
         #print('first rand point:', rand_points[0], 'len of rands:', len(rand_points))
 
@@ -381,13 +381,13 @@ class DBase:
         self.add_lib(p_cand, screening)    # Also updates metrics
 
     # Generates new points for the purpose of finding database error
-    def find_error(self, method='linear', print_result=False):
+    def find_error(self, method='linear', print_result=False, multiplier=5000):
         # Skip if points are too few
         if len(self.flibs) < 6:
             return
 
         # Generate random points for database
-        rand_count = 3000 * self.dimensions
+        rand_count = multiplier * self.dimensions
         values = copy.deepcopy(self.basecase.inputs.xsgen)
         rand_points = [copy.copy(values) for i in range(rand_count)]
 
@@ -406,7 +406,9 @@ class DBase:
             if np.isnan(interpolated):
                 out_of_range += 1
                 continue
-            real = burnup_maker(rand) + prod_maker(rand) + dest_maker(rand)
+            x = rand['fuel_density']
+            y = rand['clad_density']
+            real = main('', x=x, y=y)
             tot_error += 100 * abs(real - interpolated) / real
         tot_error /= rand_count
         self.database_error.append(round(tot_error, 2))
@@ -671,7 +673,7 @@ class DBase:
             lib_target.proximity_order = sorted(distances_target, key=distances_target.get)[1:]
 
     # Finds the estimate of voronoi cell sizes in database
-    def voronoi(self, s_mult=500):
+    def voronoi(self, s_mult=2000):
         # For the set of input points in d dimensional space,
         # generates samples number of random points. For each random
         # point, finds which point in p_coords is closest to it for

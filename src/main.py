@@ -81,10 +81,15 @@
 #
 
 import os
-
 from objects import PathNaming
 from dbase import DBase
 
+from pxsgen import *
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+from matplotlib import cm
+import numpy as np
 
 def main(args):
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -99,67 +104,58 @@ def main(args):
         pass
     else:
         # Manual mode
-
         paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\1\\')
         database = DBase(paths)
         database.update_metrics()
-
-        database.build(50, 0)
+        database.build(30, 0)
 
         paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\2\\')
         database = DBase(paths)
         database.update_metrics()
-
-        database.build(40, 10)
+        database.build(30, 00)
 
         paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\3\\')
         database = DBase(paths)
         database.update_metrics()
-
-        database.build(30, 20)
+        database.build(20, 10)
 
         paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\4\\')
         database = DBase(paths)
         database.update_metrics()
+        database.build(20, 10)
 
-        database.build(25, 25)
 
-
-        '''
+        """
         # Plot data
-        x = []
-        y = []
-        z = []
-        for i, lib in enumerate(database.flibs):
-            x.append(lib.normalized['fuel_density'])
-            y.append(lib.normalized['clad_density'])
-            z.append(lib.normalized['cool_density'])
-            print(i, lib.rank)
-        x.append(next_lib.furthest_point[0])
-        y.append(next_lib.furthest_point[1])
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        X = np.arange(0, 1, 0.01)
+        Y = np.arange(0, 1, 0.01)
+        X, Y = np.meshgrid(X, Y)
 
-        fig, ax = plt.subplots()
-        ax.set_xlim([-0.1,1.1])
-        ax.set_ylim([-0.1,1.1])
-        labels = [i for i in range(len(x))]
-        #ax.scatter(rx, ry, s=20, c='g')
-        #ax.scatter(p_cand[0], p_cand[1], s=200, c='r')
-        ax.grid(True)
-        fig.tight_layout()
-        color_l = []
+        R = np.sqrt(X ** 2 + Y ** 2)
 
-        for i, txt in enumerate(labels):
-            #label_i = 'p'+str(txt)+', v:'+str(sizes[i])+'\n nonlin:'+str(round(database.flibs[i].neighborhood.nonlinearity,1))
-            label_i = 'p'+str(txt)
-            if i < len(database.flibs):
-                color_l.append(database.flibs[i].neighborhood.nonlinearity)
-            else:
-                label_i = 'NEXT'
-            ax.annotate(label_i, (x[i],y[i]), xytext = (x[i]-0.07,y[i]+0.05))
-        ax.scatter(x, y, s=200, c='b')
+        Z = []
+        for i in range(len(X)):
+            vector = []
+            for j in range(len(Y)):
+                vector.append(f6(X[i][j], Y[i][j], 0.5))
+            Z.append(vector)
+
+        #Z = np.sin(R)
+
+        print('done')
+        surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm,
+                               linewidth=0, antialiased=False)
+        ax.set_zlim(-1.01, 1.01)
+
+        ax.zaxis.set_major_locator(LinearLocator(10))
+        ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+
+        fig.colorbar(surf, shrink=0.5, aspect=5)
+
         plt.show()
-        '''
-
+        """
         '''
         # Find correlation matrix
         a = np.array([x1, x2, ..., xd, y1, y2, y3])
