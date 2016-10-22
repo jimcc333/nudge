@@ -32,7 +32,9 @@ import random
 import numpy as np
 
 
-def main(args):
+def main(args, x=None, y=None, z=None):
+    if x is not None:
+        return f6(x, y, 0.5)
     print('---Placeholder XSgen program---')
 
     if len(args) != 3:
@@ -118,10 +120,12 @@ def dest_maker(inputs):
     return (x6 * (x5 - x4 + x1))**0.5 - x2 + x7
 
 
-if __name__ == '__main__':
-    import sys
-    sys.exit(main(sys.argv))
+""""
+The functions below have been taken from:
+Testing Methods for 3D Scattered Data Interpolation
+by Mira Bozzini and Milvia Rossini. Monograf´ıas de la Academia de Ciencias de Zaragoza. 20: 111–135, (2002).
 
+"""
 
 def f2(x, y, z):
     return (np.tanh(9 * x - 9 * z - 9 * y) + 1) / 9
@@ -147,9 +151,13 @@ def f6(x, y, z):
     x2 = 0.75 * np.exp(- (9 * x + 1) ** 2 / 49 - (9 * y + 1) ** 2 / 10 - (9 * z + 1) ** 2 / 10)
     x3 = 0.50 * np.exp(-0.25 * ((9 * x - 7) ** 2 + (9 * y - 3) ** 2 + (9 * z - 5) ** 2))
     x4 = -0.2 * np.exp(-(9 * x - 4) ** 2 - (9 * y - 7) ** 2 - (9 * z - 5) ** 2)
-    return x1 + x2 + x3 + x4
+    return x1 + x2 + x3 + x4 + 1
 
 
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(main(sys.argv))
 
 
 
