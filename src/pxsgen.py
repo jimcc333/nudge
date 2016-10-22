@@ -154,6 +154,9 @@ def f6(x, y, z):
     return x1 + x2 + x3 + x4 + 1
 
 
+def f7(x, y, z):
+    return 1 / np.sqrt(1 + 2 * np.exp(-3 * (np.sqrt(x ** 2 + y ** 2 + z ** 2) - 6.7)))
+
 
 if __name__ == '__main__':
     import sys
