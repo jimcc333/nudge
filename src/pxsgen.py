@@ -48,6 +48,13 @@ def main(args):
               + 'NEUT_PROD = ' + str(prod_maker(lib.inputs.xsgen)) + '\n'\
               + 'NEUT_DEST = ' + str(dest_maker(lib.inputs.xsgen)) + '\n'
 
+    # Overwriting to switch functions
+    x = lib.inputs.xsgen['fuel_density']
+    y = lib.inputs.xsgen['clad_density']
+    outputs = 'BUd = ' + str(f6(x, y, 0.5)) + '\n'\
+              + 'NEUT_PROD = ' + str(0) + '\n'\
+              + 'NEUT_DEST = ' + str(0) + '\n'
+
     with open(args[2], 'w') as openfile:
         openfile.write(outputs)
 
@@ -116,11 +123,31 @@ if __name__ == '__main__':
     sys.exit(main(sys.argv))
 
 
+def f2(x, y, z):
+    return (np.tanh(9 * x - 9 * z - 9 * y) + 1) / 9
 
 
+# Good
+def f3(x, y, z):
+    return np.cos(6 * z) * (1.25 + np.cos(5.4 * y)) / (6 + 6 * (3 * x - 1) ** 2)
 
 
+# Hump at center
+def f4(x, y, z):
+    return np.exp(-81 / 16 * ((x - 0.5) ** 2 + (y - 0.52) ** 2 + (z - 0.47) ** 2))
 
+# Another hump with steeper drop
+def f5(x, y, z):
+    return np.sqrt(64 - 81 * ((x - 0.5) ** 2 + (y - 0.52) ** 2 + (z - 0.47) ** 2)) / 9
+
+
+# perfect at z=0.5
+def f6(x, y, z):
+    x1 = 0.75 * np.exp(-0.25 * ((9 * x - 2) ** 2 + (9 * y - 2) ** 2 + (9 * z - 2) ** 2))
+    x2 = 0.75 * np.exp(- (9 * x + 1) ** 2 / 49 - (9 * y + 1) ** 2 / 10 - (9 * z + 1) ** 2 / 10)
+    x3 = 0.50 * np.exp(-0.25 * ((9 * x - 7) ** 2 + (9 * y - 3) ** 2 + (9 * z - 5) ** 2))
+    x4 = -0.2 * np.exp(-(9 * x - 4) ** 2 - (9 * y - 7) ** 2 - (9 * z - 5) ** 2)
+    return x1 + x2 + x3 + x4
 
 
 
