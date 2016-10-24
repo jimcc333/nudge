@@ -226,7 +226,7 @@ class DBase:
         return
 
     # Runs exploration and exploitation to build the database
-    def build(self, exploration_count, exploitation_count):
+    def build(self, exploration_count, exploitation_count, print_progress=False):
         self.update_metrics()
         self.print()
 
@@ -235,30 +235,35 @@ class DBase:
         self.run_pxsgen(False)
 
         # Perform exploration
-        print('\n_____________________________________\n-- Exploration Step. Total points:', exploration_count)
+        if print_progress:
+            print('\n_____________________________________\n-- Exploration Step. Total points:', exploration_count)
         for i in range(exploration_count):
-            print('Generating point', len(self.flibs))
+            if print_progress:
+                print('Generating point', len(self.flibs))
             self.exploration(False)
             self.run_pxsgen(False)
-            print('  Estimating error of point')
+            if print_progress:
+                print('  Estimating error of point')
             self.estimate_error()
             #self.find_error(method='cubic')
 
         # Perform exploitation
-        print('\n_____________________________________\n-- Exploitation Step. Total points:', exploitation_count)
+        if print_progress:
+            print('\n_____________________________________\n-- Exploitation Step. Total points:', exploitation_count)
         for i in range(exploitation_count):
-            print('Generating point (exploitation)', len(self.flibs))
+            if print_progress:
+                print('Generating point (exploitation)', len(self.flibs))
             self.exploitation()
             self.run_pxsgen(False)
-            print('  Estimating error of point')
+            if print_progress:
+                print('  Estimating error of point')
             self.estimate_error()
             #self.find_error(method='cubic')
         self.find_error(print_result=True)
         self.find_error(method='cubic', print_result=True)
 
         # Write errors
-        print('\n_________________________________________________________')
-        print('-- Database complete. Writing error vectors to errors.txt')
+        print(self.paths.database_path, 'complete')
         ip_path = self.paths.database_path + 'errors.txt'
         with open(ip_path, 'w') as openfile:  # bad naming here
             openfile.write('max errors\n' + str(self.est_error_max).replace(',', ''))
@@ -320,7 +325,8 @@ class DBase:
                 self.update_neighbors(self.flibs[i], considered_libs=considered_libs)
         """
         # Find ranks
-        print('  Finding ranks of database')
+        if print_output:
+            print('  Finding ranks of database')
         self.generate_ranks()
         if print_output:
             print('    Ranks:')
@@ -330,7 +336,8 @@ class DBase:
         # Find the point with highest rank and add it
         max_rank_i = [lib.rank for lib in self.flibs].index(max(lib.rank for lib in self.flibs))
         rounded_point = [round(i, 2) for i in self.flibs[max_rank_i].furthest_point]
-        print('Selected lib', self.flibs[max_rank_i].number, 'point:', rounded_point)
+        if print_output:
+            print('Selected lib', self.flibs[max_rank_i].number, 'point:', rounded_point)
         self.add_lib(self.flibs[max_rank_i].furthest_point, False)
 
     # Finds the coordinates of next point to sample
@@ -382,8 +389,8 @@ class DBase:
             # Check if projection threshold is too low
             if (counter+1) % 100 == 0 and fail_count/(counter+1) > 0.50:
                 self.proj_threshold /= 2
-                print('Increasing projection threshold to', self.proj_threshold, 'fail rate was at',
-                      round(fail_count/(counter+1), 3))
+                # print('Increasing projection threshold to', self.proj_threshold, 'fail rate was at',
+                #      round(fail_count/(counter+1), 3))
 
         # Create a new library with the selected next point and add it to flibs/slibs
         self.add_lib(p_cand, screening)    # Also updates metrics
@@ -476,7 +483,7 @@ class DBase:
         for lib in self.flibs:
             # Calculate rank
             lib.rank = 3 * lib.voronoi_size + lib.excluded_error / total_nonlinearity
-            print(lib.number, lib.voronoi_size, lib.excluded_error / total_nonlinearity, lib.rank)
+            # print(lib.number, lib.voronoi_size, lib.excluded_error / total_nonlinearity, lib.rank)
 
     # Creates the initial set of inputs before exploration begins
     def initial_exploration(self, screening):
@@ -484,7 +491,7 @@ class DBase:
         # Make sure this is really initial
         points = len(self.slibs) if screening else len(self.flibs)
         if points > 0:
-            print('Initial exploration method called, but there are already libraries in database')
+            # print('Initial exploration method called, but there are already libraries in database')
             return
 
         # Assign all dimensions 0, 0.5, and 1 to create 3 initial input libs
@@ -561,11 +568,14 @@ class DBase:
 
         plt.show()
 
-
     # Prints information about database
     def print(self):
         print('Database ', self.paths.database_path)
         print(' Screening ips:', len(self.slibs), ' Full ips:', len(self.flibs), '  Dimensions:', self.dimensions)
+
+    # Randomly selects and adds the next point
+    def random_next(self, screening=False):
+        self.add_lib([random.random() for i in range(self.dimensions)], screening)
 
     #TODO: basecase output and general numbering will need to be thought-out
     def read_base(self, path):
