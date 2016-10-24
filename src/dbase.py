@@ -242,7 +242,7 @@ class DBase:
             self.run_pxsgen(False)
             print('  Estimating error of point')
             self.estimate_error()
-            self.find_error(method='cubic')
+            #self.find_error(method='cubic')
 
         # Perform exploitation
         print('\n_____________________________________\n-- Exploitation Step. Total points:', exploitation_count)
@@ -252,7 +252,9 @@ class DBase:
             self.run_pxsgen(False)
             print('  Estimating error of point')
             self.estimate_error()
-            self.find_error(method='cubic')
+            #self.find_error(method='cubic')
+        self.find_error(print_result=True)
+        self.find_error(method='cubic', print_result=True)
 
         # Write errors
         print('\n_________________________________________________________')
@@ -265,7 +267,7 @@ class DBase:
             openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
 
     # Estimates the error of the database using leave-1-out method
-    def estimate_error(self, method='linear', print_result=False):
+    def estimate_error(self, method='linear', save_result=True, print_result=False):
         # Skip if points are too few
         if len(self.flibs) < 6:
             return
@@ -276,13 +278,14 @@ class DBase:
             interpolated = self.interpolate(self.flibs[i].coordinate, method=method, exclude=self.flibs[i].number)
             real = main('', self.flibs[i].coordinate[0], self.flibs[i].coordinate[1])
             try:
-                print(i, round(100 * abs(real - interpolated) / real, 2))
-                lib_errors.append(100 * abs(real - interpolated) / real)
+                self.flibs[i].excluded_error = 100 * abs(real - interpolated) / real
+                lib_errors.append(self.flibs[i].excluded_error)
             except ZeroDivisionError:
                 return
-        self.est_error_mean.append(round(sum(lib_errors)/max(len(lib_errors), 1), 2))
-        self.est_error_max.append(round(max(lib_errors), 2))
-        self.est_error_min.append(round(min(lib_errors), 2))
+        if save_result:
+            self.est_error_mean.append(round(sum(lib_errors)/max(len(lib_errors), 1), 2))
+            self.est_error_max.append(round(max(lib_errors), 2))
+            self.est_error_min.append(round(min(lib_errors), 2))
         if print_result:
             print('Estimated error:', round(sum(lib_errors)/max(len(lib_errors), 1), 2))
 
@@ -294,6 +297,7 @@ class DBase:
             print('Not enough flibs in database for exploitation')
             return
 
+        """"
         # Check if neighbors are found
         try:
             self.flibs[0].neighborhood
@@ -314,7 +318,7 @@ class DBase:
                 print('    Updating neighbors of lib', self.flibs[i].number)
                 considered_libs = self.flibs[i].proximity_order[:self.dimensions * 4]
                 self.update_neighbors(self.flibs[i], considered_libs=considered_libs)
-
+        """
         # Find ranks
         print('  Finding ranks of database')
         self.generate_ranks()
@@ -325,7 +329,7 @@ class DBase:
 
         # Find the point with highest rank and add it
         max_rank_i = [lib.rank for lib in self.flibs].index(max(lib.rank for lib in self.flibs))
-        rounded_point = [round(i,2) for i in self.flibs[max_rank_i].furthest_point]
+        rounded_point = [round(i, 2) for i in self.flibs[max_rank_i].furthest_point]
         print('Selected lib', self.flibs[max_rank_i].number, 'point:', rounded_point)
         self.add_lib(self.flibs[max_rank_i].furthest_point, False)
 
@@ -385,7 +389,7 @@ class DBase:
         self.add_lib(p_cand, screening)    # Also updates metrics
 
     # Generates new points for the purpose of finding database error
-    def find_error(self, method='linear', print_result=False, multiplier=15000):
+    def find_error(self, method='linear', save_result=True, print_result=False, multiplier=15000):
         # Skip if points are too few
         if len(self.flibs) < 6:
             return
@@ -418,7 +422,8 @@ class DBase:
                 min_error = point_error
             tot_error += point_error
         tot_error /= rand_count
-        self.database_error.append(round(tot_error, 2))
+        if save_result:
+            self.database_error.append(round(tot_error, 2))
         if print_result:
             print('Real error:', round(tot_error, 2), '%. Max error:', round(max_error, 2), '%. Min error:',
                   round(min_error, 2), '%')
@@ -455,6 +460,7 @@ class DBase:
         # Estimate voronoi cell sizes
         self.voronoi()      #TODO: in the future this will be optimized
 
+        """"
         # Go through all flibs
         for lib in self.flibs:
             # Update outputs
@@ -462,12 +468,15 @@ class DBase:
 
             # Find nonlinearity score
             lib.neighborhood.calculate_nonlinearity()
+        """
+        self.estimate_error(save_result=False)
 
         # Go through all libs again now that nonlinearity scores are found
-        total_nonlinearity = sum([lib.neighborhood.nonlinearity for lib in self.flibs])
+        total_nonlinearity = sum([lib.excluded_error for lib in self.flibs])
         for lib in self.flibs:
             # Calculate rank
-            lib.rank = lib.voronoi_size + lib.neighborhood.nonlinearity / total_nonlinearity
+            lib.rank = 3 * lib.voronoi_size + lib.excluded_error / total_nonlinearity
+            print(lib.number, lib.voronoi_size, lib.excluded_error / total_nonlinearity, lib.rank)
 
     # Creates the initial set of inputs before exploration begins
     def initial_exploration(self, screening):
@@ -715,7 +724,7 @@ class DBase:
             lib_target.proximity_order = sorted(distances_target, key=distances_target.get)[1:]
 
     # Finds the estimate of voronoi cell sizes in database
-    def voronoi(self, s_mult=2000):
+    def voronoi(self, s_mult=500):
         # For the set of input points in d dimensional space,
         # generates samples number of random points. For each random
         # point, finds which point in p_coords is closest to it for

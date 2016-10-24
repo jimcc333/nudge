@@ -22,6 +22,7 @@ class Library:
         # Library analysis values from database
         self.coordinate = []            # The coordinates (based on varied inputs) of the library
         self.voronoi_size = 0           # The Voronoi cell size of the library
+        self.excluded_error = 0         # The error of the database if this point is excluded
         self.furthest_point = []        # The furthest found point within the Voronoi cell
         self.furthest_point_dist = 0    # The distance of the furthest point
         self.rank = 0                   # The rank of the library, used during exploitation

@@ -83,7 +83,7 @@
 import os
 from objects import PathNaming
 from dbase import DBase
-paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\1\\')
+paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\4\\')
 database = DBase(paths)
 database.update_metrics()
 """
@@ -113,36 +113,21 @@ def main(args):
     else:
 
         # Manual mode
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\1\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\3\\')
         database = DBase(paths)
         database.update_metrics()
-        database.build(40, 0)
-
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\4\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.build(0, 40)
+        database.build(0, 30)
 
         paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\2\\')
         database = DBase(paths)
         database.update_metrics()
-        database.build(40, 00)
+        database.build(30, 0)
 
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\3\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\4\\')
         database = DBase(paths)
         database.update_metrics()
-        database.build(40, 00)
-
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\5\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.build(0, 40)
-
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\6\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.build(0, 40)
-
+        database.build(0, 30)
+        database.plot()
 
         """
         # Plot data
