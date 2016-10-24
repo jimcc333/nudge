@@ -240,7 +240,7 @@ class DBase:
             self.exploration(False)
             self.run_pxsgen(False)
             self.estimate_error()
-            self.find_error()
+            self.find_error(method='cubic')
 
         # Perform exploitation
         print('\n_____________________________________\n-- Exploitation Step. Total points:', exploitation_count)
@@ -249,7 +249,7 @@ class DBase:
             self.exploitation()
             self.run_pxsgen(False)
             self.estimate_error()
-            self.find_error()
+            self.find_error(method='cubic')
 
         # Write errors
         print('\n_________________________________________________________')
@@ -381,7 +381,7 @@ class DBase:
         self.add_lib(p_cand, screening)    # Also updates metrics
 
     # Generates new points for the purpose of finding database error
-    def find_error(self, method='linear', print_result=False, multiplier=5000):
+    def find_error(self, method='linear', print_result=False, multiplier=15000):
         # Skip if points are too few
         if len(self.flibs) < 6:
             return
@@ -397,23 +397,28 @@ class DBase:
 
         # Iterate through points to find error of each
         tot_error = 0
-        out_of_range = 0
+        max_error = 0
+        min_error = 100
         for rand in rand_points:
             rand_varied = []
             for key in sorted(self.varied_ips):
                 rand_varied.append(rand[key])
             interpolated = self.interpolate(rand_varied, method=method)
-            if np.isnan(interpolated):
-                out_of_range += 1
-                continue
             x = rand['fuel_density']
             y = rand['clad_density']
             real = main('', x=x, y=y)
-            tot_error += 100 * abs(real - interpolated) / real
+
+            point_error = 100 * abs(real - interpolated) / real
+            if point_error > max_error:
+                max_error = point_error
+            if point_error < min_error:
+                min_error = point_error
+            tot_error += point_error
         tot_error /= rand_count
         self.database_error.append(round(tot_error, 2))
         if print_result:
-            print('Real error:', round(tot_error, 2), ' Points skipped:', round(out_of_range/rand_count*100,1), '%')
+            print('Real error:', round(tot_error, 2), '%. Max error:', round(max_error, 2), '%. Min error:',
+                  round(min_error, 2), '%')
 
     # Generates all neighborhoods after exploration
     def generate_neighbors(self):
@@ -483,14 +488,26 @@ class DBase:
         # Available methods: ‘linear’ or ‘cubic’
         # Database metrics should be updated before running
 
+        data_matrix = copy.copy(self.lib_inputs)
+        outputs = copy.copy(self.lib_outputs)
+
         if exclude is not None:
-            data_matrix = copy.copy(self.lib_inputs)
-            outputs = copy.copy(self.lib_outputs)
             data_matrix = data_matrix[:exclude] + data_matrix[exclude + 1:]
             outputs = outputs[:exclude] + outputs[exclude + 1:]
-            return griddata(data_matrix, outputs, location, method=method).tolist()[0]
 
-        return griddata(self.lib_inputs, self.lib_outputs, location, method=method).tolist()[0]
+        data_matrix = np.asarray(data_matrix)
+        outputs = np.asarray(outputs)
+        location = np.asarray(location)
+
+        interpolated = griddata(data_matrix, outputs, location, method=method).tolist()[0]
+
+        if np.isnan(interpolated):
+            distances = []
+            for point in data_matrix:
+                distances.append(distance.euclidean(point, location))
+            interpolated = outputs[distances.index(min(distances))]
+
+        return interpolated
 
     # Places the output data to the neighborhood of lib
     def neighbor_outputs(self, lib):
@@ -510,6 +527,13 @@ class DBase:
 
             self.data_mat = np.column_stack((self.np_prods, self.np_dests, self.np_BUs))
             self.pca_mat = mlabPCA(self.data_mat)   # PCA matrix
+
+    # Plots data
+    def plot(self):
+        # Plot input points
+        dimention_1 = [i.inputs.xsgen['fuel_density'] for i in self.flibs]
+        dimention_2 = [i.inputs.xsgen['clad_density'] for i in self.flibs]
+
 
     # Prints information about database
     def print(self):

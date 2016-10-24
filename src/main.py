@@ -79,6 +79,14 @@
 #
 #
 #
+"""" easy copy paste:
+import os
+from objects import PathNaming
+from dbase import DBase
+paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\2\\')
+database = DBase(paths)
+database.update_metrics()
+"""
 
 import os
 from objects import PathNaming
@@ -103,6 +111,15 @@ def main(args):
         #TODO: have non-manual mode
         pass
     else:
+
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\2\\')
+        database = DBase(paths)
+        database.update_metrics()
+        database.find_error(print_result=True)
+        database.find_error(print_result=True)
+        database.find_error(print_result=True)
+
+        """"
         # Manual mode
         paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\1\\')
         database = DBase(paths)
@@ -123,7 +140,7 @@ def main(args):
         database = DBase(paths)
         database.update_metrics()
         database.build(20, 10)
-
+        """
 
         """
         # Plot data

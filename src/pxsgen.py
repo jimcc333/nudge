@@ -38,7 +38,8 @@ def main(args, x=None, y=None, z=None):
             y = 0.5
         if z is None:
             z = 0.5
-        return f6(x, y, z)
+        output = f6(x, y, z)
+        return output
     print('---Placeholder XSgen program---')
 
     if len(args) != 3:
