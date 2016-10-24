@@ -5,6 +5,7 @@ import random
 import subprocess
 
 import numpy as np
+import matplotlib.pyplot as plt
 from matplotlib.mlab import PCA as mlabPCA
 from scipy.spatial import distance
 from scipy.interpolate import griddata
@@ -239,6 +240,7 @@ class DBase:
             print('Generating point', len(self.flibs))
             self.exploration(False)
             self.run_pxsgen(False)
+            print('  Estimating error of point')
             self.estimate_error()
             self.find_error(method='cubic')
 
@@ -248,6 +250,7 @@ class DBase:
             print('Generating point (exploitation)', len(self.flibs))
             self.exploitation()
             self.run_pxsgen(False)
+            print('  Estimating error of point')
             self.estimate_error()
             self.find_error(method='cubic')
 
@@ -269,14 +272,11 @@ class DBase:
 
         # TODO: screening check
         lib_errors = []
-        out_of_range = 0
         for i in range(len(self.flibs)):
             interpolated = self.interpolate(self.flibs[i].coordinate, method=method, exclude=self.flibs[i].number)
-            real = self.flibs[i].max_BU + self.flibs[i].max_prod + self.flibs[i].max_dest
-            if np.isnan(interpolated):
-                out_of_range += 1
-                continue
+            real = main('', self.flibs[i].coordinate[0], self.flibs[i].coordinate[1])
             try:
+                print(i, round(100 * abs(real - interpolated) / real, 2))
                 lib_errors.append(100 * abs(real - interpolated) / real)
             except ZeroDivisionError:
                 return
@@ -284,10 +284,10 @@ class DBase:
         self.est_error_max.append(round(max(lib_errors), 2))
         self.est_error_min.append(round(min(lib_errors), 2))
         if print_result:
-            print('Estimated error:', round(sum(lib_errors)/max(len(lib_errors), 1), 2), ' Points skipped:', out_of_range)
+            print('Estimated error:', round(sum(lib_errors)/max(len(lib_errors), 1), 2))
 
     # Exploitation loop, generates next point based on outputs
-    def exploitation(self):
+    def exploitation(self, print_output=False):
         # Check if there are enough libraries
         if len(self.flibs) < self.dimensions * 2 + 2:
             # Not enough libs to construct neighborhoods
@@ -318,6 +318,10 @@ class DBase:
         # Find ranks
         print('  Finding ranks of database')
         self.generate_ranks()
+        if print_output:
+            print('    Ranks:')
+            for lib in self.flibs:
+                print(lib.number, lib.rank)
 
         # Find the point with highest rank and add it
         max_rank_i = [lib.rank for lib in self.flibs].index(max(lib.rank for lib in self.flibs))
@@ -407,7 +411,6 @@ class DBase:
             x = rand['fuel_density']
             y = rand['clad_density']
             real = main('', x=x, y=y)
-
             point_error = 100 * abs(real - interpolated) / real
             if point_error > max_error:
                 max_error = point_error
@@ -531,8 +534,23 @@ class DBase:
     # Plots data
     def plot(self):
         # Plot input points
-        dimention_1 = [i.inputs.xsgen['fuel_density'] for i in self.flibs]
-        dimention_2 = [i.inputs.xsgen['clad_density'] for i in self.flibs]
+        x = [i[0] for i in self.lib_inputs]
+        y = [i[1] for i in self.lib_inputs]
+        s = [10 for i in self.lib_inputs]   # Sizes
+        s[-1] = 50
+
+        fig, ax = plt.subplots()
+        ax.scatter(x, y, s=s)
+        ax.set_xlim([-0.1, 1.1])
+        ax.set_ylim([-0.1, 1.1])
+        for i in range(len(x)):
+            ax.annotate(str(i), (x[i], y[i]))
+
+        # Plot underlying function
+        grid_x, grid_y = np.mgrid[0:1:100j, 0:1:100j]
+        plt.imshow(main('', grid_x, grid_y), extent=(0, 1, 0, 1), origin='lower')
+
+        plt.show()
 
 
     # Prints information about database
@@ -590,8 +608,8 @@ class DBase:
         self.dimensions = len(self.varied_ips)
 
     # Runs pxsgen on all waiting inputs and adds result to database
-    def run_pxsgen(self, exploitation):
-        if exploitation:
+    def run_pxsgen(self, screening):
+        if screening:
             for i in range(len(self.slibs)):
                 shell_arg = self.paths.pxsgen_command + ' ' + self.slibs[i].ip_path + ' ' + self.slibs[i].op_path
                 if not os.path.exists(self.slibs[i].op_path):

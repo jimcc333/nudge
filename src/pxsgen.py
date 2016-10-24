@@ -38,7 +38,7 @@ def main(args, x=None, y=None, z=None):
             y = 0.5
         if z is None:
             z = 0.5
-        output = f6(x, y, z)
+        output = f8(x, y, z)
         return output
     print('---Placeholder XSgen program---')
 
@@ -59,7 +59,7 @@ def main(args, x=None, y=None, z=None):
     x = lib.inputs.xsgen['fuel_density']
     y = lib.inputs.xsgen['clad_density']
     z = lib.inputs.xsgen['cool_density']
-    outputs = 'BUd = ' + str(f6(x, y, z)) + '\n'\
+    outputs = 'BUd = ' + str(f8(x, y, z)) + '\n'\
               + 'NEUT_PROD = ' + str(0) + '\n'\
               + 'NEUT_DEST = ' + str(0) + '\n'
 
@@ -162,6 +162,11 @@ def f6(x, y, z):
 
 def f7(x, y, z):
     return 1 / np.sqrt(1 + 2 * np.exp(-3 * (np.sqrt(x ** 2 + y ** 2 + z ** 2) - 6.7)))
+
+
+# Ignores z
+def f8(x, y, z):
+    return x * (1 - x) * np.cos(4 * np.pi * x) * np.sin(4 * np.pi * y ** 2) ** 2 + 1
 
 
 if __name__ == '__main__':
