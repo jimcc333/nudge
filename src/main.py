@@ -83,7 +83,7 @@
 import os
 from objects import PathNaming
 from dbase import DBase
-paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\11\\')
+paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\1\\')
 database = DBase(paths)
 database.update_metrics()
 database.plot()

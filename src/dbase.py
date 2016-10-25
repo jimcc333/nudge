@@ -416,11 +416,6 @@ class DBase:
         min_error = 100
         for rand in rand_points:
             rand_varied = []
-            for key in sorted(self.varied_ips):
-                rand_varied.append(rand[key])
-            interpolated = self.interpolate(rand_varied, method=method)
-            x = rand['fuel_density']
-            y = rand['clad_density']
             real = main('', [x, y])
             point_error = 100 * abs(real - interpolated) / real
             if point_error > max_error:
