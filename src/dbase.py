@@ -274,7 +274,7 @@ class DBase:
     # Estimates the error of the database using leave-1-out method
     def estimate_error(self, method='linear', save_result=True, print_result=False):
         # Skip if points are too few
-        if len(self.flibs) < 6:
+        if len(self.flibs) < self.dimensions * 2:
             return
 
         # TODO: screening check

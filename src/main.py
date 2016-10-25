@@ -83,9 +83,10 @@
 import os
 from objects import PathNaming
 from dbase import DBase
-paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\2\\')
+paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\11\\')
 database = DBase(paths)
 database.update_metrics()
+database.plot()
 """
 
 import os
@@ -110,10 +111,12 @@ def main(args):
 
     # Database path
     if '-d' in args:
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\2\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\1\\')
         database = DBase(paths)
         database.update_metrics()
-        database.run_pxsgen(False)
+        #database.build(20, 20)
+        database.find_error(print_result=True)
+        database.plot()
         return
 
     # Manual mode check
@@ -123,12 +126,7 @@ def main(args):
     else:
 
         # Manual mode
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\1\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.build(15, 50, print_progress=True)
 
-        """"
         pool = Pool(processes=6)
         paths = ['C:\\Users\\Cem\\Documents\\nudge\\1\\',
                  'C:\\Users\\Cem\\Documents\\nudge\\2\\',
@@ -170,7 +168,7 @@ def main(args):
             return
 
         pool.starmap(database_thread, zip(paths, explorations, exploitations))
-        """
+
 
 
         """
