@@ -281,7 +281,7 @@ class DBase:
         lib_errors = []
         for i in range(len(self.flibs)):
             interpolated = self.interpolate(self.flibs[i].coordinate, method=method, exclude=self.flibs[i].number)
-            real = main('', self.flibs[i].coordinate[0], self.flibs[i].coordinate[1])
+            real = main('', self.flibs[i].coordinate)
             try:
                 self.flibs[i].excluded_error = 100 * abs(real - interpolated) / real
                 lib_errors.append(self.flibs[i].excluded_error)
@@ -421,7 +421,7 @@ class DBase:
             interpolated = self.interpolate(rand_varied, method=method)
             x = rand['fuel_density']
             y = rand['clad_density']
-            real = main('', x=x, y=y)
+            real = main('', [x, y])
             point_error = 100 * abs(real - interpolated) / real
             if point_error > max_error:
                 max_error = point_error
@@ -564,7 +564,7 @@ class DBase:
 
         # Plot underlying function
         grid_x, grid_y = np.mgrid[0:1:100j, 0:1:100j]
-        plt.imshow(main('', grid_x, grid_y), extent=(0, 1, 0, 1), origin='lower')
+        plt.imshow(main('', [grid_x, grid_y]), extent=(0, 1, 0, 1), origin='lower')
 
         plt.show()
 

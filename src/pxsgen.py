@@ -32,15 +32,16 @@ import random
 import numpy as np
 
 
-def main(args, x=None, y=None, z=None):
-    if x is not None:
-        if y is None:
-            y = 0.5
-        if z is None:
-            z = 0.5
-        output = f8(x, y, z)
-        return output
-    print('---Placeholder XSgen program---')
+def main(args, inputs=None):
+    max_dimensions = 9
+
+    # Check if inputs are passed to main
+    if inputs is not None:
+        all_inputs = [0.5 for i in range(max_dimensions)]
+        for i, value in enumerate(inputs):
+            all_inputs[i] = value
+        return output_method(all_inputs)
+    # print('---Placeholder XSgen program---')
 
     if len(args) != 3:
         print('Please use "pxsgen input_location output_destination" format')
@@ -50,16 +51,17 @@ def main(args, x=None, y=None, z=None):
     lib = Library('blank', args[2], args[1], 0, False)
 
     # Write outputs
-    outputs = ''
-    outputs = 'BUd = ' + str(burnup_maker(lib.inputs.xsgen)) + '\n'\
-              + 'NEUT_PROD = ' + str(prod_maker(lib.inputs.xsgen)) + '\n'\
-              + 'NEUT_DEST = ' + str(dest_maker(lib.inputs.xsgen)) + '\n'
-
-    # Overwriting to switch functions
-    x = lib.inputs.xsgen['fuel_density']
-    y = lib.inputs.xsgen['clad_density']
-    z = lib.inputs.xsgen['cool_density']
-    outputs = 'BUd = ' + str(f8(x, y, z)) + '\n'\
+    all_inputs = [0.5 for i in range(max_dimensions)]
+    all_inputs[0] = lib.inputs.xsgen['fuel_density']
+    all_inputs[1] = lib.inputs.xsgen['clad_density']
+    all_inputs[2] = lib.inputs.xsgen['cool_density']
+    all_inputs[3] = lib.inputs.xsgen['enrichment']
+    all_inputs[4] = lib.inputs.xsgen['flux']
+    all_inputs[5] = lib.inputs.xsgen['fuel_cell_radius']
+    all_inputs[6] = lib.inputs.xsgen['clad_cell_radius']
+    all_inputs[7] = lib.inputs.xsgen['void_cell_radius']
+    all_inputs[8] = lib.inputs.xsgen['unit_cell_pitch']
+    outputs = 'BUd = ' + str(output_method(all_inputs)) + '\n'\
               + 'NEUT_PROD = ' + str(0) + '\n'\
               + 'NEUT_DEST = ' + str(0) + '\n'
 
@@ -67,6 +69,13 @@ def main(args, x=None, y=None, z=None):
         openfile.write(outputs)
 
     return 0
+
+
+def output_method(inputs):
+    output = f8(inputs[0], inputs[1], inputs[2]) * 2
+    # output += f6(inputs[3], inputs[4], inputs[5])
+    # output += f5(inputs[6], inputs[7], inputs[8])
+    return output
 
 
 def randomize(ip_data):

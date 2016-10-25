@@ -83,12 +83,14 @@
 import os
 from objects import PathNaming
 from dbase import DBase
-paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\4\\')
+paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\2\\')
 database = DBase(paths)
 database.update_metrics()
 """
 
 import os
+from multiprocessing import Pool
+
 from objects import PathNaming
 from dbase import DBase
 
@@ -106,6 +108,14 @@ def main(args):
     if '-h' in args:
         return
 
+    # Database path
+    if '-d' in args:
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\2\\')
+        database = DBase(paths)
+        database.update_metrics()
+        database.run_pxsgen(False)
+        return
+
     # Manual mode check
     if '-m' not in args:
         #TODO: have non-manual mode
@@ -113,21 +123,55 @@ def main(args):
     else:
 
         # Manual mode
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\3\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\1\\')
         database = DBase(paths)
         database.update_metrics()
-        database.build(0, 30)
+        database.build(15, 50, print_progress=True)
 
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\2\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.build(30, 0)
+        """"
+        pool = Pool(processes=6)
+        paths = ['C:\\Users\\Cem\\Documents\\nudge\\1\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\2\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\3\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\4\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\5\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\6\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\7\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\8\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\9\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\10\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\11\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\12\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\13\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\14\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\15\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\16\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\17\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\18\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\19\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\20\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\21\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\22\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\23\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\24\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\25\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\26\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\27\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\28\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\29\\',
+                 'C:\\Users\\Cem\\Documents\\nudge\\30\\']
+        explorations = [97 for i in range(10)] + [72 for i in range(10)] + [47 for i in range(10)]
+        exploitations = [0 for i in range(10)] + [25 for i in range(10)] + [50 for i in range(10)]
 
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\4\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.build(0, 30)
-        database.plot()
+        if len(paths) == len(explorations) and len(paths) == len(exploitations):
+            pass
+        else:
+            print('Input error dude')
+            return
+
+        pool.starmap(database_thread, zip(paths, explorations, exploitations))
+        """
+
 
         """
         # Plot data
@@ -170,6 +214,13 @@ def main(args):
     print('\n-TheEnd-')
 
     return 0
+
+
+def database_thread(database_path, exploration_count, exploitation_count):
+    paths = PathNaming(os.name, database_path=database_path)
+    database = DBase(paths)
+    database.update_metrics()
+    database.build(exploration_count, exploitation_count)
 
 if __name__ == '__main__':
     import sys
