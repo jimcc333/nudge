@@ -112,9 +112,11 @@ def main(args):
     # Database path
     if '-d' in args:
 
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_explore\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_random\\')
         database = DBase(paths)
         database.update_metrics()
+        database.plot()
+        return
         database.build(60, 0, print_progress=True)
 
         paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_exploit\\')

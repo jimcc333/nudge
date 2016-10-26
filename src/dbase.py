@@ -272,7 +272,7 @@ class DBase:
     # Estimates the error of the database using leave-1-out method
     def estimate_error(self, method='linear', save_result=True, print_result=False):
         # Skip if points are too few
-        if len(self.flibs) < self.dimensions * 2:
+        if len(self.flibs) < self.dimensions * 2 or len(self.flibs) < 10:
             return
 
         # TODO: screening check
@@ -575,7 +575,6 @@ class DBase:
     def print(self):
         print('Database ', self.paths.database_path)
         print(' Screening ips:', len(self.slibs), ' Full ips:', len(self.flibs), '  Dimensions:', self.dimensions)
-
 
     # Randomly selects and adds the next point
     def random_selection(self, count=1, screening=False, print_progress=False):
