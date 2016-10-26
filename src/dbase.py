@@ -394,7 +394,7 @@ class DBase:
         self.add_lib(p_cand, screening)    # Also updates metrics
 
     # Generates new points for the purpose of finding database error
-    def find_error(self, method='linear', save_result=True, print_result=False, multiplier=1000):
+    def find_error(self, method='linear', save_result=True, print_result=False, multiplier=10000):
         # Skip if points are too few
         if len(self.flibs) < self.dimensions * 2:
             return
@@ -576,11 +576,18 @@ class DBase:
         print('Database ', self.paths.database_path)
         print(' Screening ips:', len(self.slibs), ' Full ips:', len(self.flibs), '  Dimensions:', self.dimensions)
 
-    # Randomly selects and adds the next point
-    def random_next(self, screening=False):
-        self.add_lib([random.random() for i in range(self.dimensions)], screening)
 
-    #TODO: basecase output and general numbering will need to be thought-out
+    # Randomly selects and adds the next point
+    def random_selection(self, count=1, screening=False, print_progress=False):
+        for i in range(count):
+            self.add_lib([random.random() for i in range(self.dimensions)], screening)
+            self.run_pxsgen(screening)
+            if print_progress:
+                print('  Estimating error of database')
+            self.estimate_error()
+            self.find_error(multiplier=3000)
+
+    # Reads basecase input
     def read_base(self, path):
         database_path = self.paths.database_path
         op_path = database_path + self.paths.FR_Output_folder + self.paths.base_output
