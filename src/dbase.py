@@ -587,6 +587,15 @@ class DBase:
             self.estimate_error()
             self.find_error(multiplier=3000)
 
+        # Write errors
+        print(self.paths.database_path, 'complete')
+        ip_path = self.paths.database_path + 'errors.txt'
+        with open(ip_path, 'w') as openfile:  # bad naming here
+            openfile.write('max errors\n' + str(self.est_error_max).replace(',', ''))
+            openfile.write('\nmin errors\n' + str(self.est_error_min).replace(',', ''))
+            openfile.write('\nmean errors\n' + str(self.est_error_mean).replace(',', ''))
+            openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
+
     # Reads basecase input
     def read_base(self, path):
         database_path = self.paths.database_path

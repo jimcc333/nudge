@@ -115,18 +115,17 @@ def main(args):
         paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_explore\\')
         database = DBase(paths)
         database.update_metrics()
-        database.build(28, 0, print_progress=True)
-
-        return
+        database.build(60, 0, print_progress=True)
 
         paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_exploit\\')
         database = DBase(paths)
         database.update_metrics()
+        database.build(20, 40, print_progress=True)
 
         paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_random\\')
         database = DBase(paths)
         database.update_metrics()
-        database.random_selection(count=100, print_progress=True)
+        database.random_selection(count=63, print_progress=True)
 
     # Manual mode check
     if '-m' not in args:
