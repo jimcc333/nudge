@@ -560,7 +560,14 @@ class DBase:
 
         # Plot underlying function
         grid_x, grid_y = np.mgrid[0:1:100j, 0:1:100j]
-        #plt.imshow(main('', [grid_x, grid_y]), extent=(0, 1, 0, 1), origin='lower')
+        values = copy.deepcopy(self.basecase.inputs.xsgen)
+        outputs = copy.deepcopy(grid_x)
+        for x in range(len(grid_x)):
+            for y in range(len(grid_x[0])):
+                values['fuel_density'] = grid_x[x, y]
+                values['clad_density'] = grid_y[x, y]
+                outputs[x, y] = main('', values)
+        plt.imshow(outputs, extent=(0, 1, 0, 1), origin='lower')
 
         plt.show()
 

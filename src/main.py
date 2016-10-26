@@ -111,12 +111,12 @@ def main(args):
 
     # Database path
     if '-d' in args:
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\1\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_random\\')
         database = DBase(paths)
         database.update_metrics()
-        database.build(10, 10)
+        database.random_next()
+        # database.build(10, 10)
         database.find_error(print_result=True, multiplier=20)
-        database.plot()
         return
 
     # Manual mode check
