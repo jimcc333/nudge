@@ -244,8 +244,8 @@ class DBase:
             self.run_pxsgen(False)
             if print_progress:
                 print('  Estimating error of point')
-            self.estimate_error()
-            #self.find_error(method='cubic')
+            #self.estimate_error()
+            self.find_error()
 
         # Perform exploitation
         if print_progress:
@@ -257,10 +257,8 @@ class DBase:
             self.run_pxsgen(False)
             if print_progress:
                 print('  Estimating error of point')
-            self.estimate_error()
-            #self.find_error(method='cubic')
-        self.find_error(print_result=True)
-        self.find_error(method='cubic', print_result=True)
+            #self.estimate_error()
+            self.find_error()
 
         # Write errors
         print(self.paths.database_path, 'complete')
@@ -281,7 +279,7 @@ class DBase:
         lib_errors = []
         for i in range(len(self.flibs)):
             interpolated = self.interpolate(self.flibs[i].coordinate, method=method, exclude=self.flibs[i].number)
-            real = main('', self.flibs[i].coordinate)
+            real = main('', self.flibs[i].inputs.xsgen)
             try:
                 self.flibs[i].excluded_error = 100 * abs(real - interpolated) / real
                 lib_errors.append(self.flibs[i].excluded_error)
@@ -396,13 +394,13 @@ class DBase:
         self.add_lib(p_cand, screening)    # Also updates metrics
 
     # Generates new points for the purpose of finding database error
-    def find_error(self, method='linear', save_result=True, print_result=False, multiplier=15000):
+    def find_error(self, method='linear', save_result=True, print_result=False, multiplier=1000):
         # Skip if points are too few
-        if len(self.flibs) < 6:
+        if len(self.flibs) < self.dimensions * 2:
             return
 
         # Generate random points for database
-        rand_count = multiplier * self.dimensions
+        rand_count = multiplier
         values = copy.deepcopy(self.basecase.inputs.xsgen)
         rand_points = [copy.copy(values) for i in range(rand_count)]
 
@@ -416,7 +414,10 @@ class DBase:
         min_error = 100
         for rand in rand_points:
             rand_varied = []
-            real = main('', [x, y])
+            for key in sorted(self.varied_ips):
+                rand_varied.append(rand[key])
+            interpolated = self.interpolate(rand_varied, method=method)
+            real = main('', rand)
             point_error = 100 * abs(real - interpolated) / real
             if point_error > max_error:
                 max_error = point_error
@@ -559,7 +560,7 @@ class DBase:
 
         # Plot underlying function
         grid_x, grid_y = np.mgrid[0:1:100j, 0:1:100j]
-        plt.imshow(main('', [grid_x, grid_y]), extent=(0, 1, 0, 1), origin='lower')
+        #plt.imshow(main('', [grid_x, grid_y]), extent=(0, 1, 0, 1), origin='lower')
 
         plt.show()
 
@@ -623,17 +624,18 @@ class DBase:
 
     # Runs pxsgen on all waiting inputs and adds result to database
     def run_pxsgen(self, screening):
+        devnull = open(os.devnull, 'w')
         if screening:
             for i in range(len(self.slibs)):
                 shell_arg = self.paths.pxsgen_command + ' ' + self.slibs[i].ip_path + ' ' + self.slibs[i].op_path
                 if not os.path.exists(self.slibs[i].op_path):
-                    subprocess.run(shell_arg, shell=True)
+                    subprocess.run(shell_arg, shell=True, stdout=devnull, stderr=devnull)
                     self.slibs[i].read_output(self.slibs[i].op_path, 1)
         else:
             for i in range(len(self.flibs)):
                 shell_arg = self.paths.pxsgen_command + ' ' + self.flibs[i].ip_path + ' ' + self.flibs[i].op_path
                 if not os.path.exists(self.flibs[i].op_path):
-                    subprocess.run(shell_arg, shell=True)
+                    subprocess.run(shell_arg, shell=True, stdout=devnull, stderr=devnull)
                     self.flibs[i].read_output(self.flibs[i].op_path, 1)
         self.update_metrics()
 
@@ -729,7 +731,7 @@ class DBase:
             lib_target.proximity_order = sorted(distances_target, key=distances_target.get)[1:]
 
     # Finds the estimate of voronoi cell sizes in database
-    def voronoi(self, s_mult=500):
+    def voronoi(self, s_mult=200):
         # For the set of input points in d dimensional space,
         # generates samples number of random points. For each random
         # point, finds which point in p_coords is closest to it for

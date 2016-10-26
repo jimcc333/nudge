@@ -114,8 +114,8 @@ def main(args):
         paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\1\\')
         database = DBase(paths)
         database.update_metrics()
-        #database.build(20, 20)
-        database.find_error(print_result=True)
+        database.build(10, 10)
+        database.find_error(print_result=True, multiplier=20)
         database.plot()
         return
 
@@ -127,7 +127,7 @@ def main(args):
 
         # Manual mode
 
-        pool = Pool(processes=6)
+        pool = Pool(processes=7)
         paths = ['C:\\Users\\Cem\\Documents\\nudge\\1\\',
                  'C:\\Users\\Cem\\Documents\\nudge\\2\\',
                  'C:\\Users\\Cem\\Documents\\nudge\\3\\',

@@ -36,39 +36,35 @@ def main(args, inputs=None):
     max_dimensions = 9
 
     # Check if inputs are passed to main
-    if inputs is not None:
-        all_inputs = [0.5 for i in range(max_dimensions)]
-        for i, value in enumerate(inputs):
-            all_inputs[i] = value
-        return output_method(all_inputs)
+    write_out = False
+    if inputs is None:
+        # Read inputs from file
+        write_out = True
+        lib = Library('blank', args[2], args[1], 0, False)
+        inputs = lib.inputs.xsgen
+
     # print('---Placeholder XSgen program---')
-
-    if len(args) != 3:
-        print('Please use "pxsgen input_location output_destination" format')
-        return
-
-    # Read inputs
-    lib = Library('blank', args[2], args[1], 0, False)
 
     # Write outputs
     all_inputs = [0.5 for i in range(max_dimensions)]
-    all_inputs[0] = lib.inputs.xsgen['fuel_density']
-    all_inputs[1] = lib.inputs.xsgen['clad_density']
-    all_inputs[2] = lib.inputs.xsgen['cool_density']
-    all_inputs[3] = lib.inputs.xsgen['enrichment']
-    all_inputs[4] = lib.inputs.xsgen['flux']
-    all_inputs[5] = lib.inputs.xsgen['fuel_cell_radius']
-    all_inputs[6] = lib.inputs.xsgen['clad_cell_radius']
-    all_inputs[7] = lib.inputs.xsgen['void_cell_radius']
-    all_inputs[8] = lib.inputs.xsgen['unit_cell_pitch']
-    outputs = 'BUd = ' + str(output_method(all_inputs)) + '\n'\
-              + 'NEUT_PROD = ' + str(0) + '\n'\
-              + 'NEUT_DEST = ' + str(0) + '\n'
+    all_inputs[0] = inputs['fuel_density']
+    all_inputs[1] = inputs['clad_density']
+    all_inputs[2] = inputs['cool_density']
+    all_inputs[3] = inputs['enrichment']
+    all_inputs[4] = inputs['flux']
+    all_inputs[5] = inputs['fuel_cell_radius']
+    all_inputs[6] = inputs['clad_cell_radius']
+    all_inputs[7] = inputs['void_cell_radius']
+    all_inputs[8] = inputs['unit_cell_pitch']
+    output = output_method(all_inputs)
 
-    with open(args[2], 'w') as openfile:
-        openfile.write(outputs)
+    outputs = 'BUd = ' + str(output) + '\n' + 'NEUT_PROD = ' + str(0) + '\n' + 'NEUT_DEST = ' + str(0) + '\n'
 
-    return 0
+    if write_out:
+        with open(args[2], 'w') as openfile:
+            openfile.write(outputs)
+
+    return output
 
 
 def output_method(inputs):
