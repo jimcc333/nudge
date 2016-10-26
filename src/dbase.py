@@ -244,7 +244,7 @@ class DBase:
             self.run_pxsgen(False)
             if print_progress:
                 print('  Estimating error of point')
-            #self.estimate_error()
+            self.estimate_error()
             self.find_error()
 
         # Perform exploitation
@@ -257,7 +257,7 @@ class DBase:
             self.run_pxsgen(False)
             if print_progress:
                 print('  Estimating error of point')
-            #self.estimate_error()
+            self.estimate_error()
             self.find_error()
 
         # Write errors
@@ -396,7 +396,7 @@ class DBase:
     # Generates new points for the purpose of finding database error
     def find_error(self, method='linear', save_result=True, print_result=False, multiplier=10000):
         # Skip if points are too few
-        if len(self.flibs) < self.dimensions * 2:
+        if len(self.flibs) < self.dimensions * 2 or len(self.flibs) < 10:
             return
 
         # Generate random points for database

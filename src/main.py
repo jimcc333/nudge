@@ -111,13 +111,22 @@ def main(args):
 
     # Database path
     if '-d' in args:
+
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_explore\\')
+        database = DBase(paths)
+        database.update_metrics()
+        database.build(28, 0, print_progress=True)
+
+        return
+
+        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_exploit\\')
+        database = DBase(paths)
+        database.update_metrics()
+
         paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_random\\')
         database = DBase(paths)
         database.update_metrics()
-        database.random_next()
-        # database.build(10, 10)
-        database.find_error(print_result=True, multiplier=20)
-        return
+        database.random_selection(count=100, print_progress=True)
 
     # Manual mode check
     if '-m' not in args:
