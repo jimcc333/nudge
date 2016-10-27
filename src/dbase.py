@@ -70,6 +70,7 @@ class DBase:
         self.est_error_min = []         # Estimated minimum database error vector
         self.est_error_mean = []        # Estimated mean database error vector
         self.database_error = []        # "True" database error vector calculated using generated test points
+        self.database_error_max = []    # "True" database max error vector calculated using generated test points
 
         # Check that database path exists
         if not os.path.isdir(paths.database_path):
@@ -267,6 +268,7 @@ class DBase:
             openfile.write('max errors\n' + str(self.est_error_max).replace(',', ''))
             openfile.write('\nmin errors\n' + str(self.est_error_min).replace(',', ''))
             openfile.write('\nmean errors\n' + str(self.est_error_mean).replace(',', ''))
+            openfile.write('\nreal max errors\n' + str(self.database_error_max).replace(',', ''))
             openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
 
     # Estimates the error of the database using leave-1-out method
@@ -427,6 +429,7 @@ class DBase:
         tot_error /= rand_count
         if save_result:
             self.database_error.append(round(tot_error, 2))
+            self.database_error_max.append(round(max_error, 2))
         if print_result:
             print('Real error:', round(tot_error, 2), '%. Max error:', round(max_error, 2), '%. Min error:',
                   round(min_error, 2), '%')
@@ -593,6 +596,7 @@ class DBase:
             openfile.write('max errors\n' + str(self.est_error_max).replace(',', ''))
             openfile.write('\nmin errors\n' + str(self.est_error_min).replace(',', ''))
             openfile.write('\nmean errors\n' + str(self.est_error_mean).replace(',', ''))
+            openfile.write('\nreal max errors\n' + str(self.database_error_max).replace(',', ''))
             openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
 
     # Reads basecase input
