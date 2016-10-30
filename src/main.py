@@ -112,75 +112,18 @@ def main(args):
 
     # Database path
     if '-d' in args:
-
-
-
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_random\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.plot()
         return
-
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_exploit\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.build(20, 40, print_progress=True)
-
-        paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_random\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.random_selection(count=63, print_progress=True)
-
     # Manual mode check
     if '-m' in args:
         print('Begin database repeat mode')
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\test\\', 3, 10, 3)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\random\\', 30, 0, 0, 200)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\0_200\\', 30, 200, 0, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\20_180\\', 30, 180, 20, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\40_160\\', 30, 160, 40, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\60_140\\', 30, 140, 60, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\80_120\\', 30, 120, 80, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\100_100\\', 30, 100, 100, 0)
         return
-    else:
-
-        # Manual mode
-
-        pool = Pool(processes=7)
-        paths = ['C:\\Users\\Cem\\Documents\\nudge\\1\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\2\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\3\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\4\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\5\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\6\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\7\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\8\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\9\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\10\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\11\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\12\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\13\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\14\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\15\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\16\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\17\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\18\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\19\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\20\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\21\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\22\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\23\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\24\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\25\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\26\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\27\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\28\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\29\\',
-                 'C:\\Users\\Cem\\Documents\\nudge\\30\\']
-        explorations = [97 for i in range(10)] + [72 for i in range(10)] + [47 for i in range(10)]
-        exploitations = [0 for i in range(10)] + [25 for i in range(10)] + [50 for i in range(10)]
-
-        if len(paths) == len(explorations) and len(paths) == len(exploitations):
-            pass
-        else:
-            print('Input error dude')
-            return
-
-        pool.starmap(database_thread, zip(paths, explorations, exploitations))
 
     print('\n-TheEnd-')
 
@@ -202,10 +145,52 @@ def repeat_databases(source_path, database_count, exploration_count, exploitatio
         shutil.copy(source_path + paths.dbase_input, database_paths[i])
 
     # Run databases
-    pool = Pool(processes=7)
+    pool = Pool(processes=processes)
     pool.starmap(database_thread, zip(database_paths, explorations, exploitations, randoms))
 
     return
+
+
+def read_error_outputs(source_path):
+    folders = os.listdir(source_path)
+    file_count = 0
+    max_errors = []
+    min_errors = []
+    mean_errors = []
+    real_max = []
+    real_errors = []
+
+    for folder_name in folders:
+        try:
+            int(folder_name)
+            file_count += 1
+
+            doc = open(source_path + folder_name + '\\errors.txt', "r")
+            lines = doc.readlines()
+            max_errors.append([float(i) for i in lines[1][1:-2].split()])
+            min_errors.append([float(i) for i in lines[3][1:-2].split()])
+            mean_errors.append([float(i) for i in lines[5][1:-2].split()])
+            real_max.append([float(i) for i in lines[7][1:-2].split()])
+            real_errors.append([float(i) for i in lines[9][1:-2].split()])
+
+        except ValueError:
+            continue
+
+    print('Max Errors')
+    for i in range(file_count):
+        print(max_errors[i])
+    print('\nMin Errors')
+    for i in range(file_count):
+        print(min_errors[i])
+    print('\nMean Errors')
+    for i in range(file_count):
+        print(mean_errors[i])
+    print('\nReal Max Errors')
+    for i in range(file_count):
+        print(real_max[i])
+    print('\nReal Errors')
+    for i in range(file_count):
+        print(real_errors[i])
 
 
 def database_thread(database_path, exploration_count, exploitation_count, random_count):

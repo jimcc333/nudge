@@ -238,7 +238,7 @@ class DBase:
         # Perform exploration
         if print_progress:
             print('\n_____________________________________\n-- Exploration Step. Total points:', exploration_count)
-        for i in range(exploration_count):
+        for i in range(exploration_count - 3):
             if print_progress:
                 print('Generating point', len(self.flibs))
             self.exploration(False)
@@ -577,10 +577,12 @@ class DBase:
     # Prints information about database
     def print(self):
         print('Database ', self.paths.database_path)
-        print(' Screening ips:', len(self.slibs), ' Full ips:', len(self.flibs), '  Dimensions:', self.dimensions)
+        # print(' Screening ips:', len(self.slibs), ' Full ips:', len(self.flibs), '  Dimensions:', self.dimensions)
 
     # Randomly selects and adds the next point
     def random_selection(self, count=1, screening=False, print_progress=False):
+        self.print()
+
         for i in range(count):
             self.add_lib([random.random() for i in range(self.dimensions)], screening)
             self.run_pxsgen(screening)

@@ -12,7 +12,8 @@ class PathNaming:
         else: self.win = False
 
         self.slash = '/'
-        if self.win: self.slash = '\\'
+        if self.win:
+            self.slash = '\\'
 
         self.database_path = database_path
         self.xsgen_command = 'xsgen --rc'
