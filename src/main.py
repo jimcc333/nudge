@@ -90,6 +90,7 @@ database.plot()
 """
 
 import os
+import shutil
 from multiprocessing import Pool
 
 from objects import PathNaming
@@ -112,12 +113,13 @@ def main(args):
     # Database path
     if '-d' in args:
 
+
+
         paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_random\\')
         database = DBase(paths)
         database.update_metrics()
         database.plot()
         return
-        database.build(60, 0, print_progress=True)
 
         paths = PathNaming(os.name, database_path='C:\\Users\\cb39852\\Documents\\nudge\\2D_exploit\\')
         database = DBase(paths)
@@ -130,9 +132,10 @@ def main(args):
         database.random_selection(count=63, print_progress=True)
 
     # Manual mode check
-    if '-m' not in args:
-        #TODO: have non-manual mode
-        pass
+    if '-m' in args:
+        print('Begin database repeat mode')
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\test\\', 3, 10, 3)
+        return
     else:
 
         # Manual mode
@@ -179,56 +182,40 @@ def main(args):
 
         pool.starmap(database_thread, zip(paths, explorations, exploitations))
 
-
-
-        """
-        # Plot data
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        X = np.arange(0, 1, 0.01)
-        Y = np.arange(0, 1, 0.01)
-        X, Y = np.meshgrid(X, Y)
-
-        R = np.sqrt(X ** 2 + Y ** 2)
-
-        Z = []
-        for i in range(len(X)):
-            vector = []
-            for j in range(len(Y)):
-                vector.append(f6(X[i][j], Y[i][j], 0.5))
-            Z.append(vector)
-
-        #Z = np.sin(R)
-
-        print('done')
-        surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm,
-                               linewidth=0, antialiased=False)
-        ax.set_zlim(-1.01, 1.01)
-
-        ax.zaxis.set_major_locator(LinearLocator(10))
-        ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-
-        fig.colorbar(surf, shrink=0.5, aspect=5)
-
-        plt.show()
-        """
-        '''
-        # Find correlation matrix
-        a = np.array([x1, x2, ..., xd, y1, y2, y3])
-        corr = np.corrcoef(a)
-        print(corr)
-        '''
-
     print('\n-TheEnd-')
 
     return 0
 
 
-def database_thread(database_path, exploration_count, exploitation_count):
+def repeat_databases(source_path, database_count, exploration_count, exploitation_count, random_count=0, processes=7):
+    # Generate threading lists
+    paths = PathNaming(os.name, database_path=source_path)
+    database_paths = [source_path + str(i) + paths.slash for i in range(database_count)]
+    explorations = [exploration_count for i in range(database_count)]
+    exploitations = [exploitation_count for i in range(database_count)]
+    randoms = [random_count for i in range(database_count)]
+
+    # Make a new folder for each database and place the input files in it
+    for i in range(database_count):
+        os.mkdir(database_paths[i])
+        shutil.copy(source_path + paths.base_input, database_paths[i])
+        shutil.copy(source_path + paths.dbase_input, database_paths[i])
+
+    # Run databases
+    pool = Pool(processes=7)
+    pool.starmap(database_thread, zip(database_paths, explorations, exploitations, randoms))
+
+    return
+
+
+def database_thread(database_path, exploration_count, exploitation_count, random_count):
     paths = PathNaming(os.name, database_path=database_path)
     database = DBase(paths)
     database.update_metrics()
-    database.build(exploration_count, exploitation_count)
+    if random_count > 0:
+        database.random_selection(random_count)
+    else:
+        database.build(exploration_count, exploitation_count)
 
 if __name__ == '__main__':
     import sys
