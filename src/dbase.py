@@ -589,7 +589,7 @@ class DBase:
             if print_progress:
                 print('  Estimating error of database')
             self.estimate_error()
-            self.find_error(multiplier=3000)
+            self.find_error()
 
         # Write errors
         print(self.paths.database_path, 'complete')

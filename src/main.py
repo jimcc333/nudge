@@ -116,14 +116,15 @@ def main(args):
     # Manual mode check
     if '-m' in args:
         print('Begin database repeat mode')
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\0_200\\', 30, 150, 0, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\20_180\\', 30, 130, 20, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\40_160\\', 30, 110, 40, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\60_140\\', 30, 90, 60, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\80_120\\', 30, 70, 80, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\100_100\\', 30, 50, 100, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\random\\', 30, 0, 0, 150)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\20_180\\', 30, 80, 20, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\0_200\\', 30, 100, 0, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\40_160\\', 30, 60, 40, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\60_140\\', 30, 40, 60, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\80_120\\', 30, 20, 80, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\random\\', 30, 0, 0, 100)
         return
+
+    read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\20_180\\')
 
     print('\n-TheEnd-')
 
@@ -151,6 +152,7 @@ def repeat_databases(source_path, database_count, exploration_count, exploitatio
     return
 
 
+# Reads errors of databases inside a folder
 def read_error_outputs(source_path):
     folders = os.listdir(source_path)
     file_count = 0
@@ -162,10 +164,8 @@ def read_error_outputs(source_path):
 
     for folder_name in folders:
         try:
-            int(folder_name)
-            file_count += 1
-
             doc = open(source_path + folder_name + '\\errors.txt', "r")
+            file_count += 1
             lines = doc.readlines()
             max_errors.append([float(i) for i in lines[1][1:-2].split()])
             min_errors.append([float(i) for i in lines[3][1:-2].split()])
@@ -173,24 +173,24 @@ def read_error_outputs(source_path):
             real_max.append([float(i) for i in lines[7][1:-2].split()])
             real_errors.append([float(i) for i in lines[9][1:-2].split()])
 
-        except ValueError:
+        except FileNotFoundError:
             continue
 
     print('Max Errors')
-    for i in range(file_count):
-        print(max_errors[i])
+    print(np.mean(max_errors, axis=0))
     print('\nMin Errors')
-    for i in range(file_count):
-        print(min_errors[i])
+    print(np.mean(min_errors, axis=0))
     print('\nMean Errors')
-    for i in range(file_count):
-        print(mean_errors[i])
+    print(np.mean(mean_errors, axis=0))
     print('\nReal Max Errors')
-    for i in range(file_count):
-        print(real_max[i])
+    print(np.mean(real_max, axis=0))
     print('\nReal Errors')
-    for i in range(file_count):
-        print(real_errors[i])
+    print(np.mean(real_errors, axis=0))
+
+    plt.plot(np.mean(real_errors, axis=0))
+    plt.show()
+
+    return max_errors
 
 
 def database_thread(database_path, exploration_count, exploitation_count, random_count):
