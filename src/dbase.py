@@ -396,7 +396,7 @@ class DBase:
         self.add_lib(p_cand, screening)    # Also updates metrics
 
     # Generates new points for the purpose of finding database error
-    def find_error(self, method='linear', save_result=True, print_result=False, multiplier=10000):
+    def find_error(self, method='linear', save_result=True, print_result=False, multiplier=5000):
         # Skip if points are too few
         if len(self.flibs) < self.dimensions * 2 or len(self.flibs) < 10:
             return

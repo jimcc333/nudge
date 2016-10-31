@@ -116,13 +116,13 @@ def main(args):
     # Manual mode check
     if '-m' in args:
         print('Begin database repeat mode')
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\random\\', 30, 0, 0, 200)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\0_200\\', 30, 200, 0, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\20_180\\', 30, 180, 20, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\40_160\\', 30, 160, 40, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\60_140\\', 30, 140, 60, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\80_120\\', 30, 120, 80, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\100_100\\', 30, 100, 100, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\0_200\\', 30, 150, 0, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\20_180\\', 30, 130, 20, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\40_160\\', 30, 110, 40, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\60_140\\', 30, 90, 60, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\80_120\\', 30, 70, 80, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\100_100\\', 30, 50, 100, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\random\\', 30, 0, 0, 150)
         return
 
     print('\n-TheEnd-')
