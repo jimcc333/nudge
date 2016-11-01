@@ -116,15 +116,35 @@ def main(args):
     # Manual mode check
     if '-m' in args:
         print('Begin database repeat mode')
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\20_180\\', 30, 80, 20, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\0_200\\', 30, 100, 0, 0)
+        # repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\20_180\\', 30, 80, 20, 0)
         repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\40_160\\', 30, 60, 40, 0)
         repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\60_140\\', 30, 40, 60, 0)
         repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\80_120\\', 30, 20, 80, 0)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\0_200\\', 30, 100, 0, 0)
         repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\random\\', 30, 0, 0, 100)
         return
 
-    read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\20_180\\')
+    random_data = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\random1\\')
+    explore_only = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\0_2001\\')
+    exploit_20 = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\20_180\\')
+    exploit_40 = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\40_160\\')
+    exploit_60 = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\60_140\\')
+    exploit_80 = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\80_120\\')
+    plt.plot(random_data[:-1])
+    plt.plot(explore_only[:-1])
+    plt.plot(exploit_20[:-1])
+    plt.plot(exploit_40[:-1])
+    plt.plot(exploit_60[:-1])
+    plt.plot(exploit_80[:-1])
+
+    plt.legend(['Random', 'Explore Only', 'Exploit 20', 'Exploit 40', 'Exploit 60', 'Exploit 80'])
+    x_max = int(min([len(random_data), len(explore_only), len(exploit_20)])) - 1
+    y_max = max([max(random_data), max(explore_only), max(explore_only)])
+    y_max *= 1.05
+    plt.axis([15, x_max, 0, 0.7])
+    plt.xlabel('# of points in database')
+    plt.ylabel('Error (%)')
+    plt.show()
 
     print('\n-TheEnd-')
 
@@ -175,22 +195,13 @@ def read_error_outputs(source_path):
 
         except FileNotFoundError:
             continue
+    if file_count == 0:
+        return []
 
-    print('Max Errors')
-    print(np.mean(max_errors, axis=0))
-    print('\nMin Errors')
-    print(np.mean(min_errors, axis=0))
-    print('\nMean Errors')
-    print(np.mean(mean_errors, axis=0))
-    print('\nReal Max Errors')
-    print(np.mean(real_max, axis=0))
-    print('\nReal Errors')
-    print(np.mean(real_errors, axis=0))
+    # plt.plot(np.mean(real_errors, axis=0))
+    # plt.show()
 
-    plt.plot(np.mean(real_errors, axis=0))
-    plt.show()
-
-    return max_errors
+    return np.mean(real_errors, axis=0)
 
 
 def database_thread(database_path, exploration_count, exploitation_count, random_count):
