@@ -510,8 +510,13 @@ class DBase:
         outputs = copy.copy(self.lib_outputs)
 
         if exclude is not None:
-            data_matrix = data_matrix[:exclude] + data_matrix[exclude + 1:]
-            outputs = outputs[:exclude] + outputs[exclude + 1:]
+            if len(exclude) == 1:
+                data_matrix = data_matrix[:exclude] + data_matrix[exclude + 1:]
+                outputs = outputs[:exclude] + outputs[exclude + 1:]
+            else:
+                for i in reversed(exclude):
+                    data_matrix.pop(i)
+                    outputs.pop(i)
 
         data_matrix = np.asarray(data_matrix)
         outputs = np.asarray(outputs)
@@ -547,19 +552,20 @@ class DBase:
             self.pca_mat = mlabPCA(self.data_mat)   # PCA matrix
 
     # Plots data
-    def plot(self):
+    def plot(self, numbers=True, points=True):
         # Plot input points
         x = [i[0] for i in self.lib_inputs]
         y = [i[1] for i in self.lib_inputs]
         s = [10 for i in self.lib_inputs]   # Sizes
-        s[-1] = 50
 
         fig, ax = plt.subplots()
-        ax.scatter(x, y, s=s)
-        ax.set_xlim([-0.01, 1.01])
         ax.set_ylim([-0.01, 1.01])
-        for i in range(len(x)):
-            ax.annotate(str(i), (x[i], y[i]))
+        ax.set_xlim([-0.01, 1.01])
+        if points:
+            ax.scatter(x, y, s=30, c='g')
+            if numbers:
+                for i in range(len(x)):
+                    ax.annotate(str(i), (x[i], y[i]))
 
         # Plot underlying function
         grid_x, grid_y = np.mgrid[0:1:100j, 0:1:100j]
@@ -575,13 +581,17 @@ class DBase:
         plt.show()
 
     # Plots database estimate of blackbox output
-    def plot_estimate(self, exclude_up_to=None):
+    def plot_estimate(self, exclude_after=None):
         # Handle database exclusion
         exclude = None
-        if exclude_up_to is not None:
-            exclude = list(range(len(self.flibs)))[0:exclude_up_to]
+        if exclude_after is not None:
+            exclude = list(range(len(self.flibs)))[exclude_after:]
 
-        # Ploting grid
+        # Get used points
+        data_x = [i[0] for i in self.lib_inputs[:exclude_after]]
+        data_y = [i[1] for i in self.lib_inputs[:exclude_after]]
+
+        # Plot estimate
         grid_x, grid_y = np.mgrid[0:1:80j, 0:1:80j]
         values = copy.deepcopy(grid_x)
         for x in range(len(grid_x)):
@@ -589,6 +599,7 @@ class DBase:
                 values[x, y] = self.interpolate([grid_y[x, y], grid_x[x, y]], exclude=exclude)
 
         fig, ax = plt.subplots()
+        ax.scatter(data_x, data_y, s=30, c='g')
         ax.set_xlim([-0.01, 1.01])
         ax.set_ylim([-0.01, 1.01])
         plt.imshow(values, extent=(0, 1, 0, 1), origin='lower')
