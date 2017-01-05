@@ -556,8 +556,8 @@ class DBase:
 
         fig, ax = plt.subplots()
         ax.scatter(x, y, s=s)
-        ax.set_xlim([-0.1, 1.1])
-        ax.set_ylim([-0.1, 1.1])
+        ax.set_xlim([-0.01, 1.01])
+        ax.set_ylim([-0.01, 1.01])
         for i in range(len(x)):
             ax.annotate(str(i), (x[i], y[i]))
 
@@ -567,12 +567,28 @@ class DBase:
         outputs = copy.deepcopy(grid_x)
         for x in range(len(grid_x)):
             for y in range(len(grid_x[0])):
-                values['fuel_density'] = grid_x[x, y]
-                values['clad_density'] = grid_y[x, y]
+                values[self.varied_ips[0]] = grid_x[x, y]
+                values[self.varied_ips[1]] = grid_y[x, y]
                 outputs[x, y] = main('', values)
         plt.imshow(outputs, extent=(0, 1, 0, 1), origin='lower')
 
         plt.show()
+
+    # Plots database estimate of blackbox output
+    def plot_estimate(self, exclude=None):
+        # Ploting grid
+        grid_x, grid_y = np.mgrid[0:1:80j, 0:1:80j]
+        values = copy.deepcopy(grid_x)
+        for x in range(len(grid_x)):
+            for y in range(len(grid_x[0])):
+                values[x, y] = self.interpolate([grid_y[x, y], grid_x[x, y]], exclude=exclude)
+
+        fig, ax = plt.subplots()
+        ax.set_xlim([-0.01, 1.01])
+        ax.set_ylim([-0.01, 1.01])
+        plt.imshow(values, extent=(0, 1, 0, 1), origin='lower')
+        plt.show()
+        return
 
     # Prints information about database
     def print(self):

@@ -108,6 +108,7 @@ def main(args):
 
     # Check if help is requested
     if '-h' in args:
+        print('Help request')
         return
 
     # Database path
@@ -115,21 +116,19 @@ def main(args):
         return
     # Manual mode check
     if '-m' in args:
-        print('Begin database repeat mode')
-        # repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\20_180\\', 30, 80, 20, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\40_160\\', 30, 60, 40, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\60_140\\', 30, 40, 60, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\80_120\\', 30, 20, 80, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\0_200\\', 30, 100, 0, 0)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\random\\', 30, 0, 0, 100)
+        print('Begin database analysis')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\60_140\\0\\')
+        database = DBase(paths)
+        database.update_metrics()
+        database.plot()
+        database.plot_estimate()
+
         return
 
     random_data = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\random1\\')
     explore_only = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\0_2001\\')
-    exploit_20 = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\20_180\\')
     exploit_40 = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\40_160\\')
-    exploit_60 = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\60_140\\')
-    exploit_80 = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\80_120\\')
+    """
     plt.plot(random_data[:-1])
     plt.plot(explore_only[:-1])
     plt.plot(exploit_20[:-1])
@@ -145,7 +144,7 @@ def main(args):
     plt.xlabel('# of points in database')
     plt.ylabel('Error (%)')
     plt.show()
-
+    """
     print('\n-TheEnd-')
 
     return 0
@@ -200,6 +199,15 @@ def read_error_outputs(source_path):
 
     # plt.plot(np.mean(real_errors, axis=0))
     # plt.show()
+
+    print(source_path)
+    print(np.mean(max_errors, axis=0))
+    print()
+    print(np.mean(mean_errors, axis=0))
+    print()
+    print(np.mean(real_max, axis=0))
+    print()
+    print(np.mean(real_errors, axis=0))
 
     return np.mean(real_errors, axis=0)
 
