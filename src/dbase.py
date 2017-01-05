@@ -575,7 +575,12 @@ class DBase:
         plt.show()
 
     # Plots database estimate of blackbox output
-    def plot_estimate(self, exclude=None):
+    def plot_estimate(self, exclude_up_to=None):
+        # Handle database exclusion
+        exclude = None
+        if exclude_up_to is not None:
+            exclude = list(range(len(self.flibs)))[0:exclude_up_to]
+
         # Ploting grid
         grid_x, grid_y = np.mgrid[0:1:80j, 0:1:80j]
         values = copy.deepcopy(grid_x)
