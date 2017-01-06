@@ -113,19 +113,20 @@ def main(args):
 
     # Database path
     if '-d' in args:
+        database_thread('C:\\Users\\Cem\\Documents\\nudge\\test\\', 10, 10, 0)
         return
     # Manual mode check
     if '-m' in args:
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\60_140\\1\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\40_160\\0\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot(points=False)
-        database.plot_estimate(exclude_after=10)
-        database.plot_estimate(exclude_after=20)
-        database.plot_estimate(exclude_after=40)
-        database.plot_estimate(exclude_after=80)
-        database.plot_estimate()
+
+        it_range = list(range(100))
+        it_range = it_range[10:]
+        for i in it_range:
+            database.estimate_error(exclude_after=i, print_result=True)
+            continue
 
         return
 

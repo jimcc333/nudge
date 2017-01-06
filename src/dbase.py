@@ -272,15 +272,21 @@ class DBase:
             openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
 
     # Estimates the error of the database using leave-1-out method
-    def estimate_error(self, method='linear', save_result=True, print_result=False):
+    def estimate_error(self, method='linear', save_result=True, print_result=False, exclude_after=None):
         # Skip if points are too few
         if len(self.flibs) < self.dimensions * 2 or len(self.flibs) < 10:
             return
 
+        # Handle database exclusions
+        exclude_list = []
+        if exclude_after is not None:
+            exclude_list = list(range(len(self.flibs)))[exclude_after:]
+
         # TODO: screening check
         lib_errors = []
         for i in range(len(self.flibs)):
-            interpolated = self.interpolate(self.flibs[i].coordinate, method=method, exclude=self.flibs[i].number)
+            all_excluded = [self.flibs[i].number] + exclude_list
+            interpolated = self.interpolate(self.flibs[i].coordinate, method=method, exclude=all_excluded)
             real = main('', self.flibs[i].inputs.xsgen)
             try:
                 self.flibs[i].excluded_error = 100 * abs(real - interpolated) / real
@@ -292,7 +298,7 @@ class DBase:
             self.est_error_max.append(round(max(lib_errors), 2))
             self.est_error_min.append(round(min(lib_errors), 2))
         if print_result:
-            print('Estimated error:', round(sum(lib_errors)/max(len(lib_errors), 1), 2))
+            print('Estimated errors:', lib_errors)
 
     # Exploitation loop, generates next point based on outputs
     def exploitation(self, print_output=False):
@@ -506,17 +512,17 @@ class DBase:
         # Available methods: ‘linear’ or ‘cubic’
         # Database metrics should be updated before running
 
-        data_matrix = copy.copy(self.lib_inputs)
-        outputs = copy.copy(self.lib_outputs)
-
+        # Handle exclusions
         if exclude is not None:
-            if len(exclude) == 1:
-                data_matrix = data_matrix[:exclude] + data_matrix[exclude + 1:]
-                outputs = outputs[:exclude] + outputs[exclude + 1:]
-            else:
-                for i in reversed(exclude):
-                    data_matrix.pop(i)
-                    outputs.pop(i)
+            data_matrix = []
+            outputs = []
+            for i in range(len(self.lib_outputs)):
+                if i not in exclude:
+                    data_matrix.append(self.lib_inputs[i])
+                    outputs.append(self.lib_outputs[i])
+        else:
+            data_matrix = copy.copy(self.lib_inputs)
+            outputs = copy.copy(self.lib_outputs)
 
         data_matrix = np.asarray(data_matrix)
         outputs = np.asarray(outputs)
