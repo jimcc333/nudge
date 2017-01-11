@@ -23,12 +23,12 @@ unit_cell_pitch
 unit_cell_height
 
 # -Density inputs
-fuel_density
-clad_density
+fuel_density 1
+clad_density 1
 cool_density
 
 # -Others
-flux 4
+flux 
 
 
 #--- Database building inputs ---
