@@ -103,6 +103,7 @@ from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from matplotlib import cm
 import numpy as np
 
+
 def main(args):
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -113,14 +114,22 @@ def main(args):
 
     # Database path
     if '-d' in args:
-        database_thread('C:\\Users\\Cem\\Documents\\nudge\\test\\', 10, 10, 0)
+        repeat_databases('C:\\software\\nudge\\long_EO\\', 1, 300, 0, processes=2, record_errors=False)
         return
     # Manual mode check
     if '-m' in args:
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\40_160\\0\\')
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\long\\0\\')
         database = DBase(paths)
         database.update_metrics()
+        database.plot(numbers=False, points=False)
+        database.plot_estimate(exclude_after=60)
+        database.plot_estimate(exclude_after=120)
+        database.plot_estimate(exclude_after=180)
+        database.plot_estimate(exclude_after=240)
+        database.plot_estimate()
+
+        return
 
         it_range = list(range(100))
         it_range = it_range[10:]
@@ -155,13 +164,15 @@ def main(args):
     return 0
 
 
-def repeat_databases(source_path, database_count, exploration_count, exploitation_count, random_count=0, processes=7):
+def repeat_databases(source_path, database_count, exploration_count, exploitation_count, random_count=0, processes=7,
+                     record_errors=True):
     # Generate threading lists
     paths = PathNaming(os.name, database_path=source_path)
     database_paths = [source_path + str(i) + paths.slash for i in range(database_count)]
     explorations = [exploration_count for i in range(database_count)]
     exploitations = [exploitation_count for i in range(database_count)]
     randoms = [random_count for i in range(database_count)]
+    record_errors = [record_errors for i in range(database_count)]
 
     # Make a new folder for each database and place the input files in it
     for i in range(database_count):
@@ -171,7 +182,7 @@ def repeat_databases(source_path, database_count, exploration_count, exploitatio
 
     # Run databases
     pool = Pool(processes=processes)
-    pool.starmap(database_thread, zip(database_paths, explorations, exploitations, randoms))
+    pool.starmap(database_thread, zip(database_paths, explorations, exploitations, randoms, record_errors))
 
     return
 
@@ -217,14 +228,14 @@ def read_error_outputs(source_path):
     return np.mean(real_errors, axis=0)
 
 
-def database_thread(database_path, exploration_count, exploitation_count, random_count):
+def database_thread(database_path, exploration_count, exploitation_count, random_count, record_errors):
     paths = PathNaming(os.name, database_path=database_path)
     database = DBase(paths)
     database.update_metrics()
     if random_count > 0:
         database.random_selection(random_count)
     else:
-        database.build(exploration_count, exploitation_count)
+        database.build(exploration_count, exploitation_count, record_errors=record_errors)
 
 if __name__ == '__main__':
     import sys

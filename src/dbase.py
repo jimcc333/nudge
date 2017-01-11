@@ -227,7 +227,7 @@ class DBase:
         return
 
     # Runs exploration and exploitation to build the database
-    def build(self, exploration_count, exploitation_count, print_progress=False):
+    def build(self, exploration_count, exploitation_count, print_progress=False, record_errors=True):
         self.update_metrics()
         self.print()
 
@@ -245,8 +245,9 @@ class DBase:
             self.run_pxsgen(False)
             if print_progress:
                 print('  Estimating error of point')
-            self.estimate_error()
-            self.find_error()
+            if record_errors:
+                self.estimate_error()
+                self.find_error()
 
         # Perform exploitation
         if print_progress:
@@ -258,18 +259,20 @@ class DBase:
             self.run_pxsgen(False)
             if print_progress:
                 print('  Estimating error of point')
-            self.estimate_error()
-            self.find_error()
+            if record_errors:
+                self.estimate_error()
+                self.find_error()
 
         # Write errors
         print(self.paths.database_path, 'complete')
-        ip_path = self.paths.database_path + 'errors.txt'
-        with open(ip_path, 'w') as openfile:  # bad naming here
-            openfile.write('max errors\n' + str(self.est_error_max).replace(',', ''))
-            openfile.write('\nmin errors\n' + str(self.est_error_min).replace(',', ''))
-            openfile.write('\nmean errors\n' + str(self.est_error_mean).replace(',', ''))
-            openfile.write('\nreal max errors\n' + str(self.database_error_max).replace(',', ''))
-            openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
+        if record_errors:
+            ip_path = self.paths.database_path + 'errors.txt'
+            with open(ip_path, 'w') as openfile:  # bad naming here
+                openfile.write('max errors\n' + str(self.est_error_max).replace(',', ''))
+                openfile.write('\nmin errors\n' + str(self.est_error_min).replace(',', ''))
+                openfile.write('\nmean errors\n' + str(self.est_error_mean).replace(',', ''))
+                openfile.write('\nreal max errors\n' + str(self.database_error_max).replace(',', ''))
+                openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
 
     # Estimates the error of the database using leave-1-out method
     def estimate_error(self, method='linear', save_result=True, print_result=False, exclude_after=None):
