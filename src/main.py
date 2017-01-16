@@ -114,20 +114,25 @@ def main(args):
 
     # Database path
     if '-d' in args:
-        repeat_databases('C:\\software\\nudge\\long_EO\\', 1, 300, 0, processes=2, record_errors=False)
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\long_EO\\0\\')
+        database = DBase(paths)
+        database.update_metrics()
+        database.build(69, 0, record_errors=False)
+        database.plot_estimate()
+        repeat_databases('C:\\software\\nudge\\f6_300\\', 20, 300, 0, processes=6, record_errors=False)
+
         return
     # Manual mode check
     if '-m' in args:
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\long\\0\\')
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\m60\\0\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot(numbers=False, points=False)
-        database.plot_estimate(exclude_after=60)
-        database.plot_estimate(exclude_after=120)
-        database.plot_estimate(exclude_after=180)
-        database.plot_estimate(exclude_after=240)
         database.plot_estimate()
+        return
+        database.plot_estimate(diff=True, exclude_after=50, abs_max=0.3)
+        database.plot_estimate(diff=True, exclude_after=150, abs_max=0.3)
+        database.plot_estimate(diff=True, abs_max=0.3)
 
         return
 

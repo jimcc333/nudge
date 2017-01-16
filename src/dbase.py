@@ -361,7 +361,7 @@ class DBase:
             return
 
         # Iterate through all random points
-        rand_count = len(coords) * 5000 #TODO: make this better, should probably depend on dimensions too
+        rand_count = len(coords) * 500 #TODO: make this better, should probably depend on dimensions too
         rand_points = [[random.random() for i in range(self.dimensions)] for i in range(rand_count)]
         #print('first rand point:', rand_points[0], 'len of rands:', len(rand_points))
 
@@ -590,28 +590,43 @@ class DBase:
         plt.show()
 
     # Plots database estimate of blackbox output
-    def plot_estimate(self, exclude_after=None):
+    def plot_estimate(self, exclude_after=None, diff=False, abs_max=None, abs_min=None):
         # Handle database exclusion
         exclude = None
         if exclude_after is not None:
             exclude = list(range(len(self.flibs)))[exclude_after:]
-
         # Get used points
         data_x = [i[0] for i in self.lib_inputs[:exclude_after]]
         data_y = [i[1] for i in self.lib_inputs[:exclude_after]]
 
-        # Plot estimate
+        # Get estimate data
         grid_x, grid_y = np.mgrid[0:1:80j, 0:1:80j]
         values = copy.deepcopy(grid_x)
         for x in range(len(grid_x)):
             for y in range(len(grid_x[0])):
                 values[x, y] = self.interpolate([grid_y[x, y], grid_x[x, y]], exclude=exclude)
 
+        # Check difference plotting
+        if diff:
+            inputs = copy.deepcopy(self.basecase.inputs.xsgen)
+            for x in range(len(values)):
+                for y in range(len(values[0])):
+                    inputs[self.varied_ips[0]] = grid_x[x, y]
+                    inputs[self.varied_ips[1]] = grid_y[x, y]
+                    values[x, y] = abs(values[x, y] - main('', inputs))
+
+        # Check absolute values for coloring limits
+        if abs_max is None:
+            abs_max = np.amax(values)
+        if abs_min is None:
+            abs_min = np.amin(values)
+
+        # Plot data
         fig, ax = plt.subplots()
         ax.scatter(data_x, data_y, s=30, c='g')
         ax.set_xlim([-0.01, 1.01])
         ax.set_ylim([-0.01, 1.01])
-        plt.imshow(values, extent=(0, 1, 0, 1), origin='lower')
+        plt.imshow(values, extent=(0, 1, 0, 1), origin='lower', vmin=abs_min, vmax=abs_max)
         plt.show()
         return
 
