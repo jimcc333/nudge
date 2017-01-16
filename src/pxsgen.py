@@ -40,7 +40,7 @@ def main(args, inputs=None):
     if inputs is None:
         # Read inputs from file
         write_out = True
-        lib = Library('blank', args[2], args[1], 0, False)
+        lib = Library('blank', args[2], args[1], 0, False)  # The inputs are flipped here and this is fixed elsewhere...
         inputs = lib.inputs.xsgen
 
     # print('---Placeholder XSgen program---')
