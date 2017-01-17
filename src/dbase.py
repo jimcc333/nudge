@@ -232,13 +232,16 @@ class DBase:
         self.print()
 
         # Add some initial points
-        self.initial_exploration(False)
-        self.run_pxsgen(False)
+        added_points = 0
+        if len(self.flibs) < 3:
+            self.initial_exploration(False)
+            self.run_pxsgen(False)
+            added_points = 3
 
         # Perform exploration
         if print_progress:
             print('\n_____________________________________\n-- Exploration Step. Total points:', exploration_count)
-        for i in range(exploration_count - 3):
+        for i in range(exploration_count - added_points):
             if print_progress:
                 print('Generating point', len(self.flibs))
             self.exploration(False)
