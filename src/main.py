@@ -114,12 +114,8 @@ def main(args):
 
     # Database path
     if '-d' in args:
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\long_EO\\0\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.build(69, 0, record_errors=False)
-        database.plot_estimate()
-        repeat_databases('C:\\software\\nudge\\f6_300\\', 20, 300, 0, processes=6, record_errors=False)
+        repeat_databases('C:\\software\\nudge\\f8_300_s20\\', 10, 10, 4, processes=6, record_errors=False)
+        repeat_databases('C:\\software\\nudge\\f8_300_s20\\', 10, 10, 4, processes=6, record_errors=False)
 
         return
     # Manual mode check
@@ -181,9 +177,10 @@ def repeat_databases(source_path, database_count, exploration_count, exploitatio
 
     # Make a new folder for each database and place the input files in it
     for i in range(database_count):
-        os.mkdir(database_paths[i])
-        shutil.copy(source_path + paths.base_input, database_paths[i])
-        shutil.copy(source_path + paths.dbase_input, database_paths[i])
+        if not os.path.isdir(database_paths[i]):
+            os.mkdir(database_paths[i])
+            shutil.copy(source_path + paths.base_input, database_paths[i])
+            shutil.copy(source_path + paths.dbase_input, database_paths[i])
 
     # Run databases
     pool = Pool(processes=processes)
