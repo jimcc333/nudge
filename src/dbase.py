@@ -5,6 +5,7 @@ import random
 import subprocess
 
 import numpy as np
+import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from matplotlib.mlab import PCA as mlabPCA
 from scipy.spatial import distance
@@ -278,7 +279,7 @@ class DBase:
                 openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
 
     # Estimates the error of the database using leave-1-out method
-    def estimate_error(self, method='linear', save_result=True, print_result=False, exclude_after=None):
+    def estimate_error(self, method='linear', save_result=True, print_result=False, exclude_after=None, plot=False):
         # Skip if points are too few
         if len(self.flibs) < self.dimensions * 2 or len(self.flibs) < 10:
             return
@@ -305,6 +306,16 @@ class DBase:
             self.est_error_min.append(round(min(lib_errors), 2))
         if print_result:
             print('Estimated errors:', lib_errors)
+
+        if plot:
+            errors = [flib.excluded_error for flib in self.flibs]
+            x = [i[0] for i in self.lib_inputs]
+            y = [i[1] for i in self.lib_inputs]
+            fig, ax = plt.subplots()
+            ax.set_ylim([-0.01, 1.01])
+            ax.set_xlim([-0.01, 1.01])
+            ax.scatter(x, y, s=160, c=errors)
+            plt.show()
 
     # Exploitation loop, generates next point based on outputs
     def exploitation(self, print_output=False):
@@ -564,7 +575,7 @@ class DBase:
             self.pca_mat = mlabPCA(self.data_mat)   # PCA matrix
 
     # Plots data
-    def plot(self, numbers=True, points=True):
+    def plot(self, numbers=False, points=True, est_errors=False):
         # Plot input points
         x = [i[0] for i in self.lib_inputs]
         y = [i[1] for i in self.lib_inputs]
@@ -574,7 +585,8 @@ class DBase:
         ax.set_ylim([-0.01, 1.01])
         ax.set_xlim([-0.01, 1.01])
         if points:
-            ax.scatter(x, y, s=30, c='g')
+            errors = [flib.excluded_error for flib in self.flibs] if est_errors else 'g'
+            ax.scatter(x, y, s=60, c=errors)
             if numbers:
                 for i in range(len(x)):
                     ax.annotate(str(i), (x[i], y[i]))
@@ -757,6 +769,9 @@ class DBase:
             for flib in self.flibs:
                 self.lib_inputs.append(flib.coordinate)
                 self.lib_outputs.append(flib.max_BU + flib.max_prod + flib.max_dest)
+
+        # Find error estimates
+        self.estimate_error(save_result=False)
 
     # Updates the neighborhoods of flib in database
     def update_neighbors(self, flib, considered_libs=None):

@@ -114,17 +114,26 @@ def main(args):
 
     # Database path
     if '-d' in args:
-        repeat_databases('C:\\software\\nudge\\f8_300_s20\\', 10, 10, 4, processes=6, record_errors=False)
-        repeat_databases('C:\\software\\nudge\\f8_300_s20\\', 10, 10, 4, processes=6, record_errors=False)
+        for i in range(15):
+            repeat_databases('C:\\software\\nudge\\f8_300_s10\\', 20, 10, 10, processes=6, record_errors=False)
+
+        for i in range(10):
+            repeat_databases('C:\\software\\nudge\\f8_300_s15\\', 20, 15, 15, processes=6, record_errors=False)
+
+        for i in range(5):
+            repeat_databases('C:\\software\\nudge\\f8_300_s30\\', 20, 30, 30, processes=6, record_errors=False)
 
         return
     # Manual mode check
     if '-m' in args:
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\m60\\0\\')
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\long\\0\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot_estimate()
+        # database.estimate_error()
+        database.plot(numbers=False, est_errors=True)
+        return
+        database.estimate_error(plot=True)
         return
         database.plot_estimate(diff=True, exclude_after=50, abs_max=0.3)
         database.plot_estimate(diff=True, exclude_after=150, abs_max=0.3)
