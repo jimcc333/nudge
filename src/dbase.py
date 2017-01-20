@@ -586,7 +586,7 @@ class DBase:
         ax.set_xlim([-0.01, 1.01])
         if points:
             errors = [flib.excluded_error for flib in self.flibs] if est_errors else 'g'
-            ax.scatter(x, y, s=60, c=errors)
+            ax.scatter(x, y, s=200, c=errors)
             if numbers:
                 for i in range(len(x)):
                     ax.annotate(str(i), (x[i], y[i]))
@@ -605,7 +605,7 @@ class DBase:
         plt.show()
 
     # Plots database estimate of blackbox output
-    def plot_estimate(self, exclude_after=None, diff=False, abs_max=None, abs_min=None):
+    def plot_estimate(self, exclude_after=None, diff=False, abs_max=None, abs_min=None, est_errors=False):
         # Handle database exclusion
         exclude = None
         if exclude_after is not None:
@@ -638,7 +638,8 @@ class DBase:
 
         # Plot data
         fig, ax = plt.subplots()
-        ax.scatter(data_x, data_y, s=30, c='g')
+        errors = [flib.excluded_error for flib in self.flibs] if est_errors else 'g'
+        ax.scatter(data_x, data_y, s=200, c=errors)
         ax.set_xlim([-0.01, 1.01])
         ax.set_ylim([-0.01, 1.01])
         plt.imshow(values, extent=(0, 1, 0, 1), origin='lower', vmin=abs_min, vmax=abs_max)
