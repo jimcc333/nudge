@@ -106,10 +106,20 @@ import numpy as np
 
 def main(args):
     os.system('cls' if os.name == 'nt' else 'clear')
+    print('----------------- NUDGE: NUclear Database GEneration software -----------------')
 
     # Check if help is requested
     if '-h' in args:
-        print('Help request')
+        print('NUDGE help:')
+        print('NUDGE is a global surrogate modeling software. It is used to create a database of input-output pairs to '
+              'be used for interpolation for quick estimation of the full simulation.')
+        print('Flags:')
+        print(' -d: location of the database to be generated')
+        print(' -h: help screen')
+        print()
+        print('The database folder should have two files:')
+        print(' - basecase.py: xsgen input file containing base-case values')
+        print(' - inputs.txt:  file containing database inputs')
         return
 
     # Database path
@@ -121,6 +131,28 @@ def main(args):
             repeat_databases('C:\\software\\nudge\\f8_300_s30\\', 15, 30, 30, processes=6, record_errors=False)
 
         return
+
+        print('Begin database generation for ', args[args.index('d') + 1])
+        paths = PathNaming(os.name, args[args.index('d') + 1])
+        database = DBase(paths)
+        database.update_metrics()
+
+        # Handle existing points in the database
+        samples = len(database.flibs)
+        added_exploration = database.inputs['exploration']
+        added_exploitation = database.inputs['exploitation']
+        if samples != 0:
+            if samples > added_exploration + added_exploitation or samples > database.inputs['samples']:
+                print('Database size exceeds maximum samples specified by input')
+                return
+            if samples > added_exploration:
+                added_exploration = 0
+                added_exploitation -= (samples - added_exploration)
+            else:
+                added_exploration -= samples
+
+        database.build(added_exploration, added_exploitation, print_progress=True)
+
     # Manual mode check
     if '-m' in args:
         print('Begin database analysis')

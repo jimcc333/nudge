@@ -32,4 +32,11 @@ flux
 
 
 #--- Database building inputs ---
+# use the exploration flag to specify total additional exploration runs for the database
+exploration
+# use the exploitation flag to specify total additional exploitation runs for the database
+exploitation
+
+
+
 

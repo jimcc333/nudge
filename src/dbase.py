@@ -47,6 +47,10 @@ class DBase:
 
         # Database inputs
         self.inputs = {
+            'exploration': 0,           # Total number of new exploration points to add to the database
+            'exploitation': 0,          # Total number of new exploitation points to add to the database
+            # the following will be implemented later
+            'samples': None,               # Maximum database size (flibs)
             'max_error': None,          # In [%]
             'max_time': 100,            # In [hour]
             'scout_frac': 10,           # Weight of screening time allocation
