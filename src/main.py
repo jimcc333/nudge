@@ -110,18 +110,45 @@ def main(args):
 
     # Check if help is requested
     if '-h' in args:
-        print('NUDGE help:')
-        print('NUDGE is a global surrogate modeling software. It is used to create a database of input-output pairs to '
-              'be used for interpolation for quick estimation of the full simulation.')
+        print('--- Help ---')
+        print('NUDGE is a global surrogate modeling software. It is used to create a database')
+        print('of input-output pairs to be used for interpolation for quick estimation of simulations')
         print('Flags:')
-        print(' -d: location of the database to be generated')
         print(' -h: help screen')
+        print(' -d [PATH]: generate database at [PATH] based on the input file')
+        print(' -explore [PATH]: add one exploration point to database at [PATH]')
+        print(' -exploit [PATH]: add one exploration point to database at [PATH]')
         print()
         print('The database folder should have two files:')
         print(' - basecase.py: xsgen input file containing base-case values')
-        print(' - inputs.txt:  file containing database inputs')
+        print(' - inputs.txt: file containing database inputs')
         return
 
+    if args[1] == '-explore':
+        try:
+            print('Adding 1 new sample in the database at ' + args[2] + ' using exploration method')
+        except IndexError:
+            print('Please provide the path of the database')
+            return
+
+        paths = PathNaming(os.name, args[2])
+        database = DBase(paths)
+        database.update_metrics()
+        database.exploration()
+        return
+
+    if args[1] == '-exploit':
+        try:
+            print('Adding 1 new sample in the database at ' + args[2] + ' using exploitation method')
+        except IndexError:
+            print('Please provide the path of the database')
+            return
+
+        paths = PathNaming(os.name, args[2])
+        database = DBase(paths)
+        database.update_metrics()
+        database.exploitation()
+        return
 
     # Database path
     if '-d' in args:
