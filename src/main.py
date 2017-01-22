@@ -177,26 +177,6 @@ def main(args):
 
         return
 
-    random_data = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\random1\\')
-    explore_only = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\0_2001\\')
-    exploit_40 = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\40_160\\')
-    """
-    plt.plot(random_data[:-1])
-    plt.plot(explore_only[:-1])
-    plt.plot(exploit_20[:-1])
-    plt.plot(exploit_40[:-1])
-    plt.plot(exploit_60[:-1])
-    plt.plot(exploit_80[:-1])
-
-    plt.legend(['Random', 'Explore Only', 'Exploit 20', 'Exploit 40', 'Exploit 60', 'Exploit 80'])
-    x_max = int(min([len(random_data), len(explore_only), len(exploit_20)])) - 1
-    y_max = max([max(random_data), max(explore_only), max(explore_only)])
-    y_max *= 1.05
-    plt.axis([15, x_max, 0, 0.7])
-    plt.xlabel('# of points in database')
-    plt.ylabel('Error (%)')
-    plt.show()
-    """
     print('\n-TheEnd-')
 
     return 0
@@ -275,7 +255,3 @@ def database_thread(database_path, exploration_count, exploitation_count, random
         database.random_selection(random_count)
     else:
         database.build(exploration_count, exploitation_count, record_errors=record_errors)
-
-if __name__ == '__main__':
-    import sys
-    sys.exit(main(sys.argv))
