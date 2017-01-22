@@ -55,7 +55,7 @@ class DBase:
             'explore_mult': 500,        # Exploration method Monte Carlo multiplier
             'voronoi_mult': 200,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 2,           # The factor that multiplies error when finding rank
-            'voronoi_adjuster': 0.5,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
+            'voronoi_adjuster': 0.7,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
         }
 
         # Database libraries
@@ -232,7 +232,8 @@ class DBase:
         return
 
     # Runs exploration and exploitation to build the database
-    def build(self, exploration_count, exploitation_count, print_progress=False, record_errors=True):
+    def build(self, exploration_count, exploitation_count, print_progress=False, record_errors=True,
+              exploit_method='furthest'):
         self.update_metrics()
         self.print()
 
@@ -263,7 +264,7 @@ class DBase:
         for i in range(exploitation_count):
             if print_progress:
                 print('Generating point (exploitation)', len(self.flibs))
-            self.exploitation()
+            self.exploitation(method=exploit_method)
             self.run_pxsgen(False)
             if print_progress:
                 print('  Estimating error of point')
@@ -346,8 +347,9 @@ class DBase:
         ranks = [lib.rank for lib in self.flibs]
         max_rank_i = ranks.index(max(ranks))    # The next point is selected near this point (both methods)
         # Find the point with highest rank and add it
-        selected_point = self.flibs[max_rank_i].furthest_point
-        rounded_point = [round(i, 2) for i in self.flibs[max_rank_i].furthest_point]
+        selected_point = self.flibs[max_rank_i].furthest_point\
+
+        # print('ranks:', [round(i.rank, 2) for i in self.flibs])
 
         if method == 'guided':
             # Find adjustment factors
@@ -357,7 +359,6 @@ class DBase:
             if adjuster > self.inputs['voronoi_adjuster']:
                 adjuster = self.inputs['voronoi_adjuster'] / adjuster
             distance_factors = [1+i*adjuster for i in zeroed_errors]
-            print('distance factors:', distance_factors)
             # Find adjusted voronoi cells
             self.voronoi(factors=distance_factors)
             # Determine coordinates of selected point so that its in the original voronoi cell
@@ -365,8 +366,11 @@ class DBase:
             adjusted_point = [(selected_point[i] + furthest[i])/2 +
                               self.inputs['voronoi_adjuster']*(selected_point[i] - furthest[i])/2
                               for i in range(self.dimensions)]
+            # print('selected:', [round(i, 3) for i in self.flibs[max_rank_i].coordinate])
+            # print('furthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
             selected_point = adjusted_point
 
+        rounded_point = [round(i, 2) for i in selected_point]
         if print_output:
             print('Selected lib', self.flibs[max_rank_i].number, 'point:', rounded_point)
         self.add_lib(selected_point, False)

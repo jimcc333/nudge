@@ -114,6 +114,12 @@ def main(args):
 
     # Database path
     if '-d' in args:
+        repeat_databases('C:\\software\\nudge\\furthest\\', 40, 20, 30, processes=6, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\guided\\', 40, 20, 30, processes=6, record_errors=True, exploit_method='guided')
+        read_error_outputs('C:\\software\\nudge\\furthest\\')
+        print('***\n\n\n')
+        read_error_outputs('C:\\software\\nudge\\guided\\')
+        return
         for i in range(8):
             repeat_databases('C:\\software\\nudge\\f8_300_s15\\', 15, 15, 15, processes=6, record_errors=False)
 
@@ -124,10 +130,13 @@ def main(args):
     # Manual mode check
     if '-m' in args:
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\long_EO\\0\\')
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\guided\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot_estimate(diff=True, est_errors=True)
+        database.exploitation(method='guided')
+        database.plot()
+        return
+        database.build(10,10, print_progress=True, record_errors=False)
         return
         database.estimate_error(plot=True)
         return
@@ -171,13 +180,14 @@ def main(args):
 
 
 def repeat_databases(source_path, database_count, exploration_count, exploitation_count, random_count=0, processes=7,
-                     record_errors=True):
+                     exploit_method='furthest', record_errors=True):
     # Generate threading lists
     paths = PathNaming(os.name, database_path=source_path)
     database_paths = [source_path + str(i) + paths.slash for i in range(database_count)]
     explorations = [exploration_count for i in range(database_count)]
     exploitations = [exploitation_count for i in range(database_count)]
     randoms = [random_count for i in range(database_count)]
+    exploit_method = [exploit_method for i in range(database_count)]
     record_errors = [record_errors for i in range(database_count)]
 
     # Make a new folder for each database and place the input files in it
@@ -189,7 +199,8 @@ def repeat_databases(source_path, database_count, exploration_count, exploitatio
 
     # Run databases
     pool = Pool(processes=processes)
-    pool.starmap(database_thread, zip(database_paths, explorations, exploitations, randoms, record_errors))
+    pool.starmap(database_thread, zip(database_paths, explorations, exploitations, randoms, exploit_method,
+                                      record_errors))
 
     return
 
@@ -235,14 +246,15 @@ def read_error_outputs(source_path):
     return np.mean(real_errors, axis=0)
 
 
-def database_thread(database_path, exploration_count, exploitation_count, random_count, record_errors):
+def database_thread(database_path, exploration_count, exploitation_count, random_count, exploit_method, record_errors):
     paths = PathNaming(os.name, database_path=database_path)
     database = DBase(paths)
     database.update_metrics()
     if random_count > 0:
         database.random_selection(random_count)
     else:
-        database.build(exploration_count, exploitation_count, record_errors=record_errors)
+        database.build(exploration_count, exploitation_count, record_errors=record_errors,
+                       exploit_method=exploit_method)
 
 if __name__ == '__main__':
     import sys
