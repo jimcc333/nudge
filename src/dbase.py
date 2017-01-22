@@ -221,6 +221,7 @@ class DBase:
         # Write out the file
         with open(ip_path, 'w') as openfile: # bad naming here
             openfile.write(ipfile)
+        openfile.close()
 
         # Read it in database
         new_lib = Library(self.paths.database_path, op_path, ip_path, lib_number, screening)
@@ -229,7 +230,6 @@ class DBase:
             self.update_metrics(screening=screening)
         else:
             self.update_metrics(screening=screening)
-        return
 
     # Runs exploration and exploitation to build the database
     def build(self, exploration_count, exploitation_count, print_progress=False, record_errors=True):
@@ -723,7 +723,7 @@ class DBase:
                     self.varied_ips.append(items[0])
                 if items[0] in self.inputs:	# Check database inputs
                     self.inputs[items[0]] = float(items[1])
-
+        doc.close()
         self.dimensions = len(self.varied_ips)
 
     # Runs pxsgen on all waiting inputs and adds result to database
@@ -878,3 +878,4 @@ class DBase:
         self.voronoi_sizes = p_vol
         for i, lib in enumerate(self.flibs):
             lib.voronoi_size = p_vol[i]
+

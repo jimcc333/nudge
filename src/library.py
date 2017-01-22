@@ -119,7 +119,7 @@ class Library:
                     else:
                         # End of initial heavy metal
                         break
-
+        '''
         if self.inputs.xsgen['enrichment'] is not None:
             if self.inputs.xsgen['enrichment'] - (self.inputs.initial_heavy_metal[922350] /
                                                   (self.inputs.initial_heavy_metal[922350] +
@@ -127,6 +127,7 @@ class Library:
                     error_message = 'Input file in ' + self.ip_path + \
                                     ' has inconsistency between enrichment and given mass compositions'
                     raise RuntimeError(error_message)
+        '''
 
     # Reads the xsgen output of library
     def read_output(self, file_path, frac):
