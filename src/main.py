@@ -122,6 +122,7 @@ def main(args):
         print(' - inputs.txt:  file containing database inputs')
         return
 
+
     # Database path
     if '-d' in args:
         for i in range(8):
