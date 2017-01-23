@@ -46,7 +46,7 @@ class Library:
         self.read_input(ip_path)
 
         # Read output if exists
-        #TODO: pass combining fractions (frac) better
+        # TODO: pass combining fractions (frac) better
         if os.path.isdir(op_path):
             self.completed = True
 
@@ -60,8 +60,8 @@ class Library:
             self.read_output(op_path, 1)
         else:
             self.completed = False
-            #TODO: read full run output
-            #TODO: add library to queue
+            # TODO: read full run output
+            # TODO: add library to queue
 
     # Returns the normalized [0,1] array of varied inputs (order REALLY matters here)
     def coordinates(self, varied_ips):

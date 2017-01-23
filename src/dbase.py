@@ -52,6 +52,10 @@ class DBase:
             'scout_frac': 10,           # Weight of screening time allocation
             'explore_frac': 40,         # Weight of exploration time allocation
             'exploit_frac': 50,         # Weight of exploitation time allocation
+            'explore_mult': 500,        # Exploration method Monte Carlo multiplier
+            'voronoi_mult': 200,        # Voronoi method Monte Carlo multiplier
+            'rank_factor': 2,           # The factor that multiplies error when finding rank
+            'voronoi_adjuster': 0.7,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
         }
 
         # Database libraries
@@ -121,7 +125,7 @@ class DBase:
         if tot_sfiles > 0:
             for ip_number in range(tot_sfiles):
                     ip_path = paths.database_path + paths.SR_Input_folder + paths.slash + str(ip_number) + '.py'
-                    #TODO: op_path will need to be updated to work with xsgen
+                    # TODO: op_path will need to be updated to work with xsgen
                     op_path = paths.database_path + paths.SR_Output_folder + paths.slash + str(ip_number) + '.py'
                     #+ paths.xsgen_prefix + paths.sr_prefix + str(ip_number) + '/' + paths.xsgen_op_folder
 
@@ -158,7 +162,7 @@ class DBase:
             os.mkdir(paths.database_path + paths.FR_Output_folder)
 
     # Once normalized coords are generated, pass here to add
-    #TODO: outputting in correct units
+    # TODO: outputting in correct units
     def add_lib(self, norm_coords, screening):
         # Adding a library will:
         # - Convert normalized coords to correct units
@@ -212,7 +216,7 @@ class DBase:
                 raise RuntimeError(error_message)
             ipfile = ipfile.replace(base_line[0], key + ' = ' + str(value))
 
-        #TODO: make necessary change if screening
+        # TODO: make necessary change if screening
 
         # Write out the file
         with open(ip_path, 'w') as openfile: # bad naming here
@@ -228,7 +232,8 @@ class DBase:
         return
 
     # Runs exploration and exploitation to build the database
-    def build(self, exploration_count, exploitation_count, print_progress=False, record_errors=True):
+    def build(self, exploration_count, exploitation_count, print_progress=False, record_errors=True,
+              exploit_method='furthest'):
         self.update_metrics()
         self.print()
 
@@ -259,7 +264,7 @@ class DBase:
         for i in range(exploitation_count):
             if print_progress:
                 print('Generating point (exploitation)', len(self.flibs))
-            self.exploitation()
+            self.exploitation(method=exploit_method)
             self.run_pxsgen(False)
             if print_progress:
                 print('  Estimating error of point')
@@ -312,35 +317,17 @@ class DBase:
             plt.show()
 
     # Exploitation loop, generates next point based on outputs
-    def exploitation(self, print_output=False):
+    def exploitation(self, print_output=False, method='furthest'):
+        # methods: furthest, guided(computationally more expensive)
         # Check if there are enough libraries
         if len(self.flibs) < self.dimensions * 2 + 2:
             # Not enough libs to construct neighborhoods
             print('Not enough flibs in database for exploitation')
             return
 
-        """"
-        # Check if neighbors are found
-        try:
-            self.flibs[0].neighborhood
-        except AttributeError:
-            print('Building initial neighborhoods (this may take a while)')
-            self.generate_neighbors()
+        if method not in ['furthest', 'guided']:
+            raise RuntimeError('The exploitation method ', method, ' is not defined')
 
-        # Update neighbors, start by newest point
-        try:
-            self.flibs[-1].neighborhood
-        except AttributeError:
-            print('  Building neighborhood of new point')
-            considered_libs = self.flibs[-1].proximity_order[:self.dimensions * 4]
-            self.update_neighbors(self.flibs[-1], considered_libs=considered_libs)
-            # Update the neighbors of new points neighbors
-            print('  Updating neighbors of new points neighbors:')
-            for i in self.flibs[-1].neighborhood.lib_numbers:
-                print('    Updating neighbors of lib', self.flibs[i].number)
-                considered_libs = self.flibs[i].proximity_order[:self.dimensions * 4]
-                self.update_neighbors(self.flibs[i], considered_libs=considered_libs)
-        """
         # Find ranks
         if print_output:
             print('  Finding ranks of database')
@@ -350,12 +337,37 @@ class DBase:
             for lib in self.flibs:
                 print(lib.number, lib.rank)
 
+        # Find the next point
+        ranks = [lib.rank for lib in self.flibs]
+        max_rank_i = ranks.index(max(ranks))    # The next point is selected near this point (both methods)
         # Find the point with highest rank and add it
-        max_rank_i = [lib.rank for lib in self.flibs].index(max(lib.rank for lib in self.flibs))
-        rounded_point = [round(i, 2) for i in self.flibs[max_rank_i].furthest_point]
+        selected_point = self.flibs[max_rank_i].furthest_point\
+
+        # print('ranks:', [round(i.rank, 2) for i in self.flibs])
+
+        if method == 'guided':
+            # Find adjustment factors
+            selected_error = self.flibs[max_rank_i].excluded_error
+            zeroed_errors = [lib.excluded_error/selected_error-1 for lib in self.flibs]
+            adjuster = max([abs(i) for i in zeroed_errors])
+            if adjuster > self.inputs['voronoi_adjuster']:
+                adjuster = self.inputs['voronoi_adjuster'] / adjuster
+            distance_factors = [1+i*adjuster for i in zeroed_errors]
+            # Find adjusted voronoi cells
+            self.voronoi(factors=distance_factors)
+            # Determine coordinates of selected point so that its in the original voronoi cell
+            furthest = self.flibs[max_rank_i].furthest_point
+            adjusted_point = [(selected_point[i] + furthest[i])/2 +
+                              self.inputs['voronoi_adjuster']*(selected_point[i] - furthest[i])/2
+                              for i in range(self.dimensions)]
+            # print('selected:', [round(i, 3) for i in self.flibs[max_rank_i].coordinate])
+            # print('furthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
+            selected_point = adjusted_point
+
+        rounded_point = [round(i, 2) for i in selected_point]
         if print_output:
             print('Selected lib', self.flibs[max_rank_i].number, 'point:', rounded_point)
-        self.add_lib(self.flibs[max_rank_i].furthest_point, False)
+        self.add_lib(selected_point, False)
 
     # Finds the coordinates of next point to sample
     def exploration(self, screening=False):
@@ -369,7 +381,7 @@ class DBase:
             return
 
         # Iterate through all random points
-        rand_count = len(coords) * 500 #TODO: make this better, should probably depend on dimensions too
+        rand_count = len(coords) * self.inputs['explore_mult']  # TODO: should probably depend on dimensions too
         rand_points = [[random.random() for i in range(self.dimensions)] for i in range(rand_count)]
         #print('first rand point:', rand_points[0], 'len of rands:', len(rand_points))
 
@@ -378,7 +390,7 @@ class DBase:
         fail_count = 0		# Number of rejected rand points
         for counter, rand in enumerate(rand_points):
             #print('checking point', rand)
-            projection_fail = False		# I know, this is a n00b way to iterate...FINE #TODO: have better flow control
+            projection_fail = False		# I know, this is a n00b way to iterate...FINE # TODO: have better flow control
             min_tot = 10
             for p in coords:
                 tot_dist = 0
@@ -456,7 +468,7 @@ class DBase:
         self.update_proximity()
         # Go through all full libraries and generate initial neighborhood
         for i, lib in enumerate(self.flibs):
-            #TODO: will need to update the initial neighborhood guess
+            # TODO: will need to update the initial neighborhood guess
 
             # Check if there are enough libraries
             if len(self.flibs) < self.dimensions * 2 + 2:
@@ -481,29 +493,19 @@ class DBase:
     # Finds the gradient of all flibs
     def generate_ranks(self):
         # Estimate voronoi cell sizes
-        self.voronoi()      #TODO: in the future this will be optimized
-
-        """"
-        # Go through all flibs
-        for lib in self.flibs:
-            # Update outputs
-            self.neighbor_outputs(lib)
-
-            # Find nonlinearity score
-            lib.neighborhood.calculate_nonlinearity()
-        """
+        self.voronoi()      # TODO: in the future this will be optimized
         self.estimate_error(save_result=False)
 
         # Go through all libs again now that nonlinearity scores are found
         total_nonlinearity = sum([lib.excluded_error for lib in self.flibs])
         for lib in self.flibs:
             # Calculate rank
-            lib.rank = 3 * lib.voronoi_size + lib.excluded_error / total_nonlinearity
+            lib.rank = lib.voronoi_size + lib.excluded_error / total_nonlinearity * self.inputs['rank_factor']
             # print(lib.number, lib.voronoi_size, lib.excluded_error / total_nonlinearity, lib.rank)
 
     # Creates the initial set of inputs before exploration begins
     def initial_exploration(self, screening):
-        #TODO: this will cause the code to fail if there are only 1 or 2 points and the rest get skipped
+        # TODO: this will cause the code to fail if there are only 1 or 2 points and the rest get skipped
         # Make sure this is really initial
         points = len(self.slibs) if screening else len(self.flibs)
         if points > 0:
@@ -553,12 +555,12 @@ class DBase:
     def neighbor_outputs(self, lib):
         outputs = []
         for i in lib.neighborhood.lib_numbers:
-            #TODO: in the future this will access combined output
+            # TODO: in the future this will access combined output
             outputs.append(self.flibs[i].max_BU + self.flibs[i].max_prod + self.flibs[i].max_dest)
         lib.neighborhood.outputs = outputs
         lib.neighborhood.p_output = lib.max_BU + lib.max_prod + lib.max_dest
 
-    #TODO: PCA method need update
+    # TODO: PCA method need update
     def PCA(self):
         if len(self.max_prods) > 0:
             self.np_prods = np.asarray(self.max_prods)
@@ -750,7 +752,7 @@ class DBase:
         # Update normalized values
         for lib in libs:
             for ip in self.basecase.inputs.xsgen.keys():
-                #TODO: assigning normalized values will need to be fixed for xsgen
+                # TODO: assigning normalized values will need to be fixed for xsgen
                 lib.normalized[ip] = lib.inputs.xsgen[ip]
                 lib.coordinate = lib.coordinates(self.varied_ips)
 
@@ -777,7 +779,7 @@ class DBase:
 
         try:
             flib.neighborhood
-        except AttributeError:  #TODO: this may not be necessary since it's done in generate_neighbors
+        except AttributeError:  # TODO: this may not be necessary since it's done in generate_neighbors
             # Stupidly guess initial neighbors
             initial_neighbors = list(range(self.dimensions * 2))
             # Avoid passing the lib in its own neighborhood
@@ -808,7 +810,7 @@ class DBase:
 
             # Update the current data if new has better score
             if current_score < new_neighborhood.neighbor_score:
-                #TODO: this could be improved, information already saved in new_neighborhood
+                # TODO: this could be improved, information already saved in new_neighborhood
                 current_score = new_neighborhood.neighbor_score
                 # print(current_score, subset, round(100*current_iter/total_iters),'%')
                 current_coords = new_neighborhood.p_coords
@@ -828,12 +830,12 @@ class DBase:
             lib_target.proximity_order = sorted(distances_target, key=distances_target.get)[1:]
 
     # Finds the estimate of voronoi cell sizes in database
-    def voronoi(self, s_mult=200):
+    def voronoi(self, factors=None):
         # For the set of input points in d dimensional space,
         # generates samples number of random points. For each random
         # point, finds which point in p_coords is closest to it for
         # Voronoi cell volume approximation.
-        samples = len(self.flibs) * s_mult
+        samples = len(self.flibs) * self.inputs['voronoi_mult']
         p_coords = [i.coordinates(self.varied_ips) for i in self.flibs]
         p_vol = [0] * len(self.flibs)
         dimensions = len(p_coords[0])
@@ -847,21 +849,39 @@ class DBase:
         # Create samples number of random coordinates
         s_coords = [[random.random() for i in range(dimensions)] for i in range(samples)]
 
-        for s in s_coords:      # Random point, s
-            min_dist = 9999
-            p_closest = 0       # The point in the database closest to the given random point
-            for p in p_coords:  # Point in database, p
-                # Save the index and its distance if its closest
-                distance_s = distance.euclidean(p, s)
-                if min_dist > distance_s:
-                    min_dist = distance_s
-                    p_closest = p_coords.index(p)
-            p_vol[p_closest] += 1.0
-            # Update furthest point
-            if min_dist > self.flibs[p_closest].furthest_point_dist:
-                self.flibs[p_closest].furthest_point_dist = min_dist
-                self.flibs[p_closest].furthest_point = s
-                #print('-updated', self.flibs[p_closest].number, 'to', round(s[0], 2), round(s[1], 2), 'dist:', round(min_dist,2))
+        if factors is None:
+            for s in s_coords:      # Random point, s
+                min_dist = 9999
+                p_closest = 0       # The point in the database closest to the given random point
+                for p in p_coords:  # Point in database, p
+                    # Save the index and its distance if its closest
+                    distance_s = distance.euclidean(p, s)
+                    if min_dist > distance_s:
+                        min_dist = distance_s
+                        p_closest = p_coords.index(p)
+                p_vol[p_closest] += 1.0
+                # Update furthest point
+                if min_dist > self.flibs[p_closest].furthest_point_dist:
+                    self.flibs[p_closest].furthest_point_dist = min_dist
+                    self.flibs[p_closest].furthest_point = s
+                    #print('-updated', self.flibs[p_closest].number, 'to', round(s[0], 2), round(s[1], 2), 'dist:', round(min_dist,2))
+        else:
+            if len(factors) != len(self.flibs):
+                raise RuntimeError('Size mismatch of factor and library vectors in voronoi cell calculation')
+            for s in s_coords:      # Random point, s
+                min_dist = 9999
+                p_closest = 0       # The point in the database closest to the given random point
+                for i, p in enumerate(p_coords):  # Point in database, p
+                    # Save the index and its distance if its closest
+                    distance_s = distance.euclidean(p, s) * factors[i]
+                    if min_dist > distance_s:
+                        min_dist = distance_s
+                        p_closest = p_coords.index(p)
+                p_vol[p_closest] += 1.0
+                # Update furthest point
+                if min_dist > self.flibs[p_closest].furthest_point_dist:
+                    self.flibs[p_closest].furthest_point_dist = min_dist
+                    self.flibs[p_closest].furthest_point = s
 
         p_vol = [i/samples for i in p_vol]
 
