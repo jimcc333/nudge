@@ -146,6 +146,7 @@ def main(args):
 
         paths = PathNaming(os.name, args[2])
         database = DBase(paths)
+
         database.update_metrics()
         database.exploitation()
         return
