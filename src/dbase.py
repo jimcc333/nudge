@@ -76,19 +76,19 @@ class DBase:
         # Check that database path exists
         if not os.path.isdir(paths.database_path):
             error_message = 'The database path does not exist. Looking for: ' + paths.database_path
-            raise RuntimeError(error_message)
+            raise NotADirectoryError(error_message)
 
         # Check that database input file exists
         if not os.path.exists(paths.database_path + paths.dbase_input):
             error_message = 'The database input file does not exist. Looking for: ' \
                             + paths.database_path + paths.dbase_input
-            raise RuntimeError(error_message)
+            raise FileNotFoundError(error_message)
 
         # Check that basecase input exists
         if not os.path.exists(paths.database_path + paths.base_input):
             error_message = 'The database base-case input file does not exist. Looking for: ' \
                             + paths.database_path + paths.base_input
-            raise RuntimeError(error_message)
+            raise FileNotFoundError(error_message)
 
         self.name = paths.database_name
 
@@ -270,13 +270,7 @@ class DBase:
         # Write errors
         print(self.paths.database_path, 'complete')
         if record_errors:
-            ip_path = self.paths.database_path + 'errors.txt'
-            with open(ip_path, 'w') as openfile:  # bad naming here
-                openfile.write('max errors\n' + str(self.est_error_max).replace(',', ''))
-                openfile.write('\nmin errors\n' + str(self.est_error_min).replace(',', ''))
-                openfile.write('\nmean errors\n' + str(self.est_error_mean).replace(',', ''))
-                openfile.write('\nreal max errors\n' + str(self.database_error_max).replace(',', ''))
-                openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
+            self.write_errors()
 
     # Estimates the error of the database using leave-1-out method
     def estimate_error(self, method='linear', save_result=True, print_result=False, exclude_after=None, plot=False):
@@ -874,3 +868,13 @@ class DBase:
         self.voronoi_sizes = p_vol
         for i, lib in enumerate(self.flibs):
             lib.voronoi_size = p_vol[i]
+
+    def write_errors(self):
+        # This should check if the file exists to prevent loss of data
+        ip_path = self.paths.database_path + 'errors.txt'
+        with open(ip_path, 'w') as openfile:  # bad naming here
+            openfile.write('max errors\n' + str(self.est_error_max).replace(',', ''))
+            openfile.write('\nmin errors\n' + str(self.est_error_min).replace(',', ''))
+            openfile.write('\nmean errors\n' + str(self.est_error_mean).replace(',', ''))
+            openfile.write('\nreal max errors\n' + str(self.database_error_max).replace(',', ''))
+            openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
