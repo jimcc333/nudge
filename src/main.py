@@ -112,6 +112,16 @@ def main(args):
         print('Help request')
         return
 
+    if '-e' in args:
+        find_errors('C:\\software\\nudge\\long\\', exclude_after=20)
+
+        return
+        read_error_outputs('C:\\software\\nudge\\f8_300\\')
+        read_error_outputs('C:\\software\\nudge\\f8_300_s10\\')
+        read_error_outputs('C:\\software\\nudge\\f8_300_s15\\')
+        read_error_outputs('C:\\software\\nudge\\f8_300_s30\\')
+        return
+
     # Database path
     if '-d' in args:
         repeat_databases('C:\\software\\nudge\\furthest\\', 40, 20, 30, processes=6, record_errors=True)
@@ -201,6 +211,27 @@ def repeat_databases(source_path, database_count, exploration_count, exploitatio
     pool = Pool(processes=processes)
     pool.starmap(database_thread, zip(database_paths, explorations, exploitations, randoms, exploit_method,
                                       record_errors))
+
+    return
+
+
+# Goes through a database study and builds errors for each database
+def find_errors(source_path, find_all=False, exclude_after=None):
+    folders = os.listdir(source_path)
+    slash = '\\' if os.name == 'nt' else '/'
+
+    for folder_name in folders:
+        try:
+            paths = PathNaming(os.name, database_path=source_path+folder_name+slash)
+            database = DBase(paths)
+            print('Finding errors of', database.paths.database_path)
+            database.update_metrics()
+            database.estimate_error(exclude_after=exclude_after)
+            database.find_error()
+            database.write_errors()
+            del database
+        except (FileNotFoundError, NotADirectoryError):
+            continue
 
     return
 
