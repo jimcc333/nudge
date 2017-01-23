@@ -118,6 +118,8 @@ def main(args):
         print(' -d [PATH]: generate database at [PATH] based on the input file')
         print(' -explore [PATH]: add one exploration point to database at [PATH]')
         print(' -exploit [PATH]: add one exploration point to database at [PATH]')
+        print(' -errors [PATH]: display the recorded errors for database at [PATH], if no [PATH] is given will attempt '
+              'to use current directory')
         print()
         print('The database folder should have two files:')
         print(' - basecase.py: xsgen input file containing base-case values')
@@ -149,6 +151,15 @@ def main(args):
 
         database.update_metrics()
         database.exploitation()
+        return
+
+    if args[1] == '-errors':
+        try:
+            database_path = args[2]
+        except IndexError:
+            database_path = os.getcwd()
+        print('Reading errors in', database_path)
+        read_error_outputs(database_path)
         return
 
     # Database path
