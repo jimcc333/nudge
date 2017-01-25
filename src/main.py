@@ -110,41 +110,49 @@ def main(args):
     # Check if help is requested
     if '-h' in args:
         print('Help request')
+        delete_after('C:\\software\\nudge\\f8_120_s15\\', 119)
         return
 
     if '-e' in args:
-        find_errors('C:\\software\\nudge\\long\\', exclude_after=20)
+        read_error_outputs('C:\\software\\nudge\\f8_240_s0\\')
+        read_error_outputs('C:\\software\\nudge\\f8_120_s10\\')
+        read_error_outputs('C:\\software\\nudge\\f8_120_s15\\')
 
         return
-        read_error_outputs('C:\\software\\nudge\\f8_300\\')
-        read_error_outputs('C:\\software\\nudge\\f8_300_s10\\')
-        read_error_outputs('C:\\software\\nudge\\f8_300_s15\\')
-        read_error_outputs('C:\\software\\nudge\\f8_300_s30\\')
+
+        for path in ['C:\\software\\nudge\\f8_300\\0\\', 'C:\\software\\nudge\\f8_300_s10\\0\\', 'C:\\software\\nudge\\f8_300_s15\\0\\']:
+            paths = PathNaming(os.name, database_path=path)
+            database = DBase(paths)
+            database.update_metrics()
+            database.plot(est_errors=True)
+
+        return
         return
 
     # Database path
     if '-d' in args:
-        repeat_databases('C:\\software\\nudge\\furthest\\', 40, 20, 30, processes=6, record_errors=True)
-        repeat_databases('C:\\software\\nudge\\guided\\', 40, 20, 30, processes=6, record_errors=True, exploit_method='guided')
-        read_error_outputs('C:\\software\\nudge\\furthest\\')
-        print('***\n\n\n')
-        read_error_outputs('C:\\software\\nudge\\guided\\')
-        return
-        for i in range(8):
-            repeat_databases('C:\\software\\nudge\\f8_300_s15\\', 15, 15, 15, processes=6, record_errors=False)
+        # find_errors('C:\\software\\nudge\\f8_240_s0\\')
+        find_errors('C:\\software\\nudge\\f8_120_s10\\', exclude_after=120)
+        # read_error_outputs('C:\\software\\nudge\\f8_120_s15\\')
 
+        return
+
+        # repeat_databases('C:\\software\\nudge\\f8_240_s0\\', 18, 120, 120, processes=6, record_errors=False)
+        for i in range(6):
+            repeat_databases('C:\\software\\nudge\\f8_120_s10\\', 12, 10, 10, processes=6, record_errors=False)
         for i in range(4):
-            repeat_databases('C:\\software\\nudge\\f8_300_s30\\', 15, 30, 30, processes=6, record_errors=False)
+            repeat_databases('C:\\software\\nudge\\f8_120_s15\\', 12, 15, 15, processes=6, record_errors=False)
+        for i in range(2):
+            repeat_databases('C:\\software\\nudge\\f8_120_s10\\', 12, 30, 30, processes=6, record_errors=False)
 
         return
     # Manual mode check
     if '-m' in args:
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\guided\\')
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f8_120_s10\\0\\')
         database = DBase(paths)
         database.update_metrics()
-        database.exploitation(method='guided')
-        database.plot()
+        database.plot(points=True)
         return
         database.build(10,10, print_progress=True, record_errors=False)
         return
@@ -217,7 +225,11 @@ def repeat_databases(source_path, database_count, exploration_count, exploitatio
 
 # Goes through a database study and builds errors for each database
 def find_errors(source_path, find_all=False, exclude_after=None):
-    folders = os.listdir(source_path)
+    try:
+        folders = os.listdir(source_path)
+    except FileNotFoundError:
+        print('The database study directory', source_path, 'does not exist')
+        return
     slash = '\\' if os.name == 'nt' else '/'
 
     for folder_name in folders:
@@ -238,6 +250,7 @@ def find_errors(source_path, find_all=False, exclude_after=None):
 
 # Reads errors of databases inside a folder
 def read_error_outputs(source_path):
+    slash = '\\' if os.name == 'nt' else '/'
     folders = os.listdir(source_path)
     file_count = 0
     max_errors = []
@@ -248,7 +261,7 @@ def read_error_outputs(source_path):
 
     for folder_name in folders:
         try:
-            doc = open(source_path + folder_name + '\\errors.txt', "r")
+            doc = open(source_path + folder_name + slash + 'errors.txt', "r")
             file_count += 1
             lines = doc.readlines()
             max_errors.append([float(i) for i in lines[1][1:-2].split()])
@@ -276,6 +289,25 @@ def read_error_outputs(source_path):
 
     return np.mean(real_errors, axis=0)
 
+
+# Deletes all libraries in a database study after the specified number
+def delete_after(database_path, number):
+    path = PathNaming(os.name, database_path=database_path)
+    folders = os.listdir(database_path)
+
+    for folder_name in folders:
+        try:
+            ip_path = database_path + folder_name + path.slash + path.FR_Input_folder
+            op_path = database_path + folder_name + path.slash + path.FR_Output_folder
+            libraries = os.listdir(ip_path)
+            for lib in libraries:
+                lib_i = int(lib.split('.')[0])
+                if lib_i > number:
+                    print('Deleting', lib)
+                    os.remove(ip_path + path.slash + lib)
+                    os.remove(op_path + path.slash + lib)
+        except FileNotFoundError:
+            continue
 
 def database_thread(database_path, exploration_count, exploitation_count, random_count, exploit_method, record_errors):
     paths = PathNaming(os.name, database_path=database_path)
