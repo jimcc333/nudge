@@ -347,8 +347,7 @@ class DBase:
         ranks = [lib.rank for lib in self.flibs]
         max_rank_i = ranks.index(max(ranks))    # The next point is selected near this point (both methods)
         # Find the point with highest rank and add it
-        selected_point = self.flibs[max_rank_i].furthest_point\
-
+        selected_point = self.flibs[max_rank_i].furthest_point
         # print('ranks:', [round(i.rank, 2) for i in self.flibs])
 
         if method == 'guided':
@@ -367,7 +366,7 @@ class DBase:
                               self.inputs['voronoi_adjuster']*(selected_point[i] - furthest[i])/2
                               for i in range(self.dimensions)]
             # print('selected:', [round(i, 3) for i in self.flibs[max_rank_i].coordinate])
-            # print('furthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
+            print('furthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
             selected_point = adjusted_point
 
         rounded_point = [round(i, 2) for i in selected_point]
@@ -607,7 +606,7 @@ class DBase:
         plt.show()
 
     # Plots database estimate of blackbox output
-    def plot_estimate(self, exclude_after=None, diff=False, abs_max=None, abs_min=None, est_errors=False):
+    def plot_estimate(self, exclude_after=None, diff=False, abs_max=None, abs_min=None, est_errors=False, mark_last=True):
         # Handle database exclusion
         exclude = None
         if exclude_after is not None:
@@ -640,7 +639,9 @@ class DBase:
 
         # Plot data
         fig, ax = plt.subplots()
-        errors = [flib.excluded_error for flib in self.flibs] if est_errors else 'g'
+        errors = [flib.excluded_error if est_errors else 'g' for flib in self.flibs]
+        if mark_last:
+            errors[-1] = max(errors)*2 if est_errors else 'y'
         ax.scatter(data_x, data_y, s=200, c=errors)
         ax.set_xlim([-0.01, 1.01])
         ax.set_ylim([-0.01, 1.01])
