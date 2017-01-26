@@ -642,6 +642,37 @@ class DBase:
         plt.show()
         return
 
+    def plot_voronoi(self, resolution=100, weighted=False):
+        # Generate a grid and get data
+        print('begin plot voronoi')
+        grid_x, grid_y = np.mgrid[0:1:(resolution*1j), 0:1:(resolution*1j)]
+        colors = np.zeros((resolution, resolution))
+
+        samples_x = [i[0] for i in self.lib_inputs]
+        samples_y = [i[1] for i in self.lib_inputs]
+
+        for x in range(resolution):
+            for y in range(resolution):
+                min_dist = 9999
+                closest_s = None
+                for i in range(len(samples_x)):
+                    sample_dist = distance.euclidean((grid_x[x, y], grid_y[x, y]), (samples_x[i], samples_y[i]))
+                    if min_dist > sample_dist:
+                        min_dist = sample_dist
+                        closest_s = i
+                colors[x][y] = closest_s
+        print(colors)
+        colors = np.divide(colors, colors.max())
+        print('colors', colors)
+        print('grid', grid_x)
+        fig, ax = plt.subplots()
+        ax.set_xlim([-0.01, 1.01])
+        ax.set_ylim([-0.01, 1.01])
+        # ax.scatter(grid_x, grid_y, c=colors, edgecolors='none')
+        plt.imshow(colors, extent=(0, 1, 0, 1), origin='lower', interpolation='nearest')
+        plt.show()
+
+
     # Prints information about database
     def print(self):
         print('Database ', self.paths.database_path)
@@ -868,12 +899,12 @@ class DBase:
         else:
             if len(factors) != len(self.flibs):
                 raise RuntimeError('Size mismatch of factor and library vectors in voronoi cell calculation')
-            for s in s_coords:      # Random point, s
+            for s_i, s in enumerate(s_coords):      # Random point, s
                 min_dist = 9999
                 p_closest = 0       # The point in the database closest to the given random point
-                for i, p in enumerate(p_coords):  # Point in database, p
+                for p_i, p in enumerate(p_coords):  # Point in database, p
                     # Save the index and its distance if its closest
-                    distance_s = distance.euclidean(p, s) * factors[i]
+                    distance_s = distance.euclidean(p, s) * factors[s_i] * factors[p_i]
                     if min_dist > distance_s:
                         min_dist = distance_s
                         p_closest = p_coords.index(p)
