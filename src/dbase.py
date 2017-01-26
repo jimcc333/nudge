@@ -66,6 +66,7 @@ class DBase:
         self.lib_inputs = []            # (d,n) matrix of varied input normalized coordinates (n: number of flibs)
         self.lib_outputs = []           # (n) vector of library outputs
         self.voronoi_sizes = []         # Voronoi cell sizes of points in the database
+        self.distance_factors = []      # Distance adjustment factors for Voronoi cell calculation
         self.np_prods = None            # numpy array of neutron production values
         self.np_dests = None            # numpy array of neutron destruction values
         self.np_BUs = None              # numpy array of burnup values
@@ -277,6 +278,16 @@ class DBase:
         if record_errors:
             self.write_errors()
 
+    # Calculates the distance weighing factors for Voronoi cell calculation
+    def calculate_factors(self, base_point_i):
+        selected_error = self.flibs[base_point_i].excluded_error
+        zeroed_errors = [lib.excluded_error / selected_error - 1 for lib in self.flibs]
+        adjuster = max([abs(i) for i in zeroed_errors])
+        if adjuster > self.inputs['voronoi_adjuster']:
+            adjuster = self.inputs['voronoi_adjuster'] / adjuster
+        self.distance_factors = [1 + i * adjuster for i in zeroed_errors]
+
+
     # Estimates the error of the database using leave-1-out method
     def estimate_error(self, method='linear', save_result=True, print_result=False, exclude_after=None, plot=False):
         # Skip if points are too few
@@ -347,14 +358,9 @@ class DBase:
 
         if method == 'guided':
             # Find adjustment factors
-            selected_error = self.flibs[max_rank_i].excluded_error
-            zeroed_errors = [lib.excluded_error/selected_error-1 for lib in self.flibs]
-            adjuster = max([abs(i) for i in zeroed_errors])
-            if adjuster > self.inputs['voronoi_adjuster']:
-                adjuster = self.inputs['voronoi_adjuster'] / adjuster
-            distance_factors = [1+i*adjuster for i in zeroed_errors]
+            self.calculate_factors(max_rank_i)
             # Find adjusted voronoi cells
-            self.voronoi(factors=distance_factors)
+            self.voronoi(factors=self.distance_factors)
             # Determine coordinates of selected point so that its in the original voronoi cell
             furthest = self.flibs[max_rank_i].furthest_point
             adjusted_point = [(selected_point[i] + furthest[i])/2 +
@@ -668,7 +674,6 @@ class DBase:
         fig, ax = plt.subplots()
         ax.set_xlim([-0.01, 1.01])
         ax.set_ylim([-0.01, 1.01])
-        # ax.scatter(grid_x, grid_y, c=colors, edgecolors='none')
         plt.imshow(colors, extent=(0, 1, 0, 1), origin='lower', interpolation='nearest')
         plt.show()
 
