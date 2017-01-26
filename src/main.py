@@ -114,27 +114,29 @@ def main(args):
         return
 
     if '-e' in args:
-        read_error_outputs('C:\\software\\nudge\\f8_240_s0\\')
+        read_error_outputs('C:\\software\\nudge\\f8_120_s0\\')
+        read_error_outputs('C:\\software\\nudge\\f8_120_e\\')
         read_error_outputs('C:\\software\\nudge\\f8_120_s10\\')
         read_error_outputs('C:\\software\\nudge\\f8_120_s15\\')
 
         return
-
-        for path in ['C:\\software\\nudge\\f8_300\\0\\', 'C:\\software\\nudge\\f8_300_s10\\0\\', 'C:\\software\\nudge\\f8_300_s15\\0\\']:
+    if '-t' in args:
+        for path in ['C:\\software\\nudge\\f8_10_10\\']:
             paths = PathNaming(os.name, database_path=path)
             database = DBase(paths)
             database.update_metrics()
-            database.plot(est_errors=True)
-
-        return
+            database.inputs['voronoi_adjuster'] = 0.3
+            database.plot_voronoi(base_point_i=19, resolution=250)
+            database.inputs['voronoi_adjuster'] = 0.8
+            database.plot_voronoi(base_point_i=19, resolution=250)
+            database.inputs['voronoi_adjuster'] = 2
+            database.plot_voronoi(base_point_i=19, resolution=250)
         return
 
     # Database path
     if '-d' in args:
-        # find_errors('C:\\software\\nudge\\f8_240_s0\\')
-        find_errors('C:\\software\\nudge\\f8_120_s10\\', exclude_after=120)
-        # read_error_outputs('C:\\software\\nudge\\f8_120_s15\\')
-
+        repeat_databases('C:\\software\\nudge\\f8_120_e\\', 12, 60, 60, processes=6, record_errors=False)
+        find_errors('C:\\software\\nudge\\f8_120_e\\')
         return
 
         # repeat_databases('C:\\software\\nudge\\f8_240_s0\\', 18, 120, 120, processes=6, record_errors=False)
@@ -149,10 +151,20 @@ def main(args):
     # Manual mode check
     if '-m' in args:
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f8_120_s10\\0\\')
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f8_120_e\\0\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot(points=True)
+        database.plot_estimate(diff=True)
+        del database
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f8_120_e\\1\\')
+        database = DBase(paths)
+        database.update_metrics()
+        database.plot_estimate(diff=True)
+        del database
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f8_120_e\\2\\')
+        database = DBase(paths)
+        database.update_metrics()
+        database.plot_estimate(diff=True)
         return
         database.build(10,10, print_progress=True, record_errors=False)
         return

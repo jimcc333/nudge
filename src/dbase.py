@@ -55,7 +55,7 @@ class DBase:
             'explore_mult': 500,        # Exploration method Monte Carlo multiplier
             'voronoi_mult': 200,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 2,           # The factor that multiplies error when finding rank
-            'voronoi_adjuster': 0.7,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
+            'voronoi_adjuster': 0.5,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
         }
 
         # Database libraries
@@ -286,7 +286,6 @@ class DBase:
         if adjuster > self.inputs['voronoi_adjuster']:
             adjuster = self.inputs['voronoi_adjuster'] / adjuster
         self.distance_factors = [1 + i * adjuster for i in zeroed_errors]
-
 
     # Estimates the error of the database using leave-1-out method
     def estimate_error(self, method='linear', save_result=True, print_result=False, exclude_after=None, plot=False):
@@ -648,8 +647,8 @@ class DBase:
         plt.show()
         return
 
-    def plot_voronoi(self, resolution=100, weighted=False):
-        # Generate a grid and get data
+    def plot_voronoi(self, resolution=100, base_point_i=None):
+        # Generate a grid and get coords of samples
         print('begin plot voronoi')
         grid_x, grid_y = np.mgrid[0:1:(resolution*1j), 0:1:(resolution*1j)]
         colors = np.zeros((resolution, resolution))
@@ -657,24 +656,29 @@ class DBase:
         samples_x = [i[0] for i in self.lib_inputs]
         samples_y = [i[1] for i in self.lib_inputs]
 
+        if base_point_i is not None:
+            self.calculate_factors(base_point_i)
+
         for x in range(resolution):
             for y in range(resolution):
                 min_dist = 9999
                 closest_s = None
                 for i in range(len(samples_x)):
                     sample_dist = distance.euclidean((grid_x[x, y], grid_y[x, y]), (samples_x[i], samples_y[i]))
+                    if base_point_i is not None:
+                        sample_dist *= self.distance_factors[i]
                     if min_dist > sample_dist:
                         min_dist = sample_dist
                         closest_s = i
-                colors[x][y] = closest_s
-        print(colors)
+                colors[y][x] = closest_s
+
         colors = np.divide(colors, colors.max())
-        print('colors', colors)
-        print('grid', grid_x)
+        errors = [flib.excluded_error for flib in self.flibs]
         fig, ax = plt.subplots()
         ax.set_xlim([-0.01, 1.01])
         ax.set_ylim([-0.01, 1.01])
-        plt.imshow(colors, extent=(0, 1, 0, 1), origin='lower', interpolation='nearest')
+        ax.scatter(samples_x, samples_y, s=100, c=errors)
+        plt.imshow(colors, extent=(0, 1, 0, 1), origin='lower', interpolation='hermite')
         plt.show()
 
 
@@ -909,7 +913,7 @@ class DBase:
                 p_closest = 0       # The point in the database closest to the given random point
                 for p_i, p in enumerate(p_coords):  # Point in database, p
                     # Save the index and its distance if its closest
-                    distance_s = distance.euclidean(p, s) * factors[s_i] * factors[p_i]
+                    distance_s = distance.euclidean(p, s) * factors[p_i]
                     if min_dist > distance_s:
                         min_dist = distance_s
                         p_closest = p_coords.index(p)
