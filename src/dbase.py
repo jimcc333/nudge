@@ -262,6 +262,8 @@ class DBase:
         # Perform exploitation
         if print_progress:
             print('\n_____________________________________\n-- Exploitation Step. Total points:', exploitation_count)
+        if exploit_method is not 'furthest':
+            print('  Method:', exploit_method, 'Adjuster value:', self.inputs['voronoi_adjuster'])
         for i in range(exploitation_count):
             if print_progress:
                 print('Generating point (exploitation)', len(self.flibs))
@@ -365,7 +367,7 @@ class DBase:
                               self.inputs['voronoi_adjuster']*(selected_point[i] - furthest[i])/2
                               for i in range(self.dimensions)]
             # print('selected:', [round(i, 3) for i in self.flibs[max_rank_i].coordinate])
-            print('furthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
+            # print('furthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
             selected_point = adjusted_point
 
         rounded_point = [round(i, 2) for i in selected_point]
@@ -649,8 +651,8 @@ class DBase:
         return
 
     def plot_voronoi(self, resolution=100, base_point_i=None):
+        print('Plotting 2D voronoi cells of the database')
         # Generate a grid and get coords of samples
-        print('begin plot voronoi')
         grid_x, grid_y = np.mgrid[0:1:(resolution*1j), 0:1:(resolution*1j)]
         colors = np.zeros((resolution, resolution))
 

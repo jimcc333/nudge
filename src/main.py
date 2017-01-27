@@ -114,10 +114,10 @@ def main(args):
         return
 
     if '-e' in args:
-        read_error_outputs('C:\\software\\nudge\\f8_120_s0\\')
-        read_error_outputs('C:\\software\\nudge\\f8_120_e\\')
-        read_error_outputs('C:\\software\\nudge\\f8_120_s10\\')
-        read_error_outputs('C:\\software\\nudge\\f8_120_s15\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor00\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor03\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor05\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor07\\')
 
         return
     if '-t' in args:
@@ -135,75 +135,53 @@ def main(args):
 
     # Database path
     if '-d' in args:
-        repeat_databases('C:\\software\\nudge\\f8_120_e\\', 12, 60, 60, processes=6, record_errors=False)
-        find_errors('C:\\software\\nudge\\f8_120_e\\')
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\factor00\\', 12, 20, 20, processes=4, record_errors=False)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\factor03\\', 12, 20, 20, processes=4, record_errors=False, exploit_method='guided')
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\factor05\\', 12, 20, 20, processes=4, record_errors=False, exploit_method='guided')
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\factor07\\', 12, 20, 20, processes=4, record_errors=False, exploit_method='guided')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\factor00\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\factor03\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\factor05\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\factor07\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor00\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor03\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor05\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor07\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor00\\0\\')
+        database = DBase(paths)
+        database.update_metrics()
+        database.plot()
+        del database
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor05\\0\\')
+        database = DBase(paths)
+        database.update_metrics()
+        database.plot()
+        del database
         return
 
-        # repeat_databases('C:\\software\\nudge\\f8_240_s0\\', 18, 120, 120, processes=6, record_errors=False)
-        for i in range(6):
-            repeat_databases('C:\\software\\nudge\\f8_120_s10\\', 12, 10, 10, processes=6, record_errors=False)
-        for i in range(4):
-            repeat_databases('C:\\software\\nudge\\f8_120_s15\\', 12, 15, 15, processes=6, record_errors=False)
-        for i in range(2):
-            repeat_databases('C:\\software\\nudge\\f8_120_s10\\', 12, 30, 30, processes=6, record_errors=False)
-
-        return
     # Manual mode check
     if '-m' in args:
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f8_120_e\\0\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor00\\0\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot_estimate(diff=True)
+        database.plot()
         del database
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f8_120_e\\1\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor05\\0\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot_estimate(diff=True)
+        database.plot()
         del database
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f8_120_e\\2\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor07\\0\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot_estimate(diff=True)
-        return
-        database.build(10,10, print_progress=True, record_errors=False)
-        return
-        database.estimate_error(plot=True)
-        return
-        database.plot_estimate(diff=True, exclude_after=50, abs_max=0.3)
-        database.plot_estimate(diff=True, exclude_after=150, abs_max=0.3)
-        database.plot_estimate(diff=True, abs_max=0.3)
-
+        database.plot()
         return
 
-        it_range = list(range(100))
-        it_range = it_range[10:]
-        for i in it_range:
-            database.estimate_error(exclude_after=i, print_result=True)
-            continue
+        if '-a' in args:
 
-        return
 
-    random_data = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\random1\\')
-    explore_only = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\0_2001\\')
-    exploit_40 = read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\40_160\\')
-    """
-    plt.plot(random_data[:-1])
-    plt.plot(explore_only[:-1])
-    plt.plot(exploit_20[:-1])
-    plt.plot(exploit_40[:-1])
-    plt.plot(exploit_60[:-1])
-    plt.plot(exploit_80[:-1])
 
-    plt.legend(['Random', 'Explore Only', 'Exploit 20', 'Exploit 40', 'Exploit 60', 'Exploit 80'])
-    x_max = int(min([len(random_data), len(explore_only), len(exploit_20)])) - 1
-    y_max = max([max(random_data), max(explore_only), max(explore_only)])
-    y_max *= 1.05
-    plt.axis([15, x_max, 0, 0.7])
-    plt.xlabel('# of points in database')
-    plt.ylabel('Error (%)')
-    plt.show()
-    """
     print('\n-TheEnd-')
 
     return 0
