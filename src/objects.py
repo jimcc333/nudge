@@ -8,8 +8,10 @@ from scipy.spatial import distance
 class PathNaming:
     # A class that holds all info about the naming of system file paths
     def __init__(self, os_name, database_path="/home/cem/nudge/db_dbtest1/"):
-        if os_name == 'nt': self.win = True
-        else: self.win = False
+        if os_name == 'nt':
+            self.win = True
+        else:
+            self.win = False
 
         self.slash = '/'
         if self.win:
@@ -78,6 +80,7 @@ class xsgenParams:
                 print(key, value)
 
 
+# Legacy code
 class Neighborhood:
     # A class that holds information about the sample point neighborhood
     # Neighborhoods are used to calculate gradients of points

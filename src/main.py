@@ -106,31 +106,60 @@ import numpy as np
 
 def main(args):
     os.system('cls' if os.name == 'nt' else 'clear')
+    print('----------------- NUDGE: NUclear Database GEneration software -----------------')
 
     # Check if help is requested
     if '-h' in args:
-        print('Help request')
-        delete_after('C:\\software\\nudge\\f8_120_s15\\', 119)
+        print('--- Help ---')
+        print('NUDGE is a global surrogate modeling software. It is used to create a database')
+        print('of input-output pairs to be used for interpolation for quick estimation of simulations')
+        print('Flags:')
+        print(' -h: help screen')
+        print(' -d [PATH]: generate database at [PATH] based on the input file')
+        print(' -explore [PATH]: add one exploration point to database at [PATH]')
+        print(' -exploit [PATH]: add one exploration point to database at [PATH]')
+        print(' -errors [PATH]: display the recorded errors for database at [PATH], if no [PATH] is given will attempt '
+              'to use current directory')
+        print()
+        print('The database folder should have two files:')
+        print(' - basecase.py: xsgen input file containing base-case values')
+        print(' - inputs.txt: file containing database inputs')
         return
 
-    if '-e' in args:
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor00\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor03\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor05\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor07\\')
+    if args[1] == '-explore':
+        try:
+            print('Adding 1 new sample in the database at ' + args[2] + ' using exploration method')
+        except IndexError:
+            print('Please provide the path of the database')
+            return
 
+        paths = PathNaming(os.name, args[2])
+        database = DBase(paths)
+        database.update_metrics()
+        database.exploration()
         return
-    if '-t' in args:
-        for path in ['C:\\software\\nudge\\f8_10_10\\']:
-            paths = PathNaming(os.name, database_path=path)
-            database = DBase(paths)
-            database.update_metrics()
-            database.inputs['voronoi_adjuster'] = 0.3
-            database.plot_voronoi(base_point_i=19, resolution=250)
-            database.inputs['voronoi_adjuster'] = 0.8
-            database.plot_voronoi(base_point_i=19, resolution=250)
-            database.inputs['voronoi_adjuster'] = 2
-            database.plot_voronoi(base_point_i=19, resolution=250)
+
+    if args[1] == '-exploit':
+        try:
+            print('Adding 1 new sample in the database at ' + args[2] + ' using exploitation method')
+        except IndexError:
+            print('Please provide the path of the database')
+            return
+
+        paths = PathNaming(os.name, args[2])
+        database = DBase(paths)
+
+        database.update_metrics()
+        database.exploitation()
+        return
+
+    if args[1] == '-errors':
+        try:
+            database_path = args[2]
+        except IndexError:
+            database_path = os.getcwd()
+        print('Reading errors in', database_path)
+        read_error_outputs(database_path)
         return
 
     # Database path
@@ -158,7 +187,6 @@ def main(args):
         database.plot()
         del database
         return
-
     # Manual mode check
     if '-m' in args:
         print('Begin database analysis')
@@ -308,7 +336,3 @@ def database_thread(database_path, exploration_count, exploitation_count, random
     else:
         database.build(exploration_count, exploitation_count, record_errors=record_errors,
                        exploit_method=exploit_method)
-
-if __name__ == '__main__':
-    import sys
-    sys.exit(main(sys.argv))
