@@ -94,6 +94,7 @@ import os
 from objects import PathNaming
 from dbase import DBase
 
+from repeat import *
 from pxsgen import *
 
 
