@@ -55,7 +55,7 @@ class DBase:
             'explore_mult': 500,        # Exploration method Monte Carlo multiplier
             'voronoi_mult': 200,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 2,           # The factor that multiplies error when finding rank
-            'voronoi_adjuster': 0.7,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
+            'voronoi_adjuster': 0.5,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
         }
 
         # Database libraries
@@ -66,6 +66,7 @@ class DBase:
         self.lib_inputs = []            # (d,n) matrix of varied input normalized coordinates (n: number of flibs)
         self.lib_outputs = []           # (n) vector of library outputs
         self.voronoi_sizes = []         # Voronoi cell sizes of points in the database
+        self.distance_factors = []      # Distance adjustment factors for Voronoi cell calculation
         self.np_prods = None            # numpy array of neutron production values
         self.np_dests = None            # numpy array of neutron destruction values
         self.np_BUs = None              # numpy array of burnup values
@@ -80,19 +81,19 @@ class DBase:
         # Check that database path exists
         if not os.path.isdir(paths.database_path):
             error_message = 'The database path does not exist. Looking for: ' + paths.database_path
-            raise RuntimeError(error_message)
+            raise NotADirectoryError(error_message)
 
         # Check that database input file exists
         if not os.path.exists(paths.database_path + paths.dbase_input):
             error_message = 'The database input file does not exist. Looking for: ' \
                             + paths.database_path + paths.dbase_input
-            raise RuntimeError(error_message)
+            raise FileNotFoundError(error_message)
 
         # Check that basecase input exists
         if not os.path.exists(paths.database_path + paths.base_input):
             error_message = 'The database base-case input file does not exist. Looking for: ' \
                             + paths.database_path + paths.base_input
-            raise RuntimeError(error_message)
+            raise FileNotFoundError(error_message)
 
         self.name = paths.database_name
 
@@ -275,13 +276,16 @@ class DBase:
         # Write errors
         print(self.paths.database_path, 'complete')
         if record_errors:
-            ip_path = self.paths.database_path + 'errors.txt'
-            with open(ip_path, 'w') as openfile:  # bad naming here
-                openfile.write('max errors\n' + str(self.est_error_max).replace(',', ''))
-                openfile.write('\nmin errors\n' + str(self.est_error_min).replace(',', ''))
-                openfile.write('\nmean errors\n' + str(self.est_error_mean).replace(',', ''))
-                openfile.write('\nreal max errors\n' + str(self.database_error_max).replace(',', ''))
-                openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
+            self.write_errors()
+
+    # Calculates the distance weighing factors for Voronoi cell calculation
+    def calculate_factors(self, base_point_i):
+        selected_error = self.flibs[base_point_i].excluded_error
+        zeroed_errors = [lib.excluded_error / selected_error - 1 for lib in self.flibs]
+        adjuster = max([abs(i) for i in zeroed_errors])
+        if adjuster > self.inputs['voronoi_adjuster']:
+            adjuster = self.inputs['voronoi_adjuster'] / adjuster
+        self.distance_factors = [1 + i * adjuster for i in zeroed_errors]
 
     # Estimates the error of the database using leave-1-out method
     def estimate_error(self, method='linear', save_result=True, print_result=False, exclude_after=None, plot=False):
@@ -352,14 +356,9 @@ class DBase:
 
         if method == 'guided':
             # Find adjustment factors
-            selected_error = self.flibs[max_rank_i].excluded_error
-            zeroed_errors = [lib.excluded_error/selected_error-1 for lib in self.flibs]
-            adjuster = max([abs(i) for i in zeroed_errors])
-            if adjuster > self.inputs['voronoi_adjuster']:
-                adjuster = self.inputs['voronoi_adjuster'] / adjuster
-            distance_factors = [1+i*adjuster for i in zeroed_errors]
+            self.calculate_factors(max_rank_i)
             # Find adjusted voronoi cells
-            self.voronoi(factors=distance_factors)
+            self.voronoi(factors=self.distance_factors)
             # Determine coordinates of selected point so that its in the original voronoi cell
             furthest = self.flibs[max_rank_i].furthest_point
             adjusted_point = [(selected_point[i] + furthest[i])/2 +
@@ -649,6 +648,41 @@ class DBase:
         plt.show()
         return
 
+    def plot_voronoi(self, resolution=100, base_point_i=None):
+        # Generate a grid and get coords of samples
+        print('begin plot voronoi')
+        grid_x, grid_y = np.mgrid[0:1:(resolution*1j), 0:1:(resolution*1j)]
+        colors = np.zeros((resolution, resolution))
+
+        samples_x = [i[0] for i in self.lib_inputs]
+        samples_y = [i[1] for i in self.lib_inputs]
+
+        if base_point_i is not None:
+            self.calculate_factors(base_point_i)
+
+        for x in range(resolution):
+            for y in range(resolution):
+                min_dist = 9999
+                closest_s = None
+                for i in range(len(samples_x)):
+                    sample_dist = distance.euclidean((grid_x[x, y], grid_y[x, y]), (samples_x[i], samples_y[i]))
+                    if base_point_i is not None:
+                        sample_dist *= self.distance_factors[i]
+                    if min_dist > sample_dist:
+                        min_dist = sample_dist
+                        closest_s = i
+                colors[y][x] = closest_s
+
+        colors = np.divide(colors, colors.max())
+        errors = [flib.excluded_error for flib in self.flibs]
+        fig, ax = plt.subplots()
+        ax.set_xlim([-0.01, 1.01])
+        ax.set_ylim([-0.01, 1.01])
+        ax.scatter(samples_x, samples_y, s=100, c=errors)
+        plt.imshow(colors, extent=(0, 1, 0, 1), origin='lower', interpolation='hermite')
+        plt.show()
+
+
     # Prints information about database
     def print(self):
         print('Database ', self.paths.database_path)
@@ -875,12 +909,12 @@ class DBase:
         else:
             if len(factors) != len(self.flibs):
                 raise RuntimeError('Size mismatch of factor and library vectors in voronoi cell calculation')
-            for s in s_coords:      # Random point, s
+            for s_i, s in enumerate(s_coords):      # Random point, s
                 min_dist = 9999
                 p_closest = 0       # The point in the database closest to the given random point
-                for i, p in enumerate(p_coords):  # Point in database, p
+                for p_i, p in enumerate(p_coords):  # Point in database, p
                     # Save the index and its distance if its closest
-                    distance_s = distance.euclidean(p, s) * factors[i]
+                    distance_s = distance.euclidean(p, s) * factors[p_i]
                     if min_dist > distance_s:
                         min_dist = distance_s
                         p_closest = p_coords.index(p)
@@ -895,3 +929,13 @@ class DBase:
         self.voronoi_sizes = p_vol
         for i, lib in enumerate(self.flibs):
             lib.voronoi_size = p_vol[i]
+
+    def write_errors(self):
+        # This should check if the file exists to prevent loss of data
+        ip_path = self.paths.database_path + 'errors.txt'
+        with open(ip_path, 'w') as openfile:  # bad naming here
+            openfile.write('max errors\n' + str(self.est_error_max).replace(',', ''))
+            openfile.write('\nmin errors\n' + str(self.est_error_min).replace(',', ''))
+            openfile.write('\nmean errors\n' + str(self.est_error_mean).replace(',', ''))
+            openfile.write('\nreal max errors\n' + str(self.database_error_max).replace(',', ''))
+            openfile.write('\nreal errors\n' + str(self.database_error).replace(',', ''))
