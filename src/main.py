@@ -158,46 +158,39 @@ def main(args):
 
     # Database path
     if '-d' in args:
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\factor00\\', 12, 20, 20, processes=4, record_errors=False)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\factor03\\', 12, 20, 20, processes=4, record_errors=False, exploit_method='guided')
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\factor05\\', 12, 20, 20, processes=4, record_errors=False, exploit_method='guided')
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\factor07\\', 12, 20, 20, processes=4, record_errors=False, exploit_method='guided')
-        find_errors('C:\\Users\\Cem\\Documents\\nudge\\factor00\\')
-        find_errors('C:\\Users\\Cem\\Documents\\nudge\\factor03\\')
-        find_errors('C:\\Users\\Cem\\Documents\\nudge\\factor05\\')
-        find_errors('C:\\Users\\Cem\\Documents\\nudge\\factor07\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor00\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor03\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor05\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor07\\')
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor00\\0\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.plot()
-        del database
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor05\\0\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.plot()
-        del database
+        repeat_databases('C:\\software\\nudge\\f6_20_30_c05\\', 24, 20, 30, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_20_30_c10\\', 24, 20, 30, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_20_30_c15\\', 24, 20, 30, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_20_30_c20\\', 24, 20, 30, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_20_30_c40\\', 24, 20, 30, processes=4, record_errors=True)
+        read_error_outputs('C:\\software\\nudge\\f6_20_30_c05\\')
+        read_error_outputs('C:\\software\\nudge\\f6_20_30_c10\\')
+        read_error_outputs('C:\\software\\nudge\\f6_20_30_c15\\')
+        read_error_outputs('C:\\software\\nudge\\f6_20_30_c20\\')
+        read_error_outputs('C:\\software\\nudge\\f6_20_30_c40\\')
+
+        return
+
         return
     # Manual mode check
     if '-m' in args:
+
+
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor00\\0\\')
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f6_20_30_c05\\0\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot()
+        database.plot_estimate(diff=True, abs_max=0.5)
         del database
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor05\\0\\')
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f6_20_30_c05\\1\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot()
+        database.plot_estimate(diff=True, abs_max=0.5)
         del database
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor07\\0\\')
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f6_20_30_c05\\2\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot()
+        database.plot_estimate(diff=True, abs_max=0.5)
         return
 
 

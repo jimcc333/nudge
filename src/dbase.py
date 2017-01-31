@@ -237,7 +237,7 @@ class DBase:
             self.update_metrics(screening=screening)
 
     # Runs exploration and exploitation to build the database
-    def build(self, exploration_count, exploitation_count, print_progress=False, record_errors=True,
+    def build(self, exploration_count, exploitation_count, print_progress='furthest', record_errors=True,
               exploit_method='furthest'):
         self.update_metrics()
         self.print()
@@ -508,6 +508,7 @@ class DBase:
 
         # Go through all libs again now that nonlinearity scores are found
         total_nonlinearity = sum([lib.excluded_error for lib in self.flibs])
+
         for lib in self.flibs:
             # Calculate rank
             lib.rank = lib.voronoi_size + lib.excluded_error / total_nonlinearity * self.inputs['rank_factor']
@@ -611,7 +612,8 @@ class DBase:
         plt.show()
 
     # Plots database estimate of blackbox output
-    def plot_estimate(self, exclude_after=None, diff=False, abs_max=None, abs_min=None, est_errors=False, mark_last=True):
+    def plot_estimate(self, exclude_after=None, diff=False, abs_max=None, abs_min=None, est_errors=False,
+                      mark_last=False, print_range=False):
         # Handle database exclusion
         exclude = None
         if exclude_after is not None:
@@ -635,6 +637,9 @@ class DBase:
                     inputs[self.varied_ips[0]] = grid_x[x, y]
                     inputs[self.varied_ips[1]] = grid_y[x, y]
                     values[x, y] = abs(values[x, y] - main('', inputs))
+            if print_range:
+                print('Abs max:', values.max())
+                print('Abs min:', values.min())
 
         # Check absolute values for coloring limits
         if abs_max is None:
