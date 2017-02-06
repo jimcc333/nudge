@@ -58,8 +58,8 @@ class DBase:
             'explore_mult': 500,        # Exploration method Monte Carlo multiplier
             'voronoi_mult': 200,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 2,           # The factor that multiplies error when finding rank
-            'voronoi_adjuster': 0.9,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
-            'guide_increment': 0.005,   # The increment to bring back selected guided sample back to original V cell
+            'voronoi_adjuster': 0.5,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
+            'guide_increment': 0.001,   # The increment to bring back selected guided sample back to original V cell
         }
 
         # Database libraries
@@ -361,18 +361,17 @@ class DBase:
             self.calculate_factors(max_rank_i)
             # Find adjusted voronoi cells
             self.voronoi(factors=self.distance_factors)
-            print('selected:', [round(i, 3) for i in self.flibs[max_rank_i].coordinate])
             base = self.flibs[max_rank_i].coordinate
             furthest = copy.copy(self.flibs[max_rank_i].furthest_point)
             adjusted_point = furthest
 
             # Adjust coordinates of selected point so that its in the original voronoi cell
             #   Find normalized vector from furthest to base point
-            print(base, furthest)
             normal_vector = []
             for d in range(self.dimensions):
                 normal_vector.append(furthest[d] - base[d])
-            normal_vector[:] = [value/sum(normal_vector) for value in normal_vector]
+            total = sum([abs(i) for i in normal_vector])
+            normal_vector[:] = [value/total for value in normal_vector]
             closest_to_base = False
 
             # If it's closest to base, then it's too close: move it away by flipping normal_vector and condition
@@ -382,19 +381,14 @@ class DBase:
                 exit_condition = False
                 closest_to_base = True
 
-            closest_lib = self.find_closest(adjusted_point)
-            print('exit condition:', exit_condition)
-            print('normal vector', normal_vector)
             while closest_to_base is not exit_condition:
                 # Move the point closer to the base point (max_rank_i point)
-                adjusted_point = [adjusted_point[i] - normal_vector[i] * self.inputs['guide_increment'] for i in
+                adjusted_point = [adjusted_point[i] + normal_vector[i] * self.inputs['guide_increment'] for i in
                                   range(self.dimensions)]
                 # Find which sample the adjusted point is closest
-                closest_lib = self.find_closest(adjusted_point)
-                print(closest_lib, end=' ')
-                closest_to_base = True if closest_lib == max_rank_i else False
+                closest_to_base = True if self.find_closest(adjusted_point) == max_rank_i else False
 
-            print('\nfurthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
+            # print('Initial furthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
             selected_point = adjusted_point
 
         rounded_point = [round(i, 2) for i in selected_point]

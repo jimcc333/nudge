@@ -158,20 +158,17 @@ def main(args):
 
     # Database path
     if '-d' in args:
-        read_error_outputs('C:\\software\\nudge\\f6_20_30_c05\\')
-        read_error_outputs('C:\\software\\nudge\\f6_20_30_c10\\')
-        read_error_outputs('C:\\software\\nudge\\f6_20_30_c15\\')
-        read_error_outputs('C:\\software\\nudge\\f6_20_30_c20\\')
-        read_error_outputs('C:\\software\\nudge\\f6_20_30_c40\\')
-        return
-        repeat_databases('C:\\software\\nudge\\f6_20_30_c05\\', 24, 20, 30, processes=4, record_errors=True)
-        repeat_databases('C:\\software\\nudge\\f6_20_30_c10\\', 24, 20, 30, processes=4, record_errors=True)
-        repeat_databases('C:\\software\\nudge\\f6_20_30_c15\\', 24, 20, 30, processes=4, record_errors=True)
-        repeat_databases('C:\\software\\nudge\\f6_20_30_c20\\', 24, 20, 30, processes=4, record_errors=True)
-        repeat_databases('C:\\software\\nudge\\f6_20_30_c40\\', 24, 20, 30, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_20_30_guided\\', 24, 20, 30, processes=4, record_errors=True, exploit_method='guided')
+        repeat_databases('C:\\software\\nudge\\f6_20_30_furthest\\', 24, 20, 30, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_10_40_guided\\', 24, 10, 40, processes=4, record_errors=True, exploit_method='guided')
+        repeat_databases('C:\\software\\nudge\\f6_10_40_furthest\\', 24, 10, 40, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_50_0\\', 24, 50, 0, processes=4, record_errors=True)
 
-        return
-
+        read_error_outputs('C:\\software\\nudge\\f6_20_30_guided\\')
+        read_error_outputs('C:\\software\\nudge\\f6_20_30_furthest\\')
+        read_error_outputs('C:\\software\\nudge\\f6_10_40_guided\\')
+        read_error_outputs('C:\\software\\nudge\\f6_10_40_furthest\\')
+        read_error_outputs('C:\\software\\nudge\\f6_50_0\\')
         return
     # Manual mode check
     if '-m' in args:
