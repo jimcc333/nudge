@@ -49,7 +49,6 @@ class DBase:
         self.inputs = {
             'exploration': 0,           # Total number of new exploration points to add to the database
             'exploitation': 0,          # Total number of new exploitation points to add to the database
-            # the following will be implemented later
             'samples': None,               # Maximum database size (flibs)
             'max_error': None,          # In [%]
             'max_time': 100,            # In [hour]
@@ -59,7 +58,8 @@ class DBase:
             'explore_mult': 500,        # Exploration method Monte Carlo multiplier
             'voronoi_mult': 200,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 2,           # The factor that multiplies error when finding rank
-            'voronoi_adjuster': 0.5,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
+            'voronoi_adjuster': 0.9,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
+            'guide_increment': 0.005,   # The increment to bring back selected guided sample back to original V cell
         }
 
         # Database libraries
@@ -348,10 +348,6 @@ class DBase:
         if print_output:
             print('  Finding ranks of database')
         self.generate_ranks()
-        if print_output:
-            print('    Ranks:')
-            for lib in self.flibs:
-                print(lib.number, lib.rank)
 
         # Find the next point
         ranks = [lib.rank for lib in self.flibs]
@@ -365,18 +361,45 @@ class DBase:
             self.calculate_factors(max_rank_i)
             # Find adjusted voronoi cells
             self.voronoi(factors=self.distance_factors)
-            # Determine coordinates of selected point so that its in the original voronoi cell
-            furthest = self.flibs[max_rank_i].furthest_point
-            adjusted_point = [(selected_point[i] + furthest[i])/2 +
-                              self.inputs['voronoi_adjuster']*(selected_point[i] - furthest[i])/2
-                              for i in range(self.dimensions)]
-            # print('selected:', [round(i, 3) for i in self.flibs[max_rank_i].coordinate])
-            # print('furthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
+            print('selected:', [round(i, 3) for i in self.flibs[max_rank_i].coordinate])
+            base = self.flibs[max_rank_i].coordinate
+            furthest = copy.copy(self.flibs[max_rank_i].furthest_point)
+            adjusted_point = furthest
+
+            # Adjust coordinates of selected point so that its in the original voronoi cell
+            #   Find normalized vector from furthest to base point
+            print(base, furthest)
+            normal_vector = []
+            for d in range(self.dimensions):
+                normal_vector.append(furthest[d] - base[d])
+            normal_vector[:] = [value/sum(normal_vector) for value in normal_vector]
+            closest_to_base = False
+
+            # If it's closest to base, then it's too close: move it away by flipping normal_vector and condition
+            exit_condition = True
+            if self.find_closest(adjusted_point) == max_rank_i:
+                normal_vector[:] = [-1 * i for i in normal_vector]
+                exit_condition = False
+                closest_to_base = True
+
+            closest_lib = self.find_closest(adjusted_point)
+            print('exit condition:', exit_condition)
+            print('normal vector', normal_vector)
+            while closest_to_base is not exit_condition:
+                # Move the point closer to the base point (max_rank_i point)
+                adjusted_point = [adjusted_point[i] - normal_vector[i] * self.inputs['guide_increment'] for i in
+                                  range(self.dimensions)]
+                # Find which sample the adjusted point is closest
+                closest_lib = self.find_closest(adjusted_point)
+                print(closest_lib, end=' ')
+                closest_to_base = True if closest_lib == max_rank_i else False
+
+            print('\nfurthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
             selected_point = adjusted_point
 
         rounded_point = [round(i, 2) for i in selected_point]
         if print_output:
-            print('Selected lib', self.flibs[max_rank_i].number, 'point:', rounded_point)
+            print('Selected lib:', self.flibs[max_rank_i].number, ' Coordinates:', rounded_point)
         self.add_lib(selected_point, False)
 
     # Finds the coordinates of next point to sample
@@ -433,6 +456,17 @@ class DBase:
 
         # Create a new library with the selected next point and add it to flibs/slibs
         self.add_lib(p_cand, screening)    # Also updates metrics
+
+    # Finds the closest point in self.flibs to the given point and returns the index
+    def find_closest(self, point):
+        closest_dist = 10
+        closest_lib = -1
+        for i, lib in enumerate(self.flibs):
+            lib_dist = distance.euclidean(point, lib.coordinate)
+            if lib_dist < closest_dist:
+                closest_dist = lib_dist
+                closest_lib = i
+        return closest_lib
 
     # Generates new points for the purpose of finding database error
     def find_error(self, method='linear', save_result=True, print_result=False, multiplier=5000):

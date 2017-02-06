@@ -158,16 +158,17 @@ def main(args):
 
     # Database path
     if '-d' in args:
-        repeat_databases('C:\\software\\nudge\\f6_20_30_c05\\', 24, 20, 30, processes=4, record_errors=True)
-        repeat_databases('C:\\software\\nudge\\f6_20_30_c10\\', 24, 20, 30, processes=4, record_errors=True)
-        repeat_databases('C:\\software\\nudge\\f6_20_30_c15\\', 24, 20, 30, processes=4, record_errors=True)
-        repeat_databases('C:\\software\\nudge\\f6_20_30_c20\\', 24, 20, 30, processes=4, record_errors=True)
-        repeat_databases('C:\\software\\nudge\\f6_20_30_c40\\', 24, 20, 30, processes=4, record_errors=True)
         read_error_outputs('C:\\software\\nudge\\f6_20_30_c05\\')
         read_error_outputs('C:\\software\\nudge\\f6_20_30_c10\\')
         read_error_outputs('C:\\software\\nudge\\f6_20_30_c15\\')
         read_error_outputs('C:\\software\\nudge\\f6_20_30_c20\\')
         read_error_outputs('C:\\software\\nudge\\f6_20_30_c40\\')
+        return
+        repeat_databases('C:\\software\\nudge\\f6_20_30_c05\\', 24, 20, 30, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_20_30_c10\\', 24, 20, 30, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_20_30_c15\\', 24, 20, 30, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_20_30_c20\\', 24, 20, 30, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_20_30_c40\\', 24, 20, 30, processes=4, record_errors=True)
 
         return
 
@@ -177,20 +178,14 @@ def main(args):
 
 
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f6_20_30_c05\\0\\')
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\basic\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot_estimate(diff=True, abs_max=0.5)
-        del database
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f6_20_30_c05\\1\\')
-        database = DBase(paths)
+        database.exploitation(print_output=True, method='guided')
+        database.run_pxsgen(False)
         database.update_metrics()
-        database.plot_estimate(diff=True, abs_max=0.5)
-        del database
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f6_20_30_c05\\2\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.plot_estimate(diff=True, abs_max=0.5)
+        database.plot_estimate(mark_last=True)
+        database.plot(numbers=True)
         return
 
 
