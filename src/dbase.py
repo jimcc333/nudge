@@ -237,7 +237,7 @@ class DBase:
             self.update_metrics(screening=screening)
 
     # Runs exploration and exploitation to build the database
-    def build(self, exploration_count, exploitation_count, print_progress='furthest', record_errors=True,
+    def build(self, exploration_count, exploitation_count, print_progress=False, record_errors=True,
               exploit_method='furthest'):
         self.update_metrics()
         self.print()

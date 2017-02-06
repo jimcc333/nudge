@@ -170,6 +170,7 @@ def main(args):
         read_error_outputs('C:\\software\\nudge\\f6_10_40_furthest\\')
         read_error_outputs('C:\\software\\nudge\\f6_50_0\\')
         return
+
     # Manual mode check
     if '-m' in args:
 
