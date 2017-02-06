@@ -58,8 +58,8 @@ class DBase:
             'explore_mult': 500,        # Exploration method Monte Carlo multiplier
             'voronoi_mult': 200,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 2,           # The factor that multiplies error when finding rank
-            'voronoi_adjuster': 0.5,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
-            'guide_increment': 0.001,   # The increment to bring back selected guided sample back to original V cell
+            'voronoi_adjuster': 0.3,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
+            'guide_increment': 0.0001,   # The increment to bring back selected guided sample back to original V cell
         }
 
         # Database libraries
@@ -371,6 +371,7 @@ class DBase:
             for d in range(self.dimensions):
                 normal_vector.append(furthest[d] - base[d])
             total = sum([abs(i) for i in normal_vector])
+            total = 1 if total == 0 else total
             normal_vector[:] = [value/total for value in normal_vector]
             closest_to_base = False
 
@@ -387,6 +388,13 @@ class DBase:
                                   range(self.dimensions)]
                 # Find which sample the adjusted point is closest
                 closest_to_base = True if self.find_closest(adjusted_point) == max_rank_i else False
+
+            # Fix edge issues
+            for value in adjusted_point:
+                if value > 1:
+                    value = 1
+                if value < 0:
+                    value = 0
 
             # print('Initial furthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
             selected_point = adjusted_point

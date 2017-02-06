@@ -158,16 +158,12 @@ def main(args):
 
     # Database path
     if '-d' in args:
-        repeat_databases('C:\\software\\nudge\\f6_20_30_guided\\', 24, 20, 30, processes=4, record_errors=True, exploit_method='guided')
-        repeat_databases('C:\\software\\nudge\\f6_20_30_furthest\\', 24, 20, 30, processes=4, record_errors=True)
-        repeat_databases('C:\\software\\nudge\\f6_10_40_guided\\', 24, 10, 40, processes=4, record_errors=True, exploit_method='guided')
-        repeat_databases('C:\\software\\nudge\\f6_10_40_furthest\\', 24, 10, 40, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_30_20_guided\\', 24, 30, 20, processes=4, record_errors=True, exploit_method='guided')
+        repeat_databases('C:\\software\\nudge\\f6_30_20_furthest\\', 24, 30, 20, processes=4, record_errors=True)
         repeat_databases('C:\\software\\nudge\\f6_50_0\\', 24, 50, 0, processes=4, record_errors=True)
 
-        read_error_outputs('C:\\software\\nudge\\f6_20_30_guided\\')
-        read_error_outputs('C:\\software\\nudge\\f6_20_30_furthest\\')
-        read_error_outputs('C:\\software\\nudge\\f6_10_40_guided\\')
-        read_error_outputs('C:\\software\\nudge\\f6_10_40_furthest\\')
+        read_error_outputs('C:\\software\\nudge\\f6_30_20_guided\\')
+        read_error_outputs('C:\\software\\nudge\\f6_30_20_furthest\\')
         read_error_outputs('C:\\software\\nudge\\f6_50_0\\')
         return
 
@@ -176,13 +172,9 @@ def main(args):
 
 
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\basic\\')
+        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f6_20_30_guided\\6\\')
         database = DBase(paths)
         database.update_metrics()
-        database.exploitation(print_output=True, method='guided')
-        database.run_pxsgen(False)
-        database.update_metrics()
-        database.plot_estimate(mark_last=True)
         database.plot(numbers=True)
         return
 
