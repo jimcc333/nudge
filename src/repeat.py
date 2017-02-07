@@ -1,5 +1,6 @@
 import os
 import shutil
+from distutils.dir_util import copy_tree
 from multiprocessing import Pool
 
 import numpy as np
@@ -26,6 +27,16 @@ def repeat_databases(source_path, database_count, exploration_count, exploitatio
             os.mkdir(database_paths[i])
             shutil.copy(source_path + paths.base_input, database_paths[i])
             shutil.copy(source_path + paths.dbase_input, database_paths[i])
+
+    # If there's existing libraries to begin with, copy them as well
+    if os.path.isdir(source_path + paths.slash + paths.FR_Input_folder + paths.slash):
+        source_dir = source_path + paths.slash + paths.FR_Input_folder + paths.slash
+        for i in range(database_count):
+            copy_tree(source_dir, database_paths[i] + paths.slash + paths.FR_Input_folder)
+    if os.path.isdir(source_path + paths.slash + paths.FR_Output_folder + paths.slash):
+        source_dir = source_path + paths.slash + paths.FR_Output_folder + paths.slash
+        for i in range(database_count):
+            copy_tree(source_dir, database_paths[i] + paths.slash + paths.FR_Output_folder)
 
     # Run databases
     pool = Pool(processes=processes)
@@ -110,14 +121,29 @@ def read_error_outputs(source_path):
 
 
 # Deletes all libraries in a database study after the specified number
-def delete_after(database_path, number):
-    path = PathNaming(os.name, database_path=database_path)
-    folders = os.listdir(database_path)
+def delete_after(study_path, number, database_path=None):
+    if database_path is not None:
+        path = PathNaming(os.name, database_path=database_path)
+        ip_path = database_path + path.slash + path.FR_Input_folder
+        try:
+            op_path = database_path + path.slash + path.FR_Output_folder
+            libraries = os.listdir(ip_path)
+            for lib in libraries:
+                lib_i = int(lib.split('.')[0])
+                if lib_i > number:
+                    print('Deleting lib', lib, 'in', database_path)
+                    os.remove(ip_path + path.slash + lib)
+                    os.remove(op_path + path.slash + lib)
+        except FileNotFoundError:
+            return
+        return
 
+    path = PathNaming(os.name, database_path=study_path)
+    folders = os.listdir(study_path)
     for folder_name in folders:
         try:
-            ip_path = database_path + folder_name + path.slash + path.FR_Input_folder
-            op_path = database_path + folder_name + path.slash + path.FR_Output_folder
+            ip_path = study_path + folder_name + path.slash + path.FR_Input_folder
+            op_path = study_path + folder_name + path.slash + path.FR_Output_folder
             libraries = os.listdir(ip_path)
             for lib in libraries:
                 lib_i = int(lib.split('.')[0])
