@@ -184,30 +184,16 @@ def main(args):
         return
 
     # Database path
-    if '-dd' in args:
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\factor00\\', 12, 50, 70, processes=6, record_errors=False)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\factor03\\', 12, 50, 70, processes=6, record_errors=False, exploit_method='guided')
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\factor05\\', 12, 50, 70, processes=6, record_errors=False, exploit_method='guided')
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\factor07\\', 12, 50, 70, processes=6, record_errors=False, exploit_method='guided')
-        find_errors('C:\\Users\\Cem\\Documents\\nudge\\factor00\\')
-        find_errors('C:\\Users\\Cem\\Documents\\nudge\\factor03\\')
-        find_errors('C:\\Users\\Cem\\Documents\\nudge\\factor05\\')
-        find_errors('C:\\Users\\Cem\\Documents\\nudge\\factor07\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor00\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor03\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor05\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor07\\')
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor00\\0\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.plot()
-        del database
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor05\\0\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.plot()
-        del database
+    if '-d' in args:
+        repeat_databases('C:\\software\\nudge\\f6_30_20_guided\\', 24, 30, 20, processes=4, record_errors=True, exploit_method='guided')
+        repeat_databases('C:\\software\\nudge\\f6_30_20_furthest\\', 24, 30, 20, processes=4, record_errors=True)
+        repeat_databases('C:\\software\\nudge\\f6_50_0\\', 24, 50, 0, processes=4, record_errors=True)
+
+        read_error_outputs('C:\\software\\nudge\\f6_30_20_guided\\')
+        read_error_outputs('C:\\software\\nudge\\f6_30_20_furthest\\')
+        read_error_outputs('C:\\software\\nudge\\f6_50_0\\')
         return
+
     # Manual mode check
     if '-m' in args:
         print('Begin database analysis')

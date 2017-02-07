@@ -92,7 +92,16 @@ def read_error_outputs(source_path):
 
     # plt.plot(np.mean(real_errors, axis=0))
     # plt.show()
+    if len(real_errors[0]) != len(mean_errors[0]):
+        print('Warning. Errors inconsistent.')
 
+    prev_count = len(real_errors[0])
+    for errors in real_errors[1:]:
+        if len(errors) != prev_count:  # numpy will catch this but this error message will make it clearer
+            print('Warning. Number of reported errors vary between databases')
+
+    print(source_path, 'Databases:', len(real_errors))
+    print(np.mean(max_errors, axis=0))
     print(source_path)
     print('estimated max:', np.mean(max_errors, axis=0))
     print()
