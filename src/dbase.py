@@ -5,7 +5,6 @@ import random
 import subprocess
 
 import numpy as np
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from matplotlib.mlab import PCA as mlabPCA
 from scipy.spatial import distance
@@ -611,7 +610,7 @@ class DBase:
         plt.show()
 
     # Plots database estimate of blackbox output
-    def plot_estimate(self, exclude_after=None, diff=False, abs_max=None, abs_min=None, est_errors=False, mark_last=True):
+    def plot_estimate(self, exclude_after=None, diff=False, abs_max=None, abs_min=None, est_errors=False, mark_last=False):
         # Handle database exclusion
         exclude = None
         if exclude_after is not None:
@@ -657,7 +656,7 @@ class DBase:
     def plot_voronoi(self, resolution=100, base_point_i=None):
         print('Plotting 2D voronoi cells of the database')
         # Generate a grid and get coords of samples
-        grid_x, grid_y = np.mgrid[0:1:(resolution*1j), 0:1:(resolution*1j)]
+        greid_x, grid_y = np.mgrid[0:1:(resolution*1j), 0:1:(resolution*1j)]
         colors = np.zeros((resolution, resolution))
 
         samples_x = [i[0] for i in self.lib_inputs]
