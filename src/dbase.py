@@ -434,7 +434,7 @@ class DBase:
             return
 
         # Iterate through all random points
-        rand_count = len(coords) * self.inputs['explore_mult']  # TODO: should probably depend on dimensions too
+        rand_count = int((len(coords)) ** 0.5) * self.inputs['explore_mult']  # TODO: could depend on dimensions too
         rand_points = [[random.random() for i in range(self.dimensions)] for i in range(rand_count)]
         #print('first rand point:', rand_points[0], 'len of rands:', len(rand_points))
 
@@ -495,7 +495,7 @@ class DBase:
             return
 
         # Generate random points for database
-        rand_count = multiplier
+        rand_count = multiplier  # This prevents scaling issues in very high dimensions
         values = copy.deepcopy(self.basecase.inputs.xsgen)
         rand_points = [copy.copy(values) for i in range(rand_count)]
 
@@ -943,7 +943,7 @@ class DBase:
         # generates samples number of random points. For each random
         # point, finds which point in p_coords is closest to it for
         # Voronoi cell volume approximation.
-        samples = len(self.flibs) * self.inputs['voronoi_mult']
+        samples = int((len(self.flibs)) ** 0.5) * self.inputs['voronoi_mult']
         p_coords = [i.coordinates(self.varied_ips) for i in self.flibs]
         p_vol = [0] * len(self.flibs)
         dimensions = len(p_coords[0])
