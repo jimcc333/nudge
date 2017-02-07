@@ -68,7 +68,7 @@ def main(args, inputs=None):
 
 
 def output_method(inputs):
-    output = f6(inputs[0], inputs[1], inputs[2]) * 2
+    output = f8(inputs[0], inputs[1], inputs[2]) * 2
     # output += f6(inputs[3], inputs[4], inputs[5])
     # output += f5(inputs[6], inputs[7], inputs[8])
     return output

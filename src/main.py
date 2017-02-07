@@ -109,7 +109,9 @@ def main(args):
         print('of input-output pairs to be used for interpolation for quick estimation of simulations')
         print('Flags:')
         print(' -h: help screen')
-        print(' -d [PATH]: generate database at [PATH] based on the input file')
+        print(' -d [explore_count] [exploit_count] [PATH]: generate database at [PATH] based on the input file')
+        print(' -plot [PATH]: plot 2D database at [PATH]')
+        print(' -est [PATH]: plot 2D database estimate at [PATH]')
         print(' -explore [PATH]: add one exploration point to database at [PATH]')
         print(' -exploit [PATH]: add one exploration point to database at [PATH]')
         print(' -errors [PATH]: display the recorded errors for database at [PATH], if no [PATH] is given will attempt '
@@ -156,6 +158,31 @@ def main(args):
         read_error_outputs(database_path)
         return
 
+    if args[1] == '-d' and len(args) == 5:
+        print('Building database', args[4], 'with', args[2], 'exploration and', args[3], 'exploitation samples.')
+        paths = PathNaming(os.name, database_path=args[4])
+        database = DBase(paths)
+        database.update_metrics()
+        database.build(int(args[2]), int(args[3]), print_progress=True)
+        database.plot()
+        return
+
+    if args[1] == '-plot':
+        print('Plotting database', args[2])
+        paths = PathNaming(os.name, database_path=args[2])
+        database = DBase(paths)
+        database.update_metrics()
+        database.plot(numbers=True)
+        return
+
+    if args[1] == '-est':
+        print('Plotting database', args[2])
+        paths = PathNaming(os.name, database_path=args[2])
+        database = DBase(paths)
+        database.update_metrics()
+        database.plot_estimate()
+        return
+
     # Database path
     if '-d' in args:
         repeat_databases('C:\\software\\nudge\\f6_30_20_guided\\', 24, 30, 20, processes=4, record_errors=True, exploit_method='guided')
@@ -169,15 +196,35 @@ def main(args):
 
     # Manual mode check
     if '-m' in args:
-
-
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\software\\nudge\\f6_20_30_guided\\6\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor00\\0\\')
         database = DBase(paths)
         database.update_metrics()
-        database.plot(numbers=True)
+        database.plot()
+        del database
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor05\\0\\')
+        database = DBase(paths)
+        database.update_metrics()
+        database.plot()
+        del database
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor07\\0\\')
+        database = DBase(paths)
+        database.update_metrics()
+        database.plot()
         return
 
+    if '-e' in args:
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor00\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor03\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor05\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor07\\')
+
+    if '-p' in args:
+        plot_heat_map('C:\\Users\\Cem\\Documents\\nudge\\factor00\\')
+        plot_heat_map('C:\\Users\\Cem\\Documents\\nudge\\factor03\\')
+        plot_heat_map('C:\\Users\\Cem\\Documents\\nudge\\factor05\\')
+        plot_heat_map('C:\\Users\\Cem\\Documents\\nudge\\factor07\\')
+        return
 
     print('\n-TheEnd-')
 

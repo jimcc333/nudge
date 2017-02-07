@@ -4,6 +4,8 @@ from distutils.dir_util import copy_tree
 from multiprocessing import Pool
 
 import numpy as np
+from math import floor
+import matplotlib.pyplot as plt
 
 from objects import PathNaming
 from dbase import DBase
@@ -110,14 +112,56 @@ def read_error_outputs(source_path):
 
     print(source_path, 'Databases:', len(real_errors))
     print(np.mean(max_errors, axis=0))
+    print(source_path)
+    print('estimated max:', np.mean(max_errors, axis=0))
     print()
-    print(np.mean(mean_errors, axis=0))
+    print('estimated errors:', np.mean(mean_errors, axis=0))
     print()
-    print(np.mean(real_max, axis=0))
-    print('Real errors,', len(real_errors[0]), 'samples')
-    print(np.mean(real_errors, axis=0))
+    print('real max:', np.mean(real_max, axis=0))
+    print()
+    print('real errors:', np.mean(real_errors, axis=0))
+    print('real errors STD:', np.std(real_errors, axis=0))
 
     return np.mean(real_errors, axis=0)
+
+
+# Plots heat maps
+def plot_heat_map(source_path, resolution=50):
+    print('Plotting heat map of', source_path)
+    slash = '\\' if os.name == 'nt' else '/'
+    folders = os.listdir(source_path)
+    counter = 0
+
+    # Generate a grid
+    colors = np.zeros((resolution, resolution))
+
+    # Go through each database and its samples assuming all inputs [0,1]
+    print('Reading databases:', end='  ')
+    for folder_name in folders:
+        try:
+            database = DBase(PathNaming(os.name, database_path=source_path + folder_name + slash))
+            database.update_metrics()
+            samples = [coords for coords in database.lib_inputs]
+            counter += 1
+            print(folder_name, end=' ')
+            for i in samples:
+                x = floor(resolution*i[0])
+                y = floor(resolution*i[1])
+                if x == resolution:
+                    x -= 1
+                if y == resolution:
+                    y -= 1
+                colors[y, x] += 1
+        except (NotADirectoryError, FileNotFoundError):
+            continue
+    print('(', counter, ' databases total)', sep='')
+
+    colors = np.divide(colors, colors.max())
+    fig, ax = plt.subplots()
+    ax.set_xlim([-0.01, 1.01])
+    ax.set_ylim([-0.01, 1.01])
+    plt.imshow(colors, extent=(0, 1, 0, 1), origin='lower', interpolation='nearest')
+    plt.show()
 
 
 # Deletes all libraries in a database study (or one database) after the specified number

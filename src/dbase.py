@@ -49,7 +49,7 @@ class DBase:
         self.inputs = {
             'exploration': 0,           # Total number of new exploration points to add to the database
             'exploitation': 0,          # Total number of new exploitation points to add to the database
-            'samples': None,               # Maximum database size (flibs)
+            'samples': None,            # Maximum database size (flibs)
             'max_error': None,          # In [%]
             'max_time': 100,            # In [hour]
             'scout_frac': 10,           # Weight of screening time allocation
@@ -347,6 +347,10 @@ class DBase:
         if print_output:
             print('  Finding ranks of database')
         self.generate_ranks()
+        if print_output:
+            print('    Ranks:')
+            for lib in self.flibs:
+                print(lib.number, lib.rank)
 
         # Find the next point
         ranks = [lib.rank for lib in self.flibs]
