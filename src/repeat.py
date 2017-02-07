@@ -200,7 +200,8 @@ def delete_after(study_path, number, database_path=None):
 
 
 # Runs a database for threading in database study
-def database_thread(database_path, exploration_count, exploitation_count, random_count, exploit_method, record_errors):
+def database_thread(database_path, exploration_count, exploitation_count, random_count=0, exploit_method='furthest',
+                    record_errors=True):
     paths = PathNaming(os.name, database_path=database_path)
     database = DBase(paths)
     database.update_metrics()
