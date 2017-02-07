@@ -120,7 +120,7 @@ def read_error_outputs(source_path):
     return np.mean(real_errors, axis=0)
 
 
-# Deletes all libraries in a database study after the specified number
+# Deletes all libraries in a database study (or one database) after the specified number
 def delete_after(study_path, number, database_path=None):
     if database_path is not None:
         path = PathNaming(os.name, database_path=database_path)
