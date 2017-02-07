@@ -57,9 +57,9 @@ class DBase:
             'exploit_frac': 50,         # Weight of exploitation time allocation
             'explore_mult': 500,        # Exploration method Monte Carlo multiplier
             'voronoi_mult': 200,        # Voronoi method Monte Carlo multiplier
-            'rank_factor': 2,           # The factor that multiplies error when finding rank
-            'voronoi_adjuster': 0.3,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
-            'guide_increment': 0.0001,   # The increment to bring back selected guided sample back to original V cell
+            'rank_factor': 1,           # The factor that multiplies error when finding rank
+            'voronoi_adjuster': 0.8,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
+            'guide_increment': 0.0001,  # The increment to bring back selected guided sample back to original V cell
         }
 
         # Database libraries
@@ -266,8 +266,6 @@ class DBase:
         # Perform exploitation
         if print_progress:
             print('\n_____________________________________\n-- Exploitation Step. Total points:', exploitation_count)
-        if exploit_method is not 'furthest':
-            print('  Method:', exploit_method, 'Adjuster value:', self.inputs['voronoi_adjuster'])
         for i in range(exploitation_count):
             if print_progress:
                 print('Generating point (exploitation)', len(self.flibs))
@@ -288,6 +286,7 @@ class DBase:
     def calculate_factors(self, base_point_i):
         selected_error = self.flibs[base_point_i].excluded_error
         zeroed_errors = [lib.excluded_error / selected_error - 1 for lib in self.flibs]
+        zeroed_errors[:] = [-0.5 if i < -0.5 else i for i in zeroed_errors]
         adjuster = max([abs(i) for i in zeroed_errors])
         if adjuster > self.inputs['voronoi_adjuster']:
             adjuster = self.inputs['voronoi_adjuster'] / adjuster
@@ -375,17 +374,33 @@ class DBase:
             normal_vector[:] = [value/total for value in normal_vector]
             closest_to_base = False
 
+            # print('Picked point', max_rank_i)
+            # print('Furthest:', [round(i, 3) for i in furthest])
+            # print('  closest to:', self.find_closest(furthest))
             # If it's closest to base, then it's too close: move it away by flipping normal_vector and condition
             exit_condition = True
             if self.find_closest(adjusted_point) == max_rank_i:
-                normal_vector[:] = [-1 * i for i in normal_vector]
+                normal_vector[:] = [i for i in normal_vector]
                 exit_condition = False
                 closest_to_base = True
-
+            # print('exit condition:', exit_condition, '   closest to base:', closest_to_base)
+            # print('normal_vector')
+            # print(normal_vector)
             while closest_to_base is not exit_condition:
                 # Move the point closer to the base point (max_rank_i point)
                 adjusted_point = [adjusted_point[i] + normal_vector[i] * self.inputs['guide_increment'] for i in
                                   range(self.dimensions)]
+                # Check if adjusting hits the edge
+                at_edge = False
+                for value in adjusted_point:
+                    if value > 1:
+                        value = 1
+                        at_edge = True
+                    if value < 0:
+                        value = 0
+                        at_edge = True
+                if at_edge:
+                    break
                 # Find which sample the adjusted point is closest
                 closest_to_base = True if self.find_closest(adjusted_point) == max_rank_i else False
 
@@ -395,7 +410,6 @@ class DBase:
                     value = 1
                 if value < 0:
                     value = 0
-
             # print('Initial furthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
             selected_point = adjusted_point
 
@@ -618,7 +632,7 @@ class DBase:
             self.pca_mat = mlabPCA(self.data_mat)   # PCA matrix
 
     # Plots data
-    def plot(self, numbers=False, points=True, est_errors=False):
+    def plot(self, numbers=False, points=True, est_errors=False, mark_last=False):
         # Plot input points
         x = [i[0] for i in self.lib_inputs]
         y = [i[1] for i in self.lib_inputs]
@@ -628,7 +642,9 @@ class DBase:
         ax.set_ylim([-0.01, 1.01])
         ax.set_xlim([-0.01, 1.01])
         if points:
-            errors = [flib.excluded_error for flib in self.flibs] if est_errors else 'g'
+            errors = [flib.excluded_error if est_errors else 'g' for flib in self.flibs]
+            if mark_last is True:
+                errors[-1] = 1 if est_errors else 'y'
             ax.scatter(x, y, s=200, c=errors)
             if numbers:
                 for i in range(len(x)):
