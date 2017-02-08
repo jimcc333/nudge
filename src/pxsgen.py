@@ -68,7 +68,7 @@ def main(args, inputs=None):
 
 
 def output_method(inputs):
-    output = f8(inputs[0], inputs[1], inputs[2]) * 2
+    output = f9(inputs[0], inputs[1], inputs[2]) * 2
     # output += f6(inputs[3], inputs[4], inputs[5])
     # output += f5(inputs[6], inputs[7], inputs[8])
     return output
@@ -173,6 +173,13 @@ def f7(x, y, z):
 def f8(x, y, z):
     return x * (1 - x) * np.cos(4 * np.pi * x) * np.sin(4 * np.pi * y ** 2) ** 2 + 1
 
+
+# 1 full 3 half peaks (taken from https://github.com/wgurecky/pCRTree/blob/master/tests/test_gradient_boost.py)
+def f9(x, y, z):
+    x *= 5
+    y *= 10
+    alpha, phi_ext = 0.7, 2 * np.pi * 0.5
+    return 2 + alpha - 2 * np.cos(x) * np.cos(y) - alpha * np.cos(phi_ext - 2 * x)
 
 if __name__ == '__main__':
     import sys
