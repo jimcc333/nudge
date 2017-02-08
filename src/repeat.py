@@ -13,10 +13,11 @@ from dbase import DBase
 
 # Repeats databases from the same inputs and basecase
 def repeat_databases(source_path, database_count, exploration_count, exploitation_count, random_count=0, processes=7,
-                     exploit_method='furthest', record_errors=True):
+                     exploit_method='furthest', record_errors=True, start_number=0):
     # Generate threading lists
+    end_number = start_number + database_count
     paths = PathNaming(os.name, database_path=source_path)
-    database_paths = [source_path + str(i) + paths.slash for i in range(database_count)]
+    database_paths = [source_path + str(i) + paths.slash for i in range(start_number, end_number)]
     explorations = [exploration_count for i in range(database_count)]
     exploitations = [exploitation_count for i in range(database_count)]
     randoms = [random_count for i in range(database_count)]
