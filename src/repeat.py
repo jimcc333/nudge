@@ -14,6 +14,11 @@ from dbase import DBase
 # Repeats databases from the same inputs and basecase
 def repeat_databases(source_path, database_count, exploration_count, exploitation_count, random_count=0, processes=7,
                      exploit_method='furthest', record_errors=True, start_number=0):
+    # Check source path
+    if not os.path.isdir(source_path):
+        print('Unable to find source:' + source_path)
+        return
+
     # Generate threading lists
     end_number = start_number + database_count
     paths = PathNaming(os.name, database_path=source_path)
