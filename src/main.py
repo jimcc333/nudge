@@ -185,22 +185,32 @@ def main(args):
 
     # Database path
     if '-d' in args:
-        repeat_databases('C:\\software\\nudge\\f6_30_20_guided\\', 24, 30, 20, processes=4, record_errors=True, exploit_method='guided')
-        repeat_databases('C:\\software\\nudge\\f6_30_20_furthest\\', 24, 30, 20, processes=4, record_errors=True)
-        repeat_databases('C:\\software\\nudge\\f6_50_0\\', 24, 50, 0, processes=4, record_errors=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_guided\\', 7, 0, 40, processes=7, record_errors=True, exploit_method='guided')
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_furthest\\', 7, 0, 40, processes=7, record_errors=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_explore\\', 7, 40, 0, processes=7, record_errors=True)
 
-        read_error_outputs('C:\\software\\nudge\\f6_30_20_guided\\')
-        read_error_outputs('C:\\software\\nudge\\f6_30_20_furthest\\')
-        read_error_outputs('C:\\software\\nudge\\f6_50_0\\')
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_guided\\', 7, 0, 40, processes=7, record_errors=True, exploit_method='guided', start_number=7)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_furthest\\', 7, 0, 40, processes=7, record_errors=True, start_number=7)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_explore\\', 7, 40, 0, processes=7, record_errors=True, start_number=7)
+
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_guided\\', 14, 0, 40, processes=7, record_errors=True, exploit_method='guided', start_number=14)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_furthest\\', 14, 0, 40, processes=7, record_errors=True, start_number=14)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_explore\\', 14, 40, 0, processes=7, record_errors=True, start_number=14)
+
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f9_guided\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f9_furthest\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f9_explore\\')
         return
 
     # Manual mode check
     if '-m' in args:
         print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor00\\0\\')
+        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\test\\')
         database = DBase(paths)
         database.update_metrics()
+        database.build(0, 40, print_progress=True, record_errors=False, exploit_method='guided')
         database.plot()
+        return
         del database
         paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor05\\0\\')
         database = DBase(paths)

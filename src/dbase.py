@@ -251,7 +251,7 @@ class DBase:
 
         # Perform exploration
         if print_progress:
-            print('\n_____________________________________\n-- Exploration Step. Total points:', exploration_count)
+            print('\n_____________________________________\n-- Exploration Step. Samples to add:', exploration_count)
         for i in range(exploration_count - added_points):
             if print_progress:
                 print('Generating point', len(self.flibs))
