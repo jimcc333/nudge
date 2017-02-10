@@ -1,3 +1,6 @@
+NUDGE: NUclear Database GEneration software
+===========================================
+
 To run nudge, run nudge.py in the nudge/ directory from terminal:
 python /src/nudge.py -h
 
@@ -60,12 +63,6 @@ python /src/nudge.py -h
           - Run new points
           - Estimate max error
           - Repeat until stop criteria met
-
-  Flags:
-      -m (manual): start NUDGE in manual mode
-      -d (database): used for the database path
-      -h (help):  help screen
-      -x (xsgen): command to run xsgen
 
 
   Notes:
