@@ -90,7 +90,7 @@ def find_errors(source_path, find_all=False, exclude_after=None):
 
 
 # Reads errors of databases inside a folder
-def read_error_outputs(source_path):
+def read_error_outputs(source_path, final_error_only=False):
     slash = '\\' if os.name == 'nt' else '/'
     folders = os.listdir(source_path)
     file_count = 0
@@ -126,6 +126,12 @@ def read_error_outputs(source_path):
         if len(errors) != prev_count:  # numpy will catch this but this error message will make it clearer
             print('Warning. Number of reported errors vary between databases')
 
+    if final_error_only:
+        print(source_path, 'Databases:', len(real_errors))
+        print('  Final real error:', round(np.mean(real_errors, axis=0)[-1], 3), '+/-',
+              round(np.std(real_errors, axis=0)[-1], 4))
+        return
+
     print(source_path, 'Databases:', len(real_errors))
     print(np.mean(max_errors, axis=0))
     print(source_path)
@@ -137,6 +143,7 @@ def read_error_outputs(source_path):
     print()
     print('real errors:', np.mean(real_errors, axis=0))
     print('real errors STD:', np.std(real_errors, axis=0))
+    print('-----------------------------------------------------------------------------------------')
 
 
 # Plots heat maps

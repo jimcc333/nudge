@@ -56,7 +56,7 @@ class DBase:
             'exploit_frac': 50,         # Weight of exploitation time allocation
             'explore_mult': 500,        # Exploration method Monte Carlo multiplier
             'max_projection': 0.0001,   # Projection check (exploration) threshold
-            'voronoi_mult': 200,        # Voronoi method Monte Carlo multiplier
+            'voronoi_mult': 300,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 1,           # The factor that multiplies error when finding rank
             'voronoi_adjuster': 0.8,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
             'guide_increment': 0.0001,  # The increment to bring back selected guided sample back to original V cell
@@ -175,7 +175,11 @@ class DBase:
         # Check if input exists
         for lib in (self.slibs if screening else self.flibs):
             if lib.inputs.xsgen == new_inputs:
-                print('Input already exists')
+                print()
+                print('Input already exists, lib:', lib.number)
+                print(new_inputs)
+                self.print()
+                print()
                 return
 
         # Create paths
