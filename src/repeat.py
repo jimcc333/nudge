@@ -12,14 +12,24 @@ from dbase import DBase
 
 
 # Repeats databases from the same inputs and basecase
-def repeat_databases(source_path, database_count, exploration_count, exploitation_count, random_count=0, processes=7,
-                     exploit_method='furthest', record_errors=True, start_number=0):
+def repeat_databases(source_path, database_count, exploration_count=0, exploitation_count=0, random_count=0, processes=7,
+                     add_new=True, exploit_method='furthest', record_errors=True, start_number=0):
     # Check source path
     if not os.path.isdir(source_path):
         print('Unable to find source:' + source_path)
         return
 
     # Generate threading lists
+    if add_new:
+        items = os.listdir(source_path)
+        databases = []
+        for item in items:
+            try:
+                databases.append(int(item))
+            except ValueError:
+                continue
+        if len(databases) != 0:
+            start_number = max(databases) + 1
     end_number = start_number + database_count
     paths = PathNaming(os.name, database_path=source_path)
     database_paths = [source_path + str(i) + paths.slash for i in range(start_number, end_number)]
@@ -204,13 +214,11 @@ def delete_after(study_path, number, database_path=None):
 
 
 # Runs a database for threading in database study
-def database_thread(database_path, exploration_count, exploitation_count, random_count=0, exploit_method='furthest',
+def database_thread(database_path, exploration_count=0, exploitation_count=0, random_count=0, exploit_method='furthest',
                     record_errors=True):
-    paths = PathNaming(os.name, database_path=database_path)
-    database = DBase(paths)
-    database.update_metrics()
+    database = DBase(database_path)
     if random_count > 0:
         database.random_selection(random_count)
     else:
-        database.build(exploration_count, exploitation_count, record_errors=record_errors,
-                       exploit_method=exploit_method)
+        database.build(exploration_to_add=exploration_count, exploitation_to_add=exploitation_count,
+                       record_errors=record_errors, exploit_method=exploit_method)

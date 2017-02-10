@@ -80,17 +80,25 @@
 #
 #
 
-import os
-
 from dbase import DBase
-
 from repeat import *
-from pxsgen import *
 
 
 def main(args):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('----------------- NUDGE: NUclear Database GEneration software -----------------')
+
+    if '-m' in args:
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\guided\\', 18, processes=6, exploit_method='guided', exploitation_count=40)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest\\', 18, processes=6, exploitation_count=40)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\explore\\', 18, processes=6, exploration_count=40)
+
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\guided\\', 18, processes=6, exploit_method='guided', add_new=False)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest\\', 18, processes=6, add_new=False)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\explore\\', 18, processes=6, add_new=False)
+
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\guided\\', 30, processes=6, exploit_method='guided', add_new=True)
+        return
 
     # Check if help is requested
     if '-h' in args:
