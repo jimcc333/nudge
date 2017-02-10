@@ -12,8 +12,8 @@ from scipy.spatial import distance
 from scipy.interpolate import griddata
 
 from library import Library
-from objects import xsgenParams, Neighborhood
-from pxsgen import burnup_maker, prod_maker, dest_maker, main
+from objects import xsgenParams, Neighborhood, PathNaming
+from pxsgen import main
 
 """
 A class that handles all generated libraries
@@ -32,30 +32,30 @@ Variables:
 
 class DBase:
 
-    def __init__(self, paths):
+    def __init__(self, database_path):
         # Read database, assuming software may have been interrupted and
         # the folder may have some inputs and outputs
 
         # Database constants
-        self.paths = paths
+        self.paths = PathNaming(os.name, database_path=database_path)
         self.varied_ips = []            # the varied inputs
         self.ip_ranges = xsgenParams()  # Ranges of varied inputs
-        self.proj_threshold = 0.0001    # Projection check (exploration) threshold
         self.dimensions = None          # Number of varied inputs for database (assigned when inputs are read)
         self.basecase = None            # The basecase Library object (assigned when basecase is read)
         self.base_file = None           # The basecase as string (assigned when basecase is read)
 
         # Database inputs
         self.inputs = {
-            'exploration': 0,           # Total number of new exploration points to add to the database
-            'exploitation': 0,          # Total number of new exploitation points to add to the database
-            'samples': None,            # Maximum database size (flibs)
+            'max_exploration': 0,       # Total number of new exploration points to add to the database
+            'max_exploitation': 0,      # Total number of new exploitation points to add to the database
+            'max_samples': None,        # Maximum database size (flibs)
             'max_error': None,          # In [%]
             'max_time': 100,            # In [hour]
             'scout_frac': 10,           # Weight of screening time allocation
             'explore_frac': 40,         # Weight of exploration time allocation
             'exploit_frac': 50,         # Weight of exploitation time allocation
             'explore_mult': 500,        # Exploration method Monte Carlo multiplier
+            'max_projection': 0.0001,   # Projection check (exploration) threshold
             'voronoi_mult': 200,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 1,           # The factor that multiplies error when finding rank
             'voronoi_adjuster': 0.8,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
@@ -83,44 +83,30 @@ class DBase:
         self.database_error_max = []    # "True" database max error vector calculated using generated test points
 
         # Check that database path exists
-        if not os.path.isdir(paths.database_path):
-            error_message = 'The database path does not exist. Looking for: ' + paths.database_path
+        if not os.path.isdir(self.paths.database_path):
+            error_message = 'The database path does not exist. Looking for: ' + self.paths.database_path
             raise NotADirectoryError(error_message)
 
-        # Check that database input file exists
-        if not os.path.exists(paths.database_path + paths.dbase_input):
-            error_message = 'The database input file does not exist. Looking for: ' \
-                            + paths.database_path + paths.dbase_input
-            raise FileNotFoundError(error_message)
-
-        # Check that basecase input exists
-        if not os.path.exists(paths.database_path + paths.base_input):
-            error_message = 'The database base-case input file does not exist. Looking for: ' \
-                            + paths.database_path + paths.base_input
-            raise FileNotFoundError(error_message)
-
-        self.name = paths.database_name
-
         # Read database input file
-        self.read_input(paths.database_path + paths.dbase_input)
+        self.read_input(self.paths.database_path + self.paths.dbase_input)
 
         # Read basecase input
-        self.read_base(paths.database_path + paths.base_input)
+        self.read_base(self.paths.database_path + self.paths.base_input)
 
         # Check to see if there's a screening library input folder
-        if os.path.exists(paths.database_path + paths.SR_Input_folder):
-            tot_sfiles = len(os.listdir(paths.database_path + paths.SR_Input_folder))
+        if os.path.exists(self.paths.database_path + self.paths.SR_Input_folder):
+            tot_sfiles = len(os.listdir(self.paths.database_path + self.paths.SR_Input_folder))
         # If the input screening library folder doesn't exist create it
         else:
-            os.mkdir(paths.database_path + paths.SR_Input_folder)
+            os.mkdir(self.paths.database_path + self.paths.SR_Input_folder)
             tot_sfiles = 0
 
         # Check to see if there's a full library input folder
-        if os.path.exists(paths.database_path + paths.FR_Input_folder):
-            tot_ffiles = len(os.listdir(paths.database_path + paths.FR_Input_folder))
+        if os.path.exists(self.paths.database_path + self.paths.FR_Input_folder):
+            tot_ffiles = len(os.listdir(self.paths.database_path + self.paths.FR_Input_folder))
         # If the input full library folder doesn't exist create it
         else:
-            os.mkdir(paths.database_path + paths.FR_Input_folder)
+            os.mkdir(self.paths.database_path + self.paths.FR_Input_folder)
             tot_ffiles = 0
 
         tot_sr_libs = 0
@@ -129,13 +115,13 @@ class DBase:
         # If there are files SR_Inputs, read them
         if tot_sfiles > 0:
             for ip_number in range(tot_sfiles):
-                    ip_path = paths.database_path + paths.SR_Input_folder + paths.slash + str(ip_number) + '.py'
+                    ip_path = self.paths.database_path + self.paths.SR_Input_folder + self.paths.slash + str(ip_number) + '.py'
                     # TODO: op_path will need to be updated to work with xsgen
-                    op_path = paths.database_path + paths.SR_Output_folder + paths.slash + str(ip_number) + '.py'
-                    #+ paths.xsgen_prefix + paths.sr_prefix + str(ip_number) + '/' + paths.xsgen_op_folder
+                    op_path = self.paths.database_path + self.paths.SR_Output_folder + self.paths.slash + str(ip_number) + '.py'
+                    #+ self.paths.xsgen_prefix + self.paths.sr_prefix + str(ip_number) + '/' + self.paths.xsgen_op_folder
 
                     if os.path.exists(ip_path):
-                        inputlib = Library(database_path=paths.database_path, op_path=op_path, ip_path=ip_path,
+                        inputlib = Library(database_path=self.paths.database_path, op_path=op_path, ip_path=ip_path,
                                            number=ip_number, scout=True)
                         self.slibs.append(copy.deepcopy(inputlib))
                         tot_sr_libs += 1
@@ -146,13 +132,13 @@ class DBase:
         # If there are files FR_Inputs, read them
         if tot_ffiles > 0:
             for ip_number in range(tot_ffiles):
-                ip_path = paths.database_path + paths.FR_Input_folder + paths.slash + str(ip_number) + '.py'
+                ip_path = self.paths.database_path + self.paths.FR_Input_folder + self.paths.slash + str(ip_number) + '.py'
                 # TODO: op_path will need to be updated to work with xsgen
-                op_path = paths.database_path + paths.FR_Output_folder + paths.slash + str(ip_number) + '.py'
-                # + paths.xsgen_prefix + paths.sr_prefix + str(ip_number) + '/' + paths.xsgen_op_folder
+                op_path = self.paths.database_path + self.paths.FR_Output_folder + self.paths.slash + str(ip_number) + '.py'
+                # + self.paths.xsgen_prefix + self.paths.sr_prefix + str(ip_number) + '/' + self.paths.xsgen_op_folder
 
                 if os.path.exists(ip_path):
-                    inputlib = Library(database_path=paths.database_path, op_path=op_path, ip_path=ip_path,
+                    inputlib = Library(database_path=self.paths.database_path, op_path=op_path, ip_path=ip_path,
                                        number=ip_number, scout=True)
                     self.flibs.append(copy.deepcopy(inputlib))
                     tot_fr_libs += 1
@@ -161,10 +147,12 @@ class DBase:
                     break
 
         # If there's no output folder, create it
-        if not os.path.exists(paths.database_path + paths.SR_Output_folder):
-            os.mkdir(paths.database_path + paths.SR_Output_folder)
-        if not os.path.exists(paths.database_path + paths.FR_Output_folder):
-            os.mkdir(paths.database_path + paths.FR_Output_folder)
+        if not os.path.exists(self.paths.database_path + self.paths.SR_Output_folder):
+            os.mkdir(self.paths.database_path + self.paths.SR_Output_folder)
+        if not os.path.exists(self.paths.database_path + self.paths.FR_Output_folder):
+            os.mkdir(self.paths.database_path + self.paths.FR_Output_folder)
+
+        self.update_coordinates()
 
     # Once normalized coords are generated, pass here to add
     # TODO: outputting in correct units
@@ -232,48 +220,61 @@ class DBase:
         new_lib = Library(self.paths.database_path, op_path, ip_path, lib_number, screening)
         self.slibs.append(new_lib) if screening else self.flibs.append(new_lib)
         if screening:
-            self.update_metrics(screening=screening)
+            self.update_metrics()
         else:
-            self.update_metrics(screening=screening)
+            self.update_metrics()
 
-    # Runs exploration and exploitation to build the database
-    def build(self, exploration_count, exploitation_count, print_progress=False, record_errors=True,
+    # Runs exploration and exploitation to build the database from input file
+    def build(self, exploration_to_add=0, exploitation_to_add=0, print_progress=False, record_errors=True,
               exploit_method='furthest'):
         self.update_metrics()
         self.print()
 
+        # Decide how many of each
+        lib_count = len(self.flibs)
+        exploration_to_add = \
+            max(self.inputs['max_exploration'] - lib_count, 0) if exploration_to_add == 0 else exploration_to_add
+        exploitation_to_add = \
+            max(self.inputs['max_exploitation'] - lib_count, 0) if exploitation_to_add == 0 else exploitation_to_add
+
+        print('Adding', exploration_to_add, 'exploration and', exploitation_to_add, 'exploitation samples')
+
         # Add some initial points
-        added_points = 0
-        if len(self.flibs) < 3:
+        if lib_count < 3:
+            print('\n_____________________________________')
+            print('-- Initial Building Step. Samples to add: 3')
             self.initial_exploration(False)
             self.run_pxsgen(False)
-            added_points = 3
+            lib_count = len(self.flibs)
+            exploration_to_add -= 3
 
         # Perform exploration
         if print_progress:
-            print('\n_____________________________________\n-- Exploration Step. Samples to add:', exploration_count)
-        for i in range(exploration_count - added_points):
+            print('\n_____________________________________')
+            print('-- Exploration Step. Samples to add:', exploration_to_add)
+        for i in range(exploration_to_add):
             if print_progress:
-                print('Generating point', len(self.flibs))
+                print('Generating exploration sample', len(self.flibs))
             self.exploration(False)
             self.run_pxsgen(False)
-            if print_progress:
-                print('  Estimating error of point')
             if record_errors:
+                if print_progress:
+                    print('  Estimating errors')
                 self.estimate_error()
                 self.find_error()
 
         # Perform exploitation
         if print_progress:
-            print('\n_____________________________________\n-- Exploitation Step. Total points:', exploitation_count)
-        for i in range(exploitation_count):
+            print('\n_____________________________________')
+            print('-- Exploitation Step. Total points:', exploitation_to_add)
+        for i in range(exploitation_to_add):
             if print_progress:
-                print('Generating point (exploitation)', len(self.flibs))
+                print('Generating exploitation sample', len(self.flibs), 'method:', exploit_method)
             self.exploitation(method=exploit_method)
             self.run_pxsgen(False)
-            if print_progress:
-                print('  Estimating error of point')
             if record_errors:
+                if print_progress:
+                    print('  Estimating error of point')
                 self.estimate_error()
                 self.find_error()
 
@@ -436,13 +437,13 @@ class DBase:
         # Iterate through all random points
         rand_count = int((len(coords)) ** 0.5) * self.inputs['explore_mult']  # TODO: could depend on dimensions too
         rand_points = [[random.random() for i in range(self.dimensions)] for i in range(rand_count)]
-        #print('first rand point:', rand_points[0], 'len of rands:', len(rand_points))
+        # print('first rand point:', rand_points[0], 'len of rands:', len(rand_points))
 
         p_cand = [3,3]		# Candidate point to be selected next
         maximin = 0			# The maximin distance of the selected point (higher better)
         fail_count = 0		# Number of rejected rand points
         for counter, rand in enumerate(rand_points):
-            #print('checking point', rand)
+            # print('checking point', rand)
             projection_fail = False		# I know, this is a n00b way to iterate...FINE # TODO: have better flow control
             min_tot = 10
             for p in coords:
@@ -450,29 +451,27 @@ class DBase:
 
                 for d in range(self.dimensions):
                     dist = (rand[d] - p[d])**2	# Cartesian distance will be calculated with this
-                    if dist < self.proj_threshold:	# Projection check
+                    if dist < self.inputs['max_projection']:  # Projection check
                         projection_fail = True
-                        #print('  failed point, dist:', dist)
+                        # print('  failed point, dist:', dist)
                     else:
                         tot_dist += dist
                 if projection_fail:
                     fail_count += 1
                     break
                 tot_dist = (tot_dist)**0.5		# Total cartesian distance of p from rand point
-                #print('  total distance:', tot_dist, ' min distance:', min_tot)
+                # print('  total distance:', tot_dist, ' min distance:', min_tot)
                 if tot_dist < min_tot:			# Finds the closest distance (in coords) to rand point
-                    #print('  assigned new min_tot')
+                    # print('  assigned new min_tot')
                     min_tot = tot_dist
             if min_tot > maximin and not projection_fail:
-                #print('assigned new maximin')
+                # print('assigned new maximin')
                 maximin = min_tot
                 p_cand = rand
 
             # Check if projection threshold is too low
             if (counter+1) % 100 == 0 and fail_count/(counter+1) > 0.50:
-                self.proj_threshold /= 2
-                # print('Increasing projection threshold to', self.proj_threshold, 'fail rate was at',
-                #      round(fail_count/(counter+1), 3))
+                self.inputs['max_projection'] /= 2
 
         # Create a new library with the selected next point and add it to flibs/slibs
         self.add_lib(p_cand, screening)    # Also updates metrics
@@ -526,33 +525,6 @@ class DBase:
         if print_result:
             print('Real error:', round(tot_error, 2), '%. Max error:', round(max_error, 2), '%. Min error:',
                   round(min_error, 2), '%')
-
-    # Generates all neighborhoods after exploration
-    def generate_neighbors(self):
-        self.update_proximity()
-        # Go through all full libraries and generate initial neighborhood
-        for i, lib in enumerate(self.flibs):
-            # TODO: will need to update the initial neighborhood guess
-
-            # Check if there are enough libraries
-            if len(self.flibs) < self.dimensions * 2 + 2:
-                # Not enough libs to construct neighborhoods
-                print('Not enough flibs in database for generate_neighbors')
-                return
-
-            initial_neighbors = list(range(self.dimensions*2))
-            # Avoid passing the lib in its own neighborhood
-            if i in initial_neighbors:
-                initial_neighbors[i] = self.dimensions*2
-
-            neighbor_libs = [self.flibs[i] for i in initial_neighbors]
-            neighbor_coordinates = [lib.coordinates(self.varied_ips) for lib in neighbor_libs]
-            lib.neighborhood = Neighborhood(lib.coordinates(self.varied_ips), initial_neighbors, neighbor_coordinates)
-
-            # Go through all combinations and pick best neighborhood for each point
-            print(' Building neighbors of point', i, 'of', len(self.flibs)-1)
-            considered_libs = lib.proximity_order[:self.dimensions * 3]
-            self.update_neighbors(lib, considered_libs=considered_libs)
 
     # Finds the gradient of all flibs
     def generate_ranks(self):
@@ -749,7 +721,6 @@ class DBase:
         plt.imshow(colors, extent=(0, 1, 0, 1), origin='lower', interpolation='hermite')
         plt.show()
 
-
     # Prints information about database
     def print(self):
         print('Database ', self.paths.database_path)
@@ -779,6 +750,11 @@ class DBase:
 
     # Reads basecase input
     def read_base(self, path):
+        # Check that basecase input exists
+        if not os.path.exists(path):
+            error_message = 'The database base-case input file does not exist. Looking for: ' + path
+            raise FileNotFoundError(error_message)
+
         database_path = self.paths.database_path
         op_path = database_path + self.paths.FR_Output_folder + self.paths.base_output
         self.basecase = Library(database_path, op_path, path, 0, False)
@@ -817,11 +793,15 @@ class DBase:
                 pass
 
             # Check the rest of (most of) defined inputs
-            if len(items) == 2 and float(items[1]) > 0:
+            if len(items) == 2:
                 if items[0] in self.ip_ranges.xsgen:
                     self.ip_ranges.xsgen[items[0]] = float(items[1])
                     self.varied_ips.append(items[0])
-                if items[0] in self.inputs:	# Check database inputs
+                # Check database inputs
+                if items[0] in ['max_exploration', 'max_exploitation', 'max_samples']:
+                    self.inputs[items[0]] = int(items[1])
+                    continue
+                if items[0] in self.inputs:
                     self.inputs[items[0]] = float(items[1])
         doc.close()
         self.dimensions = len(self.varied_ips)
@@ -841,90 +821,30 @@ class DBase:
                 if not os.path.exists(self.flibs[i].op_path):
                     subprocess.run(shell_arg, shell=True, stdout=devnull, stderr=devnull)
                     self.flibs[i].read_output(self.flibs[i].op_path, 1)
+
         self.update_metrics()
 
-    # A catch-all to update data
-    def update_metrics(self, screening=None, libs=None):
-        if len(self.slibs) == 0 and len(self.flibs) == 0:
-            return
-
-        # Figure out what to update
-        if libs is not None:
-            pass
-        else:
-            if screening is None:
-                libs = self.slibs + self.flibs
-            else:
-                libs = self.slibs if screening else self.flibs
-
+    # Updates flib coordinates
+    def update_coordinates(self):
         # Update normalized values
+        libs = self.slibs + self.flibs
         for lib in libs:
             for ip in self.basecase.inputs.xsgen.keys():
                 # TODO: assigning normalized values will need to be fixed for xsgen
                 lib.normalized[ip] = lib.inputs.xsgen[ip]
                 lib.coordinate = lib.coordinates(self.varied_ips)
 
-        # Update library proximity values
+        self.lib_inputs = []
+        self.lib_outputs = []
+        for flib in self.flibs:
+            self.lib_inputs.append(flib.coordinate)
+            self.lib_outputs.append(flib.max_BU + flib.max_prod + flib.max_dest)
+
+    # A catch-all to update data
+    def update_metrics(self):
+        self.update_coordinates()
         self.update_proximity()
-
-        # Update database coordinate matrix and output vector
-        if not screening:
-            self.lib_inputs = []
-            self.lib_outputs = []
-            for flib in self.flibs:
-                self.lib_inputs.append(flib.coordinate)
-                self.lib_outputs.append(flib.max_BU + flib.max_prod + flib.max_dest)
-
-        # Find error estimates
         self.estimate_error(save_result=False)
-
-    # Updates the neighborhoods of flib in database
-    def update_neighbors(self, flib, considered_libs=None):
-        if len(self.flibs) < self.dimensions * 2 + 2:
-            # Not enough libs to construct neighborhoods
-            print('Not enough flibs in database for update_neighbors')
-            return
-
-        try:
-            flib.neighborhood
-        except AttributeError:  # TODO: this may not be necessary since it's done in generate_neighbors
-            # Stupidly guess initial neighbors
-            initial_neighbors = list(range(self.dimensions * 2))
-            # Avoid passing the lib in its own neighborhood
-            if flib.number in initial_neighbors:
-                initial_neighbors[flib.number] = self.dimensions * 2
-            neighbor_libs = [self.flibs[i] for i in initial_neighbors]
-            neighbor_coordinates = [lib.coordinates(self.varied_ips) for lib in neighbor_libs]
-            flib.neighborhood = Neighborhood(flib.coordinates(self.varied_ips), initial_neighbors, neighbor_coordinates)
-
-        # Save current neighborhood information
-        current_score = 0
-        current_coords = flib.neighborhood.p_coords
-        current_neighborhood = flib.neighborhood.lib_numbers
-
-        # Create a list of all candidate libraries
-        if considered_libs is None:
-            cand_list = list(range(len(self.flibs)))
-            cand_list.remove(flib.number)
-        else:
-            cand_list = considered_libs
-
-        # Iterate through each combination
-        for subset in itertools.combinations(cand_list, self.dimensions*2):
-            n_coordinates = []
-            for i in subset:
-                n_coordinates.append(self.flibs[i].coordinates(self.varied_ips))
-            new_neighborhood = Neighborhood(current_coords, subset, n_coordinates)
-
-            # Update the current data if new has better score
-            if current_score < new_neighborhood.neighbor_score:
-                # TODO: this could be improved, information already saved in new_neighborhood
-                current_score = new_neighborhood.neighbor_score
-                # print(current_score, subset, round(100*current_iter/total_iters),'%')
-                current_coords = new_neighborhood.p_coords
-                current_neighborhood = copy.deepcopy(new_neighborhood)
-
-        flib.neighborhood = copy.deepcopy(current_neighborhood)
 
     # Updates the proximity among of points in the database
     def update_proximity(self):

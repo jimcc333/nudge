@@ -2,7 +2,7 @@
 #
 #  main.py
 #
-#  Copyright 2016 cem <cem@cem-VirtualB>
+#  Copyright 2016 Cem Bagdatlioglu <cem@cem-VirtualB>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -16,6 +16,9 @@
 #
 #  Naming and standards:
 #   The database folder should contain:
+#       - basecase.py				xsgen input file containing base-case values
+#       - inputs.txt				file containing database inputs
+#   The folder will also have:
 #       - /SR_Inputs 				folder containing all screening inputs
 #           - [number].py			input file for scout library [number]
 #       - /FR_Inputs 				folder containing all full run inputs
@@ -28,17 +31,14 @@
 #           - /build-[number] 		this number must match the one in FR_Inputs
 #               - /brightlite0		created by xsgen
 #                   - [nucid].txt	output for [nucid] nuclide of input [number]
-#       - basecase.py				xsgen input file containing base-case values
-#       - inputs.txt				file containing database inputs
 #
 #
 #   Terms:
 #       - Library number: indicated as [number]. Unique number for input-output pair. Starts at zero.
 #       - Library progress: screening:[0:1), full=1
 #       - Screening library: A library that's run in a short time and that has curtailed outputs
-#       - Metric: Names of inputs that libraries get interpolated on
-#       - Coordinates: the normalized ([0,1]) input array with only the varied inputs, order based on sorting
-#       - Neighborhood: Determined by inputs, the "closest" libs to a given lib (for gradient estimation)
+#       - Varied inputs: Names of inputs that libraries get interpolated on
+#       - Coordinates: the normalized ([0,1]) input array with only the varied inputs, ordered alphabetically
 #       - Voronoi cell: The hyper-dimensional "volume" made by points closest to target point
 #
 #
@@ -79,19 +79,9 @@
 #
 #
 #
-"""" easy copy paste:
-import os
-from objects import PathNaming
-from dbase import DBase
-paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\1\\')
-database = DBase(paths)
-database.update_metrics()
-database.plot()
-"""
 
 import os
 
-from objects import PathNaming
 from dbase import DBase
 
 from repeat import *
@@ -108,14 +98,16 @@ def main(args):
         print('NUDGE is a global surrogate modeling software. It is used to create a database')
         print('of input-output pairs to be used for interpolation for quick estimation of simulations')
         print('Flags:')
-        print(' -h: help screen')
-        print(' -d [explore_count] [exploit_count] [PATH]: generate database at [PATH] based on the input file')
-        print(' -plot [PATH]: plot 2D database at [PATH]')
-        print(' -est [PATH]: plot 2D database estimate at [PATH]')
-        print(' -explore [PATH]: add one exploration point to database at [PATH]')
-        print(' -exploit [PATH]: add one exploration point to database at [PATH]')
-        print(' -errors [PATH]: display the recorded errors for database at [PATH], if no [PATH] is given will attempt '
-              'to use current directory')
+        print(' -h                                        : help screen')
+        print(' -d [explore_count] [exploit_count] [PATH] : generate database at [PATH] based on the input file')
+        print(' -plot [PATH]                              : plot 2D database at [PATH]')
+        print(' -est [PATH]                               : plot 2D database estimate at [PATH]')
+        print(' -diff [PATH]                              : plot 2D database difference at [PATH]')
+        print(' -explore [PATH]                           : add one exploration point to database at [PATH]')
+        print(' -exploit [PATH]                           : add one exploration point to database at [PATH]')
+        print(' -errors [PATH]                            : display the recorded errors at [PATH]')
+        print(' -study [PATH] [x] [p]                     : perform a database study from [PATH] by repeating')
+        print('                                             the database [x] times using [p] processors')
         print()
         print('The database folder should have two files:')
         print(' - basecase.py: xsgen input file containing base-case values')
@@ -129,10 +121,10 @@ def main(args):
             print('Please provide the path of the database')
             return
 
-        paths = PathNaming(os.name, args[2])
-        database = DBase(paths)
-        database.update_metrics()
+        database = DBase(args[2])
         database.exploration()
+        database.run_pxsgen(False)
+        database.plot(mark_last=True)
         return
 
     if args[1] == '-exploit':
@@ -142,11 +134,10 @@ def main(args):
             print('Please provide the path of the database')
             return
 
-        paths = PathNaming(os.name, args[2])
-        database = DBase(paths)
-
-        database.update_metrics()
+        database = DBase(args[2])
         database.exploitation()
+        database.run_pxsgen(False)
+        database.plot(mark_last=True)
         return
 
     if args[1] == '-errors':
@@ -160,85 +151,36 @@ def main(args):
 
     if args[1] == '-d' and len(args) == 5:
         print('Building database', args[4], 'with', args[2], 'exploration and', args[3], 'exploitation samples.')
-        paths = PathNaming(os.name, database_path=args[4])
-        database = DBase(paths)
-        database.update_metrics()
+        database = DBase(args[4])
         database.build(int(args[2]), int(args[3]), print_progress=True)
         database.plot()
         return
 
     if args[1] == '-plot':
         print('Plotting database', args[2])
-        paths = PathNaming(os.name, database_path=args[2])
-        database = DBase(paths)
-        database.update_metrics()
+        database = DBase(args[2])
+        database.update_coordinates()
         database.plot(numbers=True)
         return
 
     if args[1] == '-est':
-        print('Plotting database', args[2])
-        paths = PathNaming(os.name, database_path=args[2])
-        database = DBase(paths)
+        print('Plotting estimate from database', args[2])
+        database = DBase(args[2])
         database.update_metrics()
         database.plot_estimate()
         return
 
-    # Database path
-    if '-d' in args:
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_guided\\', 7, 0, 40, processes=7, record_errors=True, exploit_method='guided')
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_furthest\\', 7, 0, 40, processes=7, record_errors=True)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_explore\\', 7, 40, 0, processes=7, record_errors=True)
-
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_guided\\', 7, 0, 40, processes=7, record_errors=True, exploit_method='guided', start_number=7)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_furthest\\', 7, 0, 40, processes=7, record_errors=True, start_number=7)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_explore\\', 7, 40, 0, processes=7, record_errors=True, start_number=7)
-
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_guided\\', 14, 0, 40, processes=7, record_errors=True, exploit_method='guided', start_number=14)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_furthest\\', 14, 0, 40, processes=7, record_errors=True, start_number=14)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9_explore\\', 14, 40, 0, processes=7, record_errors=True, start_number=14)
-
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f9_guided\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f9_furthest\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f9_explore\\')
-        return
-
-    # Manual mode check
-    if '-m' in args:
-        print('Begin database analysis')
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\test\\')
-        database = DBase(paths)
+    if args[1] == '-diff':
+        print('Plotting difference of database', args[2])
+        database = DBase(args[2])
         database.update_metrics()
-        database.build(0, 40, print_progress=True, record_errors=False, exploit_method='guided')
-        database.plot()
-        return
-        del database
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor05\\0\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.plot()
-        del database
-        paths = PathNaming(os.name, database_path='C:\\Users\\Cem\\Documents\\nudge\\factor07\\0\\')
-        database = DBase(paths)
-        database.update_metrics()
-        database.plot()
+        database.plot_estimate(diff=True)
         return
 
-    if '-e' in args:
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor00\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor03\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor05\\')
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\factor07\\')
-
-    if '-p' in args:
-        plot_heat_map('C:\\Users\\Cem\\Documents\\nudge\\factor00\\')
-        plot_heat_map('C:\\Users\\Cem\\Documents\\nudge\\factor03\\')
-        plot_heat_map('C:\\Users\\Cem\\Documents\\nudge\\factor05\\')
-        plot_heat_map('C:\\Users\\Cem\\Documents\\nudge\\factor07\\')
+    if args[1] == '-study':
+        print('Beginning database study from directory:', args[2])
+        print('Repeating', args[3], 'times, using', args[4], 'processors')
+        repeat_databases(args[2], args[3], 0, 0, processes=args[4])
         return
-
-    print('\n-TheEnd-')
-
-    return 0
-
 
 

@@ -128,8 +128,6 @@ def read_error_outputs(source_path):
     print('real errors:', np.mean(real_errors, axis=0))
     print('real errors STD:', np.std(real_errors, axis=0))
 
-    return np.mean(real_errors, axis=0)
-
 
 # Plots heat maps
 def plot_heat_map(source_path, resolution=50):

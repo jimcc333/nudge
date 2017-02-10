@@ -20,7 +20,7 @@ class Library:
         self.max_BU = 0         # Maximum burnup in library
 
         # Library analysis values from database
-        self.coordinate = []            # The coordinates (based on varied inputs) of the library
+        self.coordinate = []            # The coordinates (based on normalized varied inputs) of the library
         self.voronoi_size = 0           # The Voronoi cell size of the library
         self.excluded_error = 0         # The error of the database if this point is excluded
         self.furthest_point = []        # The furthest found point within the Voronoi cell
@@ -105,14 +105,18 @@ class Library:
             if len(items) < 3:
                 continue
             if items[0] in self.inputs.xsgen:
-                self.inputs.xsgen[items[0]] = float(items[2])
+                try:
+                    self.inputs.xsgen[items[0]] = float(items[2])
+                except ValueError:
+                    self.inputs.xsgen[items[0]] = str(items[2])
             if items[0] == 'initial_heavy_metal':
                 while line_i < max_lines:
                     line_i += 1
                     items = ip[line_i].replace(':',' ').replace(',',' ').split()
                     if len(items) > 2:
-                        error_message = 'Input file in ' + self.ip_path + \
-                                        ' has formatting error at initial_heavy_metal. Make sure each NUCID is in a new line and close bracket (}) at a new line.'
+                        error_message = 'Input file in ' + self.ip_path + ' has formatting error at initial_heavy_' \
+                                                                          'metal. Make sure each NUCID is in a new ' \
+                                                                          'line and close bracket (}) at a new line.'
                         raise RuntimeError(error_message)
                     if '}' not in items[0]:
                         self.inputs.initial_heavy_metal[int(items[0])] = float(items[1])

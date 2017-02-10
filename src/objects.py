@@ -62,6 +62,8 @@ class xsgenParams:
             'enrichment': None,         # Fuel enrichment (Uranium fuel only) as atom fraction
             'flux': None,               # Average reactor flux [n/cm2/s]
             'k_particles': None,        # Number of particles to run per kcode cycle
+            # placeholder output variable
+            'placeholder_function': None,
         }
 
     # Returns the number of defined inputs
