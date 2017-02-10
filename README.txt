@@ -1,5 +1,5 @@
 NUDGE: NUclear Database GEneration software
-===========================================
+=============
 
 To run nudge, run nudge.py in the nudge/ directory from terminal:
 python /src/nudge.py -h
