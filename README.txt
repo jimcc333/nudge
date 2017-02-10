@@ -1,9 +1,10 @@
-NUDGE: NUclear Database GEneration software
-=============
+# NUDGE: NUclear Database GEneration software
 
+## Running NUDGE
 To run nudge, run nudge.py in the nudge/ directory from terminal:
 python /src/nudge.py -h
 
+##
 
  Copyright 2016 Cem Bagdatlioglu <cem@cem-VirtualB>
 
@@ -17,7 +18,7 @@ python /src/nudge.py -h
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
 
- Naming and standards:
+## Naming and standards:
   The database folder should contain:
       - basecase.py				xsgen input file containing base-case values
       - inputs.txt				file containing database inputs
@@ -35,8 +36,7 @@ python /src/nudge.py -h
               - /brightlite0		created by xsgen
                   - [nucid].txt	output for [nucid] nuclide of input [number]
 
-
-  Terms:
+## Terms:
       - Library number: indicated as [number]. Unique number for input-output pair. Starts at zero.
       - Library progress: screening:[0:1), full=1
       - Screening library: A library that's run in a short time and that has curtailed outputs
@@ -45,7 +45,7 @@ python /src/nudge.py -h
       - Voronoi cell: The hyper-dimensional "volume" made by points closest to target point
 
 
-  Workflow:
+## Workflow:
       1 Start UI and read command line arguments
       2 Initialize database
           - If there are inputs, read them; or create the input folders
@@ -64,8 +64,7 @@ python /src/nudge.py -h
           - Estimate max error
           - Repeat until stop criteria met
 
-
-  Notes:
+## Notes:
       - Folder structure and naming chosen to be simple and intuitive. This enables users to copy-paste
           their existing libraries and easily allow NUDGE to use it in a given database
       - xsgen inputs include void and cladding radius, NUDGE also uses thickness in inputs and some workflow
