@@ -230,15 +230,19 @@ class DBase:
         self.update_metrics()
         self.print()
 
-        # Decide how many of each
+        # Decide how many of each (explore first if deciding from input)
         lib_count = len(self.flibs)
         exploration_to_add = \
             max(self.inputs['max_exploration'] - lib_count, 0) if exploration_to_add == 0 else exploration_to_add
-        exploitation_to_add = \
-            max(self.inputs['max_exploitation'] - lib_count, 0) if exploitation_to_add == 0 else exploitation_to_add
+        if exploitation_to_add == 0:
+            max_libs = self.inputs['max_exploration'] + self.inputs['max_exploitation']
+            if lib_count < max_libs:
+                if self.inputs['max_exploration'] < lib_count:
+                    exploitation_to_add = lib_count - self.inputs['max_exploration']
+                else:
+                    exploitation_to_add = self.inputs['max_exploitation']
 
         print('Adding', exploration_to_add, 'exploration and', exploitation_to_add, 'exploitation samples')
-
         # Add some initial points
         if lib_count < 3:
             print('\n_____________________________________')
