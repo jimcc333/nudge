@@ -1,0 +1,63 @@
+
+# Database input template
+# A work in progress
+# Input variable ranges. Use following format (without the initial '# '):
+# [input_variable][space][var]
+# Where [var] is the plus/minus variation of the input variable in the units of the variable
+# Do not enter a [var] or delete the input variable to have it constant
+#
+# -----------------------------------------------------------------------
+
+# ------------- xsgen inputs to vary ------------- #
+# Composition inputs
+922350
+922380
+
+# Geometry inputs
+fuel_cell_radius
+void_cell_radius
+clad_cell_radius
+unit_cell_pitch
+unit_cell_height
+
+# Density inputs
+fuel_density 0.5
+clad_density 0.5
+cool_density
+
+# Others
+flux
+
+# ------------- Database inputs ------------- #
+max_exploration 10
+max_exploitation 10
+max_samples
+max_error
+max_time
+scout_frac
+explore_frac
+exploit_frac
+explore_mult
+max_projection
+voronoi_mult
+rank_factor
+voronoi_adjuster
+guide_increment
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
