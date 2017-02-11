@@ -57,7 +57,7 @@ class DBase:
             'explore_mult': 500,        # Exploration method Monte Carlo multiplier
             'max_projection': 0.0001,   # Projection check (exploration) threshold
             'voronoi_mult': 300,        # Voronoi method Monte Carlo multiplier
-            'rank_factor': 1,           # The factor that multiplies error when finding rank
+            'rank_factor': 0.4,           # The factor that multiplies error when finding rank
             'voronoi_adjuster': 0.8,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
             'guide_increment': 0.0001,  # The increment to bring back selected guided sample back to original V cell
         }
@@ -175,11 +175,14 @@ class DBase:
         # Check if input exists
         for lib in (self.slibs if screening else self.flibs):
             if lib.inputs.xsgen == new_inputs:
-                print()
+                # If this happens then it's most likely stuck in a loop
+                # Good response is to adjust rank factor so that Voronoi cells are prioritized
+                print('!!========================================!!')
                 print('Input already exists, lib:', lib.number)
-                print(new_inputs)
+                print(norm_coords)
                 self.print()
                 print()
+                self.inputs['rank_factor'] /= 3
                 return
 
         # Create paths
@@ -277,7 +280,7 @@ class DBase:
             print('-- Exploitation Step. Total points:', exploitation_to_add)
         for i in range(exploitation_to_add):
             if print_progress:
-                print('Generating exploitation sample', len(self.flibs), 'method:', exploit_method)
+                print('Generating exploitation sample', len(self.flibs), 'using method:', exploit_method)
             self.exploitation(method=exploit_method)
             self.run_pxsgen(False)
             if record_errors:
@@ -287,7 +290,7 @@ class DBase:
                 self.find_error()
 
         # Write errors
-        print(self.paths.database_path, 'complete')
+        print('Completed building database at:', self.paths.database_path)
         if record_errors:
             self.write_errors()
 

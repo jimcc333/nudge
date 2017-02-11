@@ -89,16 +89,30 @@ def main(args):
     print('----------------- NUDGE: NUclear Database GEneration software -----------------')
 
     if '-m' in args:
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\guided\\', 18, processes=6, exploit_method='guided', exploitation_count=40)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest\\', 18, processes=6, exploitation_count=40)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\explore\\', 18, processes=6, exploration_count=40)
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\explore\\', final_error_only=True)
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\furthest1\\', final_error_only=True)
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\furthest0.25\\', final_error_only=True)
 
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\guided\\', 18, processes=6, exploit_method='guided', add_new=False)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest\\', 18, processes=6, add_new=False)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\explore\\', 18, processes=6, add_new=False)
-
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\guided\\', 30, processes=6, exploit_method='guided', add_new=True)
         return
+
+        # repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\guided\\', 18, processes=6, exploit_method='guided', add_new=False)
+        # repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest0.25\\', 12, processes=6)
+        # repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest4\\', 12, processes=6)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest0.5\\', 12, processes=6)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest2\\', 12, processes=6)
+
+        return
+
+
+        #for i in range(5):
+        #   path = 'C:\\Users\\Cem\\Documents\\nudge\\furthest4\\2\\' + str(i) + '\\'
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\furthest4\\2\\'
+        database = DBase(path)
+        database.estimate_error(print_result=True)
+        database.plot(numbers=True)
+        del database
+        return
+
 
     # Check if help is requested
     if '-h' in args:
@@ -120,6 +134,19 @@ def main(args):
         print('The database folder should have two files:')
         print(' - basecase.py: xsgen input file containing base-case values')
         print(' - inputs.txt: file containing database inputs')
+        return
+
+    if args[1] == '-build':
+        try:
+            print('Building the database at ' + args[2] + ' as defined in input file')
+        except IndexError:
+            print('Please provide the path of the database')
+            return
+
+        database = DBase(args[2])
+        # database.build(print_progress=True, record_errors=False)
+        database.find_error(print_result=True)
+        database.plot(mark_last=True)
         return
 
     if args[1] == '-explore':
