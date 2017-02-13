@@ -30,7 +30,7 @@ flux
 
 # ------------- Database inputs ------------- #
 max_exploration 10
-max_exploitation 10
+max_exploitation 20
 max_samples
 max_error
 max_time
