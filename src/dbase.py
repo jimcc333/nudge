@@ -54,9 +54,9 @@ class DBase:
             'scout_frac': 10,           # Weight of screening time allocation
             'explore_frac': 40,         # Weight of exploration time allocation
             'exploit_frac': 50,         # Weight of exploitation time allocation
-            'explore_mult': 500,        # Exploration method Monte Carlo multiplier
+            'explore_mult': 400,        # Exploration method Monte Carlo multiplier
             'max_projection': 0.0001,   # Projection check (exploration) threshold
-            'voronoi_mult': 300,        # Voronoi method Monte Carlo multiplier
+            'voronoi_mult': 400,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 1,           # The factor that multiplies error when finding rank
             'voronoi_adjuster': 0.8,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
             'guide_increment': 0.0001,  # The increment to bring back selected guided sample back to original V cell
@@ -303,7 +303,8 @@ class DBase:
         self.distance_factors = [1 + i * adjuster for i in zeroed_errors]
 
     # Estimates the error of the database using leave-1-out method
-    def estimate_error(self, method='linear', save_result=True, print_result=False, exclude_after=None, plot=False):
+    def estimate_error(self, method='linear', error_default='nearest', save_result=True, print_result=False,
+                       exclude_after=None, plot=False):
         # Skip if points are too few
         if len(self.flibs) < self.dimensions * 2 or len(self.flibs) < 10:
             return
@@ -317,7 +318,11 @@ class DBase:
         lib_errors = []
         for i in range(len(self.flibs)):
             all_excluded = [self.flibs[i].number] + exclude_list
-            interpolated = self.interpolate(self.flibs[i].coordinate, method=method, exclude=all_excluded)
+            interpolated = self.interpolate(self.flibs[i].coordinate, method=method, exclude=all_excluded,
+                                            error_default=error_default)
+            if interpolated is None:
+                lib_errors.append(0)
+                continue
             real = main('', self.flibs[i].inputs.xsgen)
             try:
                 self.flibs[i].excluded_error = 100 * abs(real - interpolated) / real
@@ -356,16 +361,12 @@ class DBase:
         # Find ranks
         if print_output:
             print('  Finding ranks of database')
-        self.generate_ranks()
-        if print_output:
-            print('    Ranks:')
-            for lib in self.flibs:
-                print(lib.number, lib.rank)
+        self.generate_ranks(print_results=print_output)
 
         # Find the next point
         ranks = [lib.rank for lib in self.flibs]
         max_rank_i = ranks.index(max(ranks))    # The next point is selected near this point (both methods)
-        # Find the point with highest rank and add it
+        # Find the point with highest rank
         selected_point = self.flibs[max_rank_i].furthest_point
         # print('ranks:', [round(i.rank, 2) for i in self.flibs])
 
@@ -386,20 +387,16 @@ class DBase:
             total = sum([abs(i) for i in normal_vector])
             total = 1 if total == 0 else total
             normal_vector[:] = [value/total for value in normal_vector]
-            closest_to_base = False
+            closest_to_base = True
 
-            # print('Picked point', max_rank_i)
-            # print('Furthest:', [round(i, 3) for i in furthest])
-            # print('  closest to:', self.find_closest(furthest))
-            # If it's closest to base, then it's too close: move it away by flipping normal_vector and condition
-            exit_condition = True
-            if self.find_closest(adjusted_point) == max_rank_i:
-                normal_vector[:] = [i for i in normal_vector]
-                exit_condition = False
-                closest_to_base = True
-            # print('exit condition:', exit_condition, '   closest to base:', closest_to_base)
-            # print('normal_vector')
-            # print(normal_vector)
+            if print_output:
+                print('Picked point', max_rank_i, ' Closest to:', self.find_closest(furthest))
+            # If it's not closest to base move it closer by flipping normal_vector and condition
+            exit_condition = False
+            if self.find_closest(adjusted_point) != max_rank_i:
+                normal_vector[:] = [-i for i in normal_vector]
+                exit_condition = True
+                closest_to_base = False
             while closest_to_base is not exit_condition:
                 # Move the point closer to the base point (max_rank_i point)
                 adjusted_point = [adjusted_point[i] + normal_vector[i] * self.inputs['guide_increment'] for i in
@@ -414,6 +411,8 @@ class DBase:
                         value = 0
                         at_edge = True
                 if at_edge:
+                    if print_output:
+                        print('Hit the edge and stopping')
                     break
                 # Find which sample the adjusted point is closest
                 closest_to_base = True if self.find_closest(adjusted_point) == max_rank_i else False
@@ -424,12 +423,13 @@ class DBase:
                     value = 1
                 if value < 0:
                     value = 0
-            # print('Initial furthest, adjusted:', [round(i, 3) for i in furthest], [round(i, 3) for i in adjusted_point])
+
+            if print_output:
+                print('Initial furthest, adjusted furthest:', [round(i, 3) for i in furthest], [round(i, 3) for i in
+                                                                                                adjusted_point])
             selected_point = adjusted_point
 
         rounded_point = [round(i, 2) for i in selected_point]
-        if print_output:
-            print('Selected lib:', self.flibs[max_rank_i].number, ' Coordinates:', rounded_point)
         self.add_lib(selected_point, False)
 
     # Finds the coordinates of next point to sample
@@ -536,10 +536,10 @@ class DBase:
                   round(min_error, 2), '%')
 
     # Finds the gradient of all flibs
-    def generate_ranks(self):
+    def generate_ranks(self, print_results=False):
         # Estimate voronoi cell sizes
         self.voronoi()      # TODO: in the future this will be optimized
-        self.estimate_error(save_result=False)
+        self.estimate_error(save_result=False, error_default='none')
 
         # Go through all libs again now that nonlinearity scores are found
         total_nonlinearity = sum([lib.excluded_error for lib in self.flibs])
@@ -548,6 +548,12 @@ class DBase:
             # Calculate rank
             lib.rank = lib.voronoi_size + lib.excluded_error / total_nonlinearity * self.inputs['rank_factor']
             # print(lib.number, lib.voronoi_size, lib.excluded_error / total_nonlinearity, lib.rank)
+
+        if print_results:
+            print('[sample number] [Voronoi size] [estimated error] [rank]')
+            for lib in self.flibs:
+                print('{:>3}'.format(lib.number), '{:04.4f}'.format(lib.voronoi_size),
+                      '{:04.4f}'.format(round(lib.excluded_error, 3)), '{:04.4f}'.format(round(lib.rank, 3)))
 
     # Creates the initial set of inputs before exploration begins
     def initial_exploration(self, screening):
@@ -567,7 +573,7 @@ class DBase:
         self.update_metrics()
 
     # Finds the interpolated output value at location using method
-    def interpolate(self, location, method='linear', exclude=None):
+    def interpolate(self, location, method='linear', exclude=None, error_default='nearest'):
         # Available methods: ‘linear’ or ‘cubic’
         # Database metrics should be updated before running
 
@@ -590,10 +596,15 @@ class DBase:
         interpolated = griddata(data_matrix, outputs, location, method=method).tolist()[0]
 
         if np.isnan(interpolated):
-            distances = []
-            for point in data_matrix:
-                distances.append(distance.euclidean(point, location))
-            interpolated = outputs[distances.index(min(distances))]
+            if error_default == 'nearest':
+                distances = []
+                for point in data_matrix:
+                    distances.append(distance.euclidean(point, location))
+                interpolated = outputs[distances.index(min(distances))]
+            if error_default == 'zero':
+                interpolated = 0
+            if error_default == 'none':
+                interpolated = None
 
         return interpolated
 
@@ -698,7 +709,7 @@ class DBase:
         plt.show()
         return
 
-    def plot_voronoi(self, resolution=100, base_point_i=None):
+    def plot_voronoi(self, resolution=100, base_point_i=None, numbers=False):
         print('Plotting 2D voronoi cells of the database')
         # Generate a grid and get coords of samples
         grid_x, grid_y = np.mgrid[0:1:(resolution*1j), 0:1:(resolution*1j)]
@@ -730,6 +741,9 @@ class DBase:
         ax.set_ylim([-0.01, 1.01])
         fig.suptitle(self.paths.database_path)
         ax.scatter(samples_x, samples_y, s=100, c=errors)
+        if numbers:
+            for i in range(len(samples_x)):
+                ax.annotate(str(i), (samples_x[i], samples_y[i]))
         plt.imshow(colors, extent=(0, 1, 0, 1), origin='lower', interpolation='hermite')
         plt.show()
 
