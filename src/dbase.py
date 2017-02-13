@@ -249,8 +249,9 @@ class DBase:
         print('Adding', exploration_to_add, 'exploration and', exploitation_to_add, 'exploitation samples')
         # Add some initial points
         if lib_count < 3:
-            print('\n_____________________________________')
-            print('-- Initial Building Step. Samples to add: 3')
+            if print_progress:
+                print('\n_____________________________________')
+                print('-- Initial Building Step. Samples to add: 3')
             self.initial_exploration(False)
             self.run_pxsgen(False)
             lib_count = len(self.flibs)
@@ -625,6 +626,7 @@ class DBase:
         fig, ax = plt.subplots()
         ax.set_ylim([-0.01, 1.01])
         ax.set_xlim([-0.01, 1.01])
+        fig.suptitle(self.paths.database_path)
         if points:
             errors = [flib.excluded_error if est_errors else 'g' for flib in self.flibs]
             if mark_last is True:
@@ -685,6 +687,7 @@ class DBase:
 
         # Plot data
         fig, ax = plt.subplots()
+        fig.suptitle(self.paths.database_path)
         errors = [flib.excluded_error if est_errors else 'g' for flib in self.flibs]
         if mark_last:
             errors[-1] = max(errors)*2 if est_errors else 'y'
@@ -725,6 +728,7 @@ class DBase:
         fig, ax = plt.subplots()
         ax.set_xlim([-0.01, 1.01])
         ax.set_ylim([-0.01, 1.01])
+        fig.suptitle(self.paths.database_path)
         ax.scatter(samples_x, samples_y, s=100, c=errors)
         plt.imshow(colors, extent=(0, 1, 0, 1), origin='lower', interpolation='hermite')
         plt.show()
