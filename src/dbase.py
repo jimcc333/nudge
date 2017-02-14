@@ -58,6 +58,8 @@ class DBase:
             'max_projection': 0.0001,   # Projection check (exploration) threshold
             'voronoi_mult': 400,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 1,           # The factor that multiplies error when finding rank
+            'min_voronoi_order': 0.1,   # The samples with Voronoi sizes in this given lower fraction of all samples
+            # will be rejected for next sample selection even if they have the highest rank [0,1]
             'voronoi_adjuster': 0.8,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
             'guide_increment': 0.0001,  # The increment to bring back selected guided sample back to original V cell
         }
@@ -365,10 +367,18 @@ class DBase:
 
         # Find the next point
         ranks = [lib.rank for lib in self.flibs]
-        max_rank_i = ranks.index(max(ranks))    # The next point is selected near this point (both methods)
-        # Find the point with highest rank
+        max_rank_i = None
+        sorted_voronoi_sizes = sorted([lib.voronoi_size for lib in self.flibs], reverse=True)
+        # Reject if Voronoi size is too small
+        for i in range(len(self.flibs)):
+            # Find index of next highest ranked sample
+            max_rank_i = ranks.index(sorted(ranks, reverse=True)[i])
+            # Check if the Voronoi cell size is high enough relative to others
+            voronoi_position = sorted_voronoi_sizes.index(self.flibs[max_rank_i].voronoi_size)
+            if (1 - ((voronoi_position + 1) / len(sorted_voronoi_sizes))) > self.inputs['min_voronoi_order']:
+                break
+
         selected_point = self.flibs[max_rank_i].furthest_point
-        # print('ranks:', [round(i.rank, 2) for i in self.flibs])
 
         if method == 'guided':
             # Find adjustment factors
@@ -429,7 +439,6 @@ class DBase:
                                                                                                 adjusted_point])
             selected_point = adjusted_point
 
-        rounded_point = [round(i, 2) for i in selected_point]
         self.add_lib(selected_point, False)
 
     # Finds the coordinates of next point to sample

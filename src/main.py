@@ -88,16 +88,38 @@ def main(args):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('----------------- NUDGE: NUclear Database GEneration software -----------------')
 
+    if '-d' in args:
+        repeat_databases('C:\\software\\nudge\\guided\\', 6, processes=6, exploit_method='guided')
+        repeat_databases('C:\\software\\nudge\\furthest\\', 6, processes=6)
+
+        repeat_databases('C:\\software\\nudge\\guided\\', 12, processes=6, exploit_method='guided', add_new=True)
+        repeat_databases('C:\\software\\nudge\\furthest\\', 12, processes=6, add_new=True)
+
+        repeat_databases('C:\\software\\nudge\\guided\\', 12, processes=6, exploit_method='guided', add_new=True)
+        repeat_databases('C:\\software\\nudge\\furthest\\', 12, processes=6, add_new=True)
+
+        read_error_outputs('C:\\software\\nudge\\guided\\')
+        read_error_outputs('C:\\software\\nudge\\furthest\\')
+        return
+
     if '-m' in args:
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\guided\\', 18, processes=6, exploit_method='guided', exploitation_count=40)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest\\', 18, processes=6, exploitation_count=40)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\explore\\', 18, processes=6, exploration_count=40)
 
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\guided\\', 18, processes=6, exploit_method='guided', add_new=False)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest\\', 18, processes=6, add_new=False)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\explore\\', 18, processes=6, add_new=False)
+        path = 'C:\\software\\nudge\\y\\'
+        database = DBase(path)
+        database.generate_ranks(print_results=True)
+        return
+        repeat_databases('C:\\software\\nudge\\furthest\\', 2, processes=6)
+        repeat_databases('C:\\software\\nudge\\furthest\\', 4, processes=6, add_new=True)
+        return
 
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\guided\\', 30, processes=6, exploit_method='guided', add_new=True)
+        for i in range(15):
+            path = 'C:\\software\\nudge\\guided\\' + str(i) + '\\'
+            database = DBase(path)
+            database.plot(numbers=True)
+        return
+
+        # database.run_pxsgen(False)
+
         return
 
     # Check if help is requested
