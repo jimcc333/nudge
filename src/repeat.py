@@ -13,7 +13,7 @@ from dbase import DBase
 
 # Repeats databases from the same inputs and basecase
 def repeat_databases(source_path, database_count, exploration_count=0, exploitation_count=0, random_count=0, processes=7,
-                     add_new=True, exploit_method='furthest', record_errors=True, start_number=0):
+                     add_new=False, exploit_method='furthest', record_errors=True, start_number=0):
     # Check source path
     if not os.path.isdir(source_path):
         print('Unable to find source:' + source_path)
@@ -65,25 +65,28 @@ def repeat_databases(source_path, database_count, exploration_count=0, exploitat
 
 
 # Goes through a database study and builds errors for each database
-def find_errors(source_path, find_all=False, exclude_after=None):
+def find_errors(source_path, find_all=False, exclude_after=None, delete_protect=True):
     try:
         folders = os.listdir(source_path)
     except FileNotFoundError:
         print('The database study directory', source_path, 'does not exist')
         return
     slash = '\\' if os.name == 'nt' else '/'
+    paths = PathNaming(os.name)
 
     for folder_name in folders:
+        if os.path.exists(source_path+folder_name+slash+paths.error_file) and delete_protect:
+            print('Errors file exists, skipping', source_path+folder_name)
+            continue
         try:
-            paths = PathNaming(os.name, database_path=source_path+folder_name+slash)
-            database = DBase(paths)
+            database = DBase(source_path+folder_name+slash)
             print('Finding errors of', database.paths.database_path)
             database.update_metrics()
             database.estimate_error(exclude_after=exclude_after)
             database.find_error()
             database.write_errors()
             del database
-        except (FileNotFoundError, NotADirectoryError):
+        except (FileNotFoundError, NotADirectoryError, RuntimeError):
             continue
 
     return

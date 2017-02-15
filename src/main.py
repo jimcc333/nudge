@@ -88,31 +88,48 @@ def main(args):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('----------------- NUDGE: NUclear Database GEneration software -----------------')
 
+    if '-d' in args:
+        #repeat_databases('C:\\software\\nudge\\3d_g\\', 12, processes=6, exploit_method='guided', record_errors=False)
+        #repeat_databases('C:\\software\\nudge\\3d_f\\', 12, processes=6, record_errors=False)
+
+        #find_errors('C:\\software\\nudge\\3d_g\\')
+        find_errors('C:\\software\\nudge\\3d_f\\')
+
+        read_error_outputs('C:\\software\\nudge\\3d_g\\')
+        read_error_outputs('C:\\software\\nudge\\3d_f\\')
+
+        return
+
+        repeat_databases('C:\\software\\nudge\\guided\\', 12, processes=6, exploit_method='guided', add_new=True)
+        repeat_databases('C:\\software\\nudge\\furthest\\', 12, processes=6, add_new=True)
+
+        repeat_databases('C:\\software\\nudge\\guided\\', 12, processes=6, exploit_method='guided', add_new=True)
+        repeat_databases('C:\\software\\nudge\\furthest\\', 12, processes=6, add_new=True)
+
+        read_error_outputs('C:\\software\\nudge\\guided\\')
+        read_error_outputs('C:\\software\\nudge\\furthest\\')
+        return
+
     if '-m' in args:
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\explore\\', final_error_only=True)
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\furthest1\\', final_error_only=True)
-        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\furthest0.25\\', final_error_only=True)
 
-        return
-
-        # repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\guided\\', 18, processes=6, exploit_method='guided', add_new=False)
-        # repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest0.25\\', 12, processes=6)
-        # repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest4\\', 12, processes=6)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest0.5\\', 12, processes=6)
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\furthest2\\', 12, processes=6)
-
-        return
-
-
-        #for i in range(5):
-        #   path = 'C:\\Users\\Cem\\Documents\\nudge\\furthest4\\2\\' + str(i) + '\\'
-        path = 'C:\\Users\\Cem\\Documents\\nudge\\furthest4\\2\\'
+        path = 'C:\\software\\nudge\\x\\'
         database = DBase(path)
-        database.estimate_error(print_result=True)
-        database.plot(numbers=True)
-        del database
+        database.build(exploration_to_add=10, record_errors=False)
+        database.plot()
+        return
+        repeat_databases('C:\\software\\nudge\\furthest\\', 2, processes=6)
+        repeat_databases('C:\\software\\nudge\\furthest\\', 4, processes=6, add_new=True)
         return
 
+        for i in range(15):
+            path = 'C:\\software\\nudge\\guided\\' + str(i) + '\\'
+            database = DBase(path)
+            database.plot(numbers=True)
+        return
+
+        # database.run_pxsgen(False)
+
+        return
 
     # Check if help is requested
     if '-h' in args:
