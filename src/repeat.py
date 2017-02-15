@@ -65,7 +65,7 @@ def repeat_databases(source_path, database_count, exploration_count=0, exploitat
 
 
 # Goes through a database study and builds errors for each database
-def find_errors(source_path, find_all=False, exclude_after=None):
+def find_errors(source_path, find_all=False, exclude_after=None, delete_protect=True):
     try:
         folders = os.listdir(source_path)
     except FileNotFoundError:
@@ -75,7 +75,7 @@ def find_errors(source_path, find_all=False, exclude_after=None):
     paths = PathNaming(os.name)
 
     for folder_name in folders:
-        if os.path.exists(source_path+folder_name+slash+paths.error_file):
+        if os.path.exists(source_path+folder_name+slash+paths.error_file) and delete_protect:
             print('Errors file exists, skipping', source_path+folder_name)
             continue
         try:
