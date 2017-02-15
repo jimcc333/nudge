@@ -72,8 +72,12 @@ def find_errors(source_path, find_all=False, exclude_after=None):
         print('The database study directory', source_path, 'does not exist')
         return
     slash = '\\' if os.name == 'nt' else '/'
+    paths = PathNaming(os.name)
 
     for folder_name in folders:
+        if os.path.exists(source_path+folder_name+slash+paths.error_file):
+            print('Errors file exists, skipping', source_path+folder_name)
+            continue
         try:
             database = DBase(source_path+folder_name+slash)
             print('Finding errors of', database.paths.database_path)
