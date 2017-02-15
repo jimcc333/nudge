@@ -1,4 +1,5 @@
 import os
+import sys
 import copy
 import itertools
 import random
@@ -247,8 +248,12 @@ class DBase:
                     exploitation_to_add = lib_count - self.inputs['max_exploration']
                 else:
                     exploitation_to_add = self.inputs['max_exploitation']
+        total_to_add = exploration_to_add + exploitation_to_add
+        total_left = copy.copy(total_to_add)
 
         print('Adding', exploration_to_add, 'exploration and', exploitation_to_add, 'exploitation samples')
+        print('\r%s %s %% complete (exploration)' % (self.paths.database_path,
+                                                     int((1 - total_left / total_to_add) * 100)), end='\r')
         # Add some initial points
         if lib_count < 3:
             if print_progress:
@@ -258,6 +263,7 @@ class DBase:
             self.run_pxsgen(False)
             lib_count = len(self.flibs)
             exploration_to_add -= 3
+            total_left -= 3
 
         # Perform exploration
         if print_progress:
@@ -273,6 +279,9 @@ class DBase:
                     print('  Estimating errors')
                 self.estimate_error()
                 self.find_error()
+            total_left -= 1
+            print('\r%s %s %% complete (exploration)' % (self.paths.database_path,
+                                                         int((1-total_left/total_to_add) * 100)), end='\r')
 
         # Perform exploitation
         if print_progress:
@@ -288,9 +297,11 @@ class DBase:
                     print('  Estimating error of point')
                 self.estimate_error()
                 self.find_error()
-
+            total_left -= 1
+            print('\r%s %s %% complete (exploitation)' % (self.paths.database_path,
+                                                          int((1-total_left/total_to_add) * 100)), end='\r')
+        print('Completed', self.paths.database_path)
         # Write errors
-        print(self.paths.database_path, 'complete')
         if record_errors:
             self.write_errors()
 
@@ -587,15 +598,16 @@ class DBase:
         # Database metrics should be updated before running
 
         # Handle exclusions
+        data_matrix = []
         if exclude is not None:
-            data_matrix = []
             outputs = []
             for i in range(len(self.lib_outputs)):
                 if i not in exclude:
                     data_matrix.append(self.lib_inputs[i])
                     outputs.append(self.lib_outputs[i])
         else:
-            data_matrix = copy.copy(self.lib_inputs)
+            for i in range(len(self.lib_outputs)):
+                data_matrix.append(copy.copy(self.lib_inputs[i]))
             outputs = copy.copy(self.lib_outputs)
 
         data_matrix = np.asarray(data_matrix)
@@ -954,7 +966,7 @@ class DBase:
 
     def write_errors(self):
         # This should check if the file exists to prevent loss of data
-        ip_path = self.paths.database_path + 'errors.txt'
+        ip_path = self.paths.database_path + self.paths.error_file
         with open(ip_path, 'w') as openfile:  # bad naming here
             openfile.write('max errors\n' + str(self.est_error_max).replace(',', ''))
             openfile.write('\nmin errors\n' + str(self.est_error_min).replace(',', ''))

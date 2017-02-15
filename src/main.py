@@ -89,8 +89,16 @@ def main(args):
     print('----------------- NUDGE: NUclear Database GEneration software -----------------')
 
     if '-d' in args:
-        repeat_databases('C:\\software\\nudge\\guided\\', 6, processes=6, exploit_method='guided')
-        repeat_databases('C:\\software\\nudge\\furthest\\', 6, processes=6)
+        #repeat_databases('C:\\software\\nudge\\3d_g\\', 12, processes=6, exploit_method='guided', record_errors=False)
+        #repeat_databases('C:\\software\\nudge\\3d_f\\', 12, processes=6, record_errors=False)
+
+        #find_errors('C:\\software\\nudge\\3d_g\\')
+        find_errors('C:\\software\\nudge\\3d_f\\')
+
+        read_error_outputs('C:\\software\\nudge\\3d_g\\')
+        read_error_outputs('C:\\software\\nudge\\3d_f\\')
+
+        return
 
         repeat_databases('C:\\software\\nudge\\guided\\', 12, processes=6, exploit_method='guided', add_new=True)
         repeat_databases('C:\\software\\nudge\\furthest\\', 12, processes=6, add_new=True)
@@ -104,9 +112,10 @@ def main(args):
 
     if '-m' in args:
 
-        path = 'C:\\software\\nudge\\y\\'
+        path = 'C:\\software\\nudge\\x\\'
         database = DBase(path)
-        database.generate_ranks(print_results=True)
+        database.build(exploration_to_add=10, record_errors=False)
+        database.plot()
         return
         repeat_databases('C:\\software\\nudge\\furthest\\', 2, processes=6)
         repeat_databases('C:\\software\\nudge\\furthest\\', 4, processes=6, add_new=True)

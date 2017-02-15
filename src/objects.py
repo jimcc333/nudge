@@ -26,6 +26,7 @@ class PathNaming:
         self.base_input = 'basecase.py'     # This file is used as the base case for the database
         self.base_output = self.slash + 'basecase.py'
         self.dbase_input = 'inputs.txt'     # Used for database creation inputs
+        self.error_file = 'errors.txt'      # Used for database errors
 
         self.SR_Input_folder = 'SR_Inputs'      # Where scout run inputs are stored
         self.SR_Output_folder = 'SR_Outputs'    # Where scout run outputs are stored
