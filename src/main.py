@@ -183,7 +183,7 @@ def main(args):
             return
 
         database = DBase(args[2])
-        # database.build(print_progress=True, record_errors=False)
+        database.build(print_progress=True, record_errors=False)
         database.find_error(print_result=True)
         database.plot(mark_last=True)
         return

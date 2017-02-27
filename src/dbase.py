@@ -1,9 +1,8 @@
 import os
-import sys
 import copy
-import itertools
 import random
 import subprocess
+import time
 
 import numpy as np
 import matplotlib.cm as cm
@@ -13,7 +12,7 @@ from scipy.spatial import distance
 from scipy.interpolate import griddata
 
 from library import Library
-from objects import xsgenParams, Neighborhood, PathNaming
+from objects import xsgenParams, PathNaming
 from pxsgen import main
 
 """
@@ -237,6 +236,7 @@ class DBase:
     # Runs exploration and exploitation to build the database from input file
     def build(self, exploration_to_add=0, exploitation_to_add=0, print_progress=False, record_errors=True,
               exploit_method='furthest'):
+        start_time = time.perf_counter()
         self.update_metrics()
         self.print()
 
@@ -252,11 +252,12 @@ class DBase:
                 else:
                     exploitation_to_add = self.inputs['max_exploitation']
         total_to_add = exploration_to_add + exploitation_to_add
+        if total_to_add == 0:
+            print('No new points to add')
+            return
         total_left = copy.copy(total_to_add)
 
         print('Adding', exploration_to_add, 'exploration and', exploitation_to_add, 'exploitation samples')
-        print('\r%s %s %% complete (exploration)' % (self.paths.database_path,
-                                                     int((1 - total_left / total_to_add) * 100)), end='\r')
         # Add some initial points
         if lib_count < 3:
             if print_progress:
@@ -267,14 +268,13 @@ class DBase:
             lib_count = len(self.flibs)
             exploration_to_add -= 3
             total_left -= 3
+        initial_time = time.perf_counter()
 
         # Perform exploration
         if print_progress:
             print('\n_____________________________________')
             print('-- Exploration Step. Samples to add:', exploration_to_add)
         for i in range(exploration_to_add):
-            if print_progress:
-                print('Generating exploration sample', len(self.flibs))
             self.exploration(False)
             self.run_pxsgen(False)
             if record_errors:
@@ -283,17 +283,20 @@ class DBase:
                 self.estimate_error()
                 self.find_error()
             total_left -= 1
-            print('\r%s %s %% complete (exploration)' % (self.paths.database_path,
+            if print_progress:
+                print('\r%s %s %% complete (current step: exploration)' % (self.paths.database_path,
                                                          int((1-total_left/total_to_add) * 100)), end='\r')
+        explore_time = time.perf_counter()
+        if print_progress:
+            print('\r--- Completed in', round(explore_time - initial_time, 2),
+                  'seconds                                                                             ', end='')
 
         # Perform exploitation
         if print_progress:
             print('\n_____________________________________')
             print('-- Exploitation Step. Total points:', exploitation_to_add)
         for i in range(exploitation_to_add):
-            if print_progress:
-                print('Generating exploitation sample', len(self.flibs), 'using method:', exploit_method)
-            self.exploitation(method=exploit_method)
+            self.exploitation(method=exploit_method, print_output=False)
             self.run_pxsgen(False)
             if record_errors:
                 if print_progress:
@@ -301,9 +304,14 @@ class DBase:
                 self.estimate_error()
                 self.find_error()
             total_left -= 1
-            print('\r%s %s %% complete (exploitation)' % (self.paths.database_path,
-                                                          int((1-total_left/total_to_add) * 100)), end='\r')
-        print('Completed', self.paths.database_path)
+            if print_progress:
+                print('\r%s %s %% completed (current step: exploitation)' % (self.paths.database_path,
+                                                                    int((1-total_left/total_to_add) * 100)), end='\r')
+        exploit_time = time.perf_counter()
+        if print_progress:
+            print('\r--- Completed in', round(exploit_time - explore_time, 2),
+                  'seconds                                                                             \n')
+            print(self.paths.database_path, 'completed in', round(exploit_time - start_time, 2), 'seconds')
         # Write errors
         if record_errors:
             self.write_errors()
