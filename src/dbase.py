@@ -59,7 +59,7 @@ class DBase:
             'max_projection': 0.0001,   # Projection check (exploration) threshold
             'voronoi_mult': 400,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 1,           # The factor that multiplies error when finding rank
-            'min_voronoi_order': 0.1,   # The samples with Voronoi sizes in this given lower fraction of all samples
+            'min_voronoi_order': 0.15,  # The samples with Voronoi sizes in this given lower fraction of all samples
             # will be rejected for next sample selection even if they have the highest rank [0,1]
             'voronoi_adjuster': 0.8,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
             'guide_increment': 0.0001,  # The increment to bring back selected guided sample back to original V cell
@@ -310,7 +310,8 @@ class DBase:
 
     # Calculates the distance weighing factors for Voronoi cell calculation
     def calculate_factors(self, base_point_i):
-        selected_error = self.flibs[base_point_i].excluded_error
+        selected_error = self.flibs[base_point_i].excluded_error if self.flibs[base_point_i].excluded_error != 0 else \
+            max([lib.excluded_error for lib in self.flibs])
         zeroed_errors = [lib.excluded_error / selected_error - 1 for lib in self.flibs]
         zeroed_errors[:] = [-0.5 if i < -0.5 else i for i in zeroed_errors]
         adjuster = max([abs(i) for i in zeroed_errors])

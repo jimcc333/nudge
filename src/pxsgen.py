@@ -105,7 +105,7 @@ by Mira Bozzini and Milvia Rossini. Monograf´ıas de la Academia de Ciencias de
 
 """
 
-
+# Curved surface
 def f2(x, y, z):
     return (np.tanh(0.2 * x - 0.2 * z - 0.2 * y) + 1) / 2
 
@@ -120,7 +120,7 @@ def f4(x, y, z):
     return np.exp(-81 / 16 * ((x - 0.5) ** 2 + (y - 0.52) ** 2 + (z - 0.47) ** 2))
 
 
-# Triple hump
+# Complicated triple hump
 def f5(x, y, z):
     A = np.sqrt(64 - 1 * ((x - 0.5) ** 2 + (y - 0.52) ** 2 + (z - 0.47) ** 2)) / 4
     return A + f2(x, y, z)/10 + f9(x, y, z) / 75
@@ -140,7 +140,7 @@ def f7(x, y, z):
     return 1 / np.sqrt(1 + 2 * np.exp(-3 * (np.sqrt(x ** 2 + y ** 2 + z ** 2) - 6.7)))
 
 
-# Ignores z
+# Ignores z, 9 peaks
 def f8(x, y, z):
     return x * (1 - x) * np.cos(4 * np.pi * x) * np.sin(4 * np.pi * y ** 2) ** 2 + 1
 
@@ -150,7 +150,10 @@ def f9(x, y, z):
     x *= 5
     y *= 10
     alpha, phi_ext = 0.7, 2 * np.pi * 0.5
-    return (2 + alpha - 2 * np.cos(x) * np.cos(y) - alpha * np.cos(phi_ext - 2 * x)) / 12
+    output = (2 + alpha - 2 * np.cos(x) * np.cos(y) - alpha * np.cos(phi_ext - 2 * x)) / 12
+    lower_bound = 0.28
+    output = output if output > lower_bound else lower_bound
+    return output
 
 if __name__ == '__main__':
     import sys
