@@ -491,7 +491,7 @@ class DBase:
                 tot_dist = 0
 
                 for d in range(self.dimensions):
-                    dist = (rand[d] - p[d])**2	# Cartesian distance will be calculated with this
+                    dist = (rand[d] - p[d])**2	 # Cartesian distance will be calculated with this
                     if dist < self.inputs['max_projection']:  # Projection check
                         projection_fail = True
                         # print('  failed point, dist:', dist)
@@ -500,7 +500,7 @@ class DBase:
                 if projection_fail:
                     fail_count += 1
                     break
-                tot_dist = (tot_dist)**0.5		# Total cartesian distance of p from rand point
+                tot_dist **= 0.5		# Total cartesian distance of p from rand point
                 # print('  total distance:', tot_dist, ' min distance:', min_tot)
                 if tot_dist < min_tot:			# Finds the closest distance (in coords) to rand point
                     # print('  assigned new min_tot')
@@ -882,6 +882,34 @@ class DBase:
                     self.flibs[i].read_output(self.flibs[i].op_path, 1)
 
         self.update_metrics()
+
+    # Times how long each step takes
+    def timer(self, exploration_count, exploitation_count, exploit_method='furthest'):
+        self.update_metrics()
+        self.print()
+        start_time = time.perf_counter()
+        print('Dimensions:', len(self.varied_ips))
+        if len(self.flibs) == 0:
+            print('Placing initial points')
+            self.initial_exploration(False)
+            self.run_pxsgen(False)
+
+        for i in range(exploration_count):
+            sample_start_time = time.perf_counter()
+            self.exploration(False)
+            print('Sample', len(self.flibs), '(exploration) took ', round(time.perf_counter() - sample_start_time, 3),
+                  's')
+            self.run_pxsgen(False)
+
+        for i in range(exploitation_count):
+            sample_start_time = time.perf_counter()
+            self.exploitation(method=exploit_method, print_output=False)
+            print('Sample', len(self.flibs), '(exploitation) took ', round(time.perf_counter() - sample_start_time, 3),
+                  's')
+            self.run_pxsgen(False)
+
+        print(exploration_count, 'exploration and', exploitation_count, 'exploitation took',
+              round(time.perf_counter() - start_time, 3), 's')
 
     # Updates flib coordinates
     def update_coordinates(self):

@@ -134,24 +134,90 @@ def main(args):
 
     if '-m' in args:
 
-        path = 'C:\\Users\\Cem\\Documents\\nudge\\guided\\'
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\3D\\'
         database = DBase(path)
-        # database.build(exploration_to_add=10, record_errors=False)
-        database.plot()
-        return
-        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\guided\\', 2, processes=6)
-        repeat_databases('C:\\software\\nudge\\furthest\\', 4, processes=6, add_new=True)
+        database.timer(57, 0)
+        print()
+        del database
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\3D1\\'
+        database = DBase(path)
+        database.timer(57, 0)
+        print()
+        del database
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\3D2\\'
+        database = DBase(path)
+        database.timer(57, 0)
+        print()
+        del database
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\3D3\\'
+        database = DBase(path)
+        database.timer(57, 0)
+        print()
+        del database
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\3D4\\'
+        database = DBase(path)
+        database.timer(57, 0)
+        print()
+        del database
         return
 
-        for i in range(15):
-            path = 'C:\\software\\nudge\\guided\\' + str(i) + '\\'
-            database = DBase(path)
-            database.plot(numbers=True)
+    if '-2' in args:
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\8d\\'
+        clear_databases(path)
+        repeat_databases(path, 10, record_errors=False)
+
+        database = DBase(path + '0\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '1\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '2\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '3\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '4\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '5\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '6\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '7\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '8\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '9\\')
+        database.timer(32, 0)
+        print()
+        del database
+
         return
 
-        # database.run_pxsgen(False)
-
-        return
 
     # Check if help is requested
     if '-h' in args:
