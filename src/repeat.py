@@ -188,6 +188,22 @@ def plot_heat_map(source_path, resolution=50):
     plt.show()
 
 
+# Removes input and output folders and errors file in database study directories
+def clear_databases(study_path):
+    path = PathNaming(os.name, database_path=study_path)
+    folders = os.listdir(study_path)
+    for folder_name in folders:
+        try:
+            database_path = study_path + folder_name + path.slash
+            shutil.rmtree(database_path + path.FR_Input_folder)
+            shutil.rmtree(database_path + path.FR_Output_folder)
+            shutil.rmtree(database_path + path.SR_Input_folder)
+            shutil.rmtree(database_path + path.SR_Output_folder)
+            os.remove(database_path + 'errors.txt')
+        except FileNotFoundError:
+            continue
+
+
 # Deletes all libraries in a database study (or one database) after the specified number
 def delete_after(study_path, number, database_path=None):
     if database_path is not None:
