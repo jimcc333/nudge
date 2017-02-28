@@ -84,7 +84,7 @@ def output_method(inputs, function):
     if function == '9D':
         output = f5(inputs[0], inputs[1], inputs[2]) * f7(inputs[3], inputs[4],  inputs[2] + inputs[3]) * \
                  f9(inputs[6], inputs[7], inputs[7]) * f4(inputs[8], inputs[0] + inputs[1], inputs[5])
-
+        output = np.log(output)
     if output is None:
         error_message = 'Placeholder xsgen does not recognize function type ' + str(function)
         raise RuntimeError(error_message)
