@@ -136,7 +136,7 @@ def main(args):
 
         path = 'C:\\Users\\Cem\\Documents\\nudge\\3D\\'
         database = DBase(path)
-        database.timer(57, 0)
+        database.exploration(False)
         print()
         del database
         path = 'C:\\Users\\Cem\\Documents\\nudge\\3D1\\'
@@ -162,59 +162,55 @@ def main(args):
         return
 
     if '-2' in args:
-        path = 'C:\\Users\\Cem\\Documents\\nudge\\8d\\'
+        # 2d: 90; 5d: 65; 8d: 35
+        count = 12
+
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\2d\\'
         clear_databases(path)
-        repeat_databases(path, 10, record_errors=False)
+        repeat_databases(path, count, record_errors=False)
 
-        database = DBase(path + '0\\')
-        database.timer(32, 0)
-        print()
-        del database
+        times = []
+        for i in range(count):
+            database = DBase(path + str(i) + '\\')
+            times.append(database.timer(0, 250))
+            del database
+            print(times[-1])
+            print('************************************')
 
-        database = DBase(path + '1\\')
-        database.timer(32, 0)
-        print()
-        del database
+        print(np.mean(times, axis=0))
+        print('---------------------------------------------------------------------------------------------------')
+        print(np.mean(times, axis=1))
 
-        database = DBase(path + '2\\')
-        database.timer(32, 0)
-        print()
-        del database
+        # path = 'C:\\Users\\Cem\\Documents\\nudge\\3d\\'
+        # clear_databases(path)
+        # repeat_databases(path, count, record_errors=False)
+        #
+        # for i in range(count):
+        #     database = DBase(path + str(i) + '\\')
+        #     database.timer(0, 70)
+        #     print()
+        #     del database
+        #
+        # path = 'C:\\Users\\Cem\\Documents\\nudge\\5d\\'
+        # clear_databases(path)
+        # repeat_databases(path, count, record_errors=False)
+        #
+        # for i in range(count):
+        #     database = DBase(path + str(i) + '\\')
+        #     database.timer(0, 60)
+        #     print()
+        #     del database
+        #
+        # path = 'C:\\Users\\Cem\\Documents\\nudge\\8d\\'
+        # clear_databases(path)
+        # repeat_databases(path, count, record_errors=False)
+        #
+        # for i in range(count):
+        #     database = DBase(path + str(i) + '\\')
+        #     database.timer(0, 40)
+        #     print()
+        #     del database
 
-        database = DBase(path + '3\\')
-        database.timer(32, 0)
-        print()
-        del database
-
-        database = DBase(path + '4\\')
-        database.timer(32, 0)
-        print()
-        del database
-
-        database = DBase(path + '5\\')
-        database.timer(32, 0)
-        print()
-        del database
-
-        database = DBase(path + '6\\')
-        database.timer(32, 0)
-        print()
-        del database
-
-        database = DBase(path + '7\\')
-        database.timer(32, 0)
-        print()
-        del database
-
-        database = DBase(path + '8\\')
-        database.timer(32, 0)
-        print()
-        del database
-
-        database = DBase(path + '9\\')
-        database.timer(32, 0)
-        print()
-        del database
 
         return
 

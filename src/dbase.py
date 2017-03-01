@@ -43,6 +43,8 @@ class DBase:
         self.dimensions = None          # Number of varied inputs for database (assigned when inputs are read)
         self.basecase = None            # The basecase Library object (assigned when basecase is read)
         self.base_file = None           # The basecase as string (assigned when basecase is read)
+        self.counter_x = 0
+        self.times = []
 
         # Database inputs
         self.inputs = {
@@ -228,10 +230,7 @@ class DBase:
         # Read it in database
         new_lib = Library(self.paths.database_path, op_path, ip_path, lib_number, screening)
         self.slibs.append(new_lib) if screening else self.flibs.append(new_lib)
-        if screening:
-            self.update_metrics()
-        else:
-            self.update_metrics()
+        self.update_metrics()
 
     # Runs exploration and exploitation to build the database from input file
     def build(self, exploration_to_add=0, exploitation_to_add=0, print_progress=False, record_errors=True,
@@ -330,6 +329,7 @@ class DBase:
     # Estimates the error of the database using leave-1-out method
     def estimate_error(self, method='linear', error_default='nearest', save_result=True, print_result=False,
                        exclude_after=None, plot=False):
+        self.counter_x += 1
         # Skip if points are too few
         if len(self.flibs) < self.dimensions * 2 or len(self.flibs) < 10:
             return
@@ -338,6 +338,8 @@ class DBase:
         exclude_list = []
         if exclude_after is not None:
             exclude_list = list(range(len(self.flibs)))[exclude_after:]
+
+        start_time = time.perf_counter()
 
         # TODO: screening check
         lib_errors = []
@@ -354,6 +356,10 @@ class DBase:
                 lib_errors.append(self.flibs[i].excluded_error)
             except ZeroDivisionError:
                 return
+
+        if self.counter_x % 2 == 1:   # a one time work around to make data processing easy, this branch only!
+            self.times.append(round(time.perf_counter() - start_time, 7))
+
         if save_result:
             self.est_error_mean.append(round(sum(lib_errors)/max(len(lib_errors), 1), 2))
             self.est_error_max.append(round(max(lib_errors), 2))
@@ -466,6 +472,7 @@ class DBase:
 
     # Finds the coordinates of next point to sample
     def exploration(self, screening=False):
+        start_time = time.perf_counter()
         # Get the coordinates of the current database
         if screening:
             coords = [i.coordinates(self.varied_ips) for i in self.slibs]
@@ -475,10 +482,14 @@ class DBase:
             print('Exploration - no points in database error')
             return
 
+        t1 = time.perf_counter()
+
         # Iterate through all random points
         rand_count = int((len(coords)) ** 0.5) * self.inputs['explore_mult']  # TODO: could depend on dimensions too
         rand_points = [[random.random() for i in range(self.dimensions)] for i in range(rand_count)]
         # print('first rand point:', rand_points[0], 'len of rands:', len(rand_points))
+
+        t2 = time.perf_counter()
 
         p_cand = [3,3]		# Candidate point to be selected next
         maximin = 0			# The maximin distance of the selected point (higher better)
@@ -514,8 +525,14 @@ class DBase:
             if (counter+1) % 100 == 0 and fail_count/(counter+1) > 0.50:
                 self.inputs['max_projection'] /= 2
 
+        t3 = time.perf_counter()
+
         # Create a new library with the selected next point and add it to flibs/slibs
         self.add_lib(p_cand, screening)    # Also updates metrics
+
+        t4 = time.perf_counter()
+
+        # print('  ', round(t1 - start_time, 6), round(t2 - t1, 6), round(t3 - t2, 6), round(t4 - t3, 6))
 
     # Finds the closest point in self.flibs to the given point and returns the index
     def find_closest(self, point):
@@ -570,8 +587,16 @@ class DBase:
     # Finds the gradient of all flibs
     def generate_ranks(self, print_results=False):
         # Estimate voronoi cell sizes
+
+        start_time = time.perf_counter()
+
         self.voronoi()      # TODO: in the future this will be optimized
+
+        t1 = time.perf_counter()
+
         self.estimate_error(save_result=False, error_default='none')
+
+        # print(len(self.flibs), round(t1 - start_time, 6), round(time.perf_counter() - t1, 6))
 
         # Go through all libs again now that nonlinearity scores are found
         total_nonlinearity = sum([lib.excluded_error for lib in self.flibs])
@@ -881,13 +906,13 @@ class DBase:
                     subprocess.run(shell_arg, shell=True, stdout=devnull, stderr=devnull)
                     self.flibs[i].read_output(self.flibs[i].op_path, 1)
 
-        self.update_metrics()
-
     # Times how long each step takes
     def timer(self, exploration_count, exploitation_count, exploit_method='furthest'):
         self.update_metrics()
         self.print()
         start_time = time.perf_counter()
+
+        # times = []
         print('Dimensions:', len(self.varied_ips))
         if len(self.flibs) == 0:
             print('Placing initial points')
@@ -897,19 +922,21 @@ class DBase:
         for i in range(exploration_count):
             sample_start_time = time.perf_counter()
             self.exploration(False)
-            print('Sample', len(self.flibs), '(exploration) took ', round(time.perf_counter() - sample_start_time, 3),
-                  's')
+            # print('Sample', len(self.flibs), '(exploration) took ', round(time.perf_counter() - sample_start_time, 3), 's')
+            # times.append(round(time.perf_counter() - sample_start_time, 3))
             self.run_pxsgen(False)
 
         for i in range(exploitation_count):
             sample_start_time = time.perf_counter()
-            self.exploitation(method=exploit_method, print_output=False)
-            print('Sample', len(self.flibs), '(exploitation) took ', round(time.perf_counter() - sample_start_time, 3),
-                  's')
+            self.exploitation(print_output=False)
+            # print('Sample', len(self.flibs), '(exploitation) took ', round(time.perf_counter() - sample_start_time, 3), 's')
+            # times.append(round(time.perf_counter() - sample_start_time, 3))
             self.run_pxsgen(False)
 
         print(exploration_count, 'exploration and', exploitation_count, 'exploitation took',
               round(time.perf_counter() - start_time, 3), 's')
+
+        return self.times
 
     # Updates flib coordinates
     def update_coordinates(self):
@@ -964,6 +991,8 @@ class DBase:
         # Create samples number of random coordinates
         s_coords = [[random.random() for i in range(dimensions)] for i in range(samples)]
 
+        start_time = time.perf_counter()
+
         if factors is None:
             for s in s_coords:      # Random point, s
                 min_dist = 9999
@@ -980,6 +1009,7 @@ class DBase:
                     self.flibs[p_closest].furthest_point_dist = min_dist
                     self.flibs[p_closest].furthest_point = s
                     #print('-updated', self.flibs[p_closest].number, 'to', round(s[0], 2), round(s[1], 2), 'dist:', round(min_dist,2))
+                self.temp_time = time.perf_counter() - start_time
         else:
             if len(factors) != len(self.flibs):
                 raise RuntimeError('Size mismatch of factor and library vectors in voronoi cell calculation')
@@ -997,6 +1027,8 @@ class DBase:
                 if min_dist > self.flibs[p_closest].furthest_point_dist:
                     self.flibs[p_closest].furthest_point_dist = min_dist
                     self.flibs[p_closest].furthest_point = s
+
+            # print(len(self.flibs), round(time.perf_counter() - start_time + self.temp_time, 6))
 
         p_vol = [i/samples for i in p_vol]
 
