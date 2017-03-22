@@ -1,9 +1,8 @@
 import os
-import sys
 import copy
-import itertools
 import random
 import subprocess
+import time
 
 import numpy as np
 import matplotlib.cm as cm
@@ -13,7 +12,7 @@ from scipy.spatial import distance
 from scipy.interpolate import griddata
 
 from library import Library
-from objects import xsgenParams, Neighborhood, PathNaming
+from objects import xsgenParams, PathNaming
 from pxsgen import main
 
 """
@@ -59,7 +58,7 @@ class DBase:
             'max_projection': 0.0001,   # Projection check (exploration) threshold
             'voronoi_mult': 400,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 1,           # The factor that multiplies error when finding rank
-            'min_voronoi_order': 0.1,   # The samples with Voronoi sizes in this given lower fraction of all samples
+            'min_voronoi_order': 0.15,  # The samples with Voronoi sizes in this given lower fraction of all samples
             # will be rejected for next sample selection even if they have the highest rank [0,1]
             'voronoi_adjuster': 0.8,    # The maximum ratio of voronoi cell adjustment (guided method) [0,1]
             'guide_increment': 0.0001,  # The increment to bring back selected guided sample back to original V cell
@@ -237,6 +236,7 @@ class DBase:
     # Runs exploration and exploitation to build the database from input file
     def build(self, exploration_to_add=0, exploitation_to_add=0, print_progress=False, record_errors=True,
               exploit_method='furthest'):
+        start_time = time.perf_counter()
         self.update_metrics()
         self.print()
 
@@ -252,11 +252,12 @@ class DBase:
                 else:
                     exploitation_to_add = self.inputs['max_exploitation']
         total_to_add = exploration_to_add + exploitation_to_add
+        if total_to_add == 0:
+            print('No new points to add')
+            return
         total_left = copy.copy(total_to_add)
 
         print('Adding', exploration_to_add, 'exploration and', exploitation_to_add, 'exploitation samples')
-        print('\r%s %s %% complete (exploration)' % (self.paths.database_path,
-                                                     int((1 - total_left / total_to_add) * 100)), end='\r')
         # Add some initial points
         if lib_count < 3:
             if print_progress:
@@ -267,14 +268,13 @@ class DBase:
             lib_count = len(self.flibs)
             exploration_to_add -= 3
             total_left -= 3
+        initial_time = time.perf_counter()
 
         # Perform exploration
         if print_progress:
             print('\n_____________________________________')
             print('-- Exploration Step. Samples to add:', exploration_to_add)
         for i in range(exploration_to_add):
-            if print_progress:
-                print('Generating exploration sample', len(self.flibs))
             self.exploration(False)
             self.run_pxsgen(False)
             if record_errors:
@@ -283,17 +283,20 @@ class DBase:
                 self.estimate_error()
                 self.find_error()
             total_left -= 1
-            print('\r%s %s %% complete (exploration)' % (self.paths.database_path,
+            if print_progress:
+                print('\r%s %s %% complete (current step: exploration)' % (self.paths.database_path,
                                                          int((1-total_left/total_to_add) * 100)), end='\r')
+        explore_time = time.perf_counter()
+        if print_progress:
+            print('\r--- Completed in', round(explore_time - initial_time, 2),
+                  'seconds                                                                             ', end='')
 
         # Perform exploitation
         if print_progress:
             print('\n_____________________________________')
             print('-- Exploitation Step. Total points:', exploitation_to_add)
         for i in range(exploitation_to_add):
-            if print_progress:
-                print('Generating exploitation sample', len(self.flibs), 'using method:', exploit_method)
-            self.exploitation(method=exploit_method)
+            self.exploitation(method=exploit_method, print_output=False)
             self.run_pxsgen(False)
             if record_errors:
                 if print_progress:
@@ -301,16 +304,22 @@ class DBase:
                 self.estimate_error()
                 self.find_error()
             total_left -= 1
-            print('\r%s %s %% complete (exploitation)' % (self.paths.database_path,
-                                                          int((1-total_left/total_to_add) * 100)), end='\r')
-        print('Completed', self.paths.database_path)
+            if print_progress:
+                print('\r%s %s %% completed (current step: exploitation)' % (self.paths.database_path,
+                                                                    int((1-total_left/total_to_add) * 100)), end='\r')
+        exploit_time = time.perf_counter()
+        if print_progress:
+            print('\r--- Completed in', round(exploit_time - explore_time, 2),
+                  'seconds                                                                             \n')
+            print(self.paths.database_path, 'completed in', round(exploit_time - start_time, 2), 'seconds')
         # Write errors
         if record_errors:
             self.write_errors()
 
     # Calculates the distance weighing factors for Voronoi cell calculation
     def calculate_factors(self, base_point_i):
-        selected_error = self.flibs[base_point_i].excluded_error
+        selected_error = self.flibs[base_point_i].excluded_error if self.flibs[base_point_i].excluded_error != 0 else \
+            max([lib.excluded_error for lib in self.flibs])
         zeroed_errors = [lib.excluded_error / selected_error - 1 for lib in self.flibs]
         zeroed_errors[:] = [-0.5 if i < -0.5 else i for i in zeroed_errors]
         adjuster = max([abs(i) for i in zeroed_errors])
@@ -482,7 +491,7 @@ class DBase:
                 tot_dist = 0
 
                 for d in range(self.dimensions):
-                    dist = (rand[d] - p[d])**2	# Cartesian distance will be calculated with this
+                    dist = (rand[d] - p[d])**2	 # Cartesian distance will be calculated with this
                     if dist < self.inputs['max_projection']:  # Projection check
                         projection_fail = True
                         # print('  failed point, dist:', dist)
@@ -491,7 +500,7 @@ class DBase:
                 if projection_fail:
                     fail_count += 1
                     break
-                tot_dist = (tot_dist)**0.5		# Total cartesian distance of p from rand point
+                tot_dist **= 0.5		# Total cartesian distance of p from rand point
                 # print('  total distance:', tot_dist, ' min distance:', min_tot)
                 if tot_dist < min_tot:			# Finds the closest distance (in coords) to rand point
                     # print('  assigned new min_tot')
@@ -873,6 +882,34 @@ class DBase:
                     self.flibs[i].read_output(self.flibs[i].op_path, 1)
 
         self.update_metrics()
+
+    # Times how long each step takes
+    def timer(self, exploration_count, exploitation_count, exploit_method='furthest'):
+        self.update_metrics()
+        self.print()
+        start_time = time.perf_counter()
+        print('Dimensions:', len(self.varied_ips))
+        if len(self.flibs) == 0:
+            print('Placing initial points')
+            self.initial_exploration(False)
+            self.run_pxsgen(False)
+
+        for i in range(exploration_count):
+            sample_start_time = time.perf_counter()
+            self.exploration(False)
+            print('Sample', len(self.flibs), '(exploration) took ', round(time.perf_counter() - sample_start_time, 3),
+                  's')
+            self.run_pxsgen(False)
+
+        for i in range(exploitation_count):
+            sample_start_time = time.perf_counter()
+            self.exploitation(method=exploit_method, print_output=False)
+            print('Sample', len(self.flibs), '(exploitation) took ', round(time.perf_counter() - sample_start_time, 3),
+                  's')
+            self.run_pxsgen(False)
+
+        print(exploration_count, 'exploration and', exploitation_count, 'exploitation took',
+              round(time.perf_counter() - start_time, 3), 's')
 
     # Updates flib coordinates
     def update_coordinates(self):

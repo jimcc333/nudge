@@ -41,6 +41,7 @@ explore_mult
 max_projection
 voronoi_mult
 rank_factor
+min_voronoi_order
 voronoi_adjuster
 guide_increment
 

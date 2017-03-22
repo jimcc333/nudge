@@ -89,47 +89,135 @@ def main(args):
     print('----------------- NUDGE: NUclear Database GEneration software -----------------')
 
     if '-d' in args:
-        #repeat_databases('C:\\software\\nudge\\3d_g\\', 12, processes=6, exploit_method='guided', record_errors=False)
-        #repeat_databases('C:\\software\\nudge\\3d_f\\', 12, processes=6, record_errors=False)
+        # will try functions (f3, f8, f9) and voronoi adjusters (0.0, 0.3, 0.5, 0.8)
+        print('begin')
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f33\\', 28, processes=7, exploit_method='guided', record_errors=False, add_new=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f35\\', 28, processes=7, exploit_method='guided', record_errors=False, add_new=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f38\\', 28, processes=7, exploit_method='guided', record_errors=False, add_new=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f3f\\', 28, processes=7, record_errors=False, add_new=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f83\\', 28, processes=7, exploit_method='guided', record_errors=False, add_new=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f85\\', 28, processes=7, exploit_method='guided', record_errors=False, add_new=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f88\\', 28, processes=7, exploit_method='guided', record_errors=False, add_new=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f8f\\', 28, processes=7, record_errors=False, add_new=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f93\\', 28, processes=7, exploit_method='guided', record_errors=False, add_new=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f95\\', 28, processes=7, exploit_method='guided', record_errors=False, add_new=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f98\\', 28, processes=7, exploit_method='guided', record_errors=False, add_new=True)
+        repeat_databases('C:\\Users\\Cem\\Documents\\nudge\\f9f\\', 28, processes=7, record_errors=False, add_new=True)
 
-        #find_errors('C:\\software\\nudge\\3d_g\\')
-        find_errors('C:\\software\\nudge\\3d_f\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\f33\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\f35\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\f38\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\f3f\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\f83\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\f85\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\f88\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\f8f\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\f93\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\f95\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\f98\\')
+        find_errors('C:\\Users\\Cem\\Documents\\nudge\\f9f\\')
 
-        read_error_outputs('C:\\software\\nudge\\3d_g\\')
-        read_error_outputs('C:\\software\\nudge\\3d_f\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f33\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f35\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f38\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f3f\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f83\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f85\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f88\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f8f\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f93\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f95\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f98\\')
+        read_error_outputs('C:\\Users\\Cem\\Documents\\nudge\\f9f\\')
 
-        return
-
-        repeat_databases('C:\\software\\nudge\\guided\\', 12, processes=6, exploit_method='guided', add_new=True)
-        repeat_databases('C:\\software\\nudge\\furthest\\', 12, processes=6, add_new=True)
-
-        repeat_databases('C:\\software\\nudge\\guided\\', 12, processes=6, exploit_method='guided', add_new=True)
-        repeat_databases('C:\\software\\nudge\\furthest\\', 12, processes=6, add_new=True)
-
-        read_error_outputs('C:\\software\\nudge\\guided\\')
-        read_error_outputs('C:\\software\\nudge\\furthest\\')
         return
 
     if '-m' in args:
 
-        path = 'C:\\software\\nudge\\x\\'
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\3D\\'
         database = DBase(path)
-        database.build(exploration_to_add=10, record_errors=False)
-        database.plot()
-        return
-        repeat_databases('C:\\software\\nudge\\furthest\\', 2, processes=6)
-        repeat_databases('C:\\software\\nudge\\furthest\\', 4, processes=6, add_new=True)
+        database.timer(57, 0)
+        print()
+        del database
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\3D1\\'
+        database = DBase(path)
+        database.timer(57, 0)
+        print()
+        del database
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\3D2\\'
+        database = DBase(path)
+        database.timer(57, 0)
+        print()
+        del database
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\3D3\\'
+        database = DBase(path)
+        database.timer(57, 0)
+        print()
+        del database
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\3D4\\'
+        database = DBase(path)
+        database.timer(57, 0)
+        print()
+        del database
         return
 
-        for i in range(15):
-            path = 'C:\\software\\nudge\\guided\\' + str(i) + '\\'
-            database = DBase(path)
-            database.plot(numbers=True)
+    if '-2' in args:
+        path = 'C:\\Users\\Cem\\Documents\\nudge\\8d\\'
+        clear_databases(path)
+        repeat_databases(path, 10, record_errors=False)
+
+        database = DBase(path + '0\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '1\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '2\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '3\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '4\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '5\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '6\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '7\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '8\\')
+        database.timer(32, 0)
+        print()
+        del database
+
+        database = DBase(path + '9\\')
+        database.timer(32, 0)
+        print()
+        del database
+
         return
 
-        # database.run_pxsgen(False)
-
-        return
 
     # Check if help is requested
     if '-h' in args:
@@ -161,7 +249,7 @@ def main(args):
             return
 
         database = DBase(args[2])
-        # database.build(print_progress=True, record_errors=False)
+        database.build(print_progress=True, record_errors=False)
         database.find_error(print_result=True)
         database.plot(mark_last=True)
         return
