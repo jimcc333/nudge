@@ -144,7 +144,7 @@ def read_error_outputs(source_path, final_error_only=False):
     print()
     print('real max:', np.mean(real_max, axis=0))
     print()
-    print('real errors:', np.mean(real_errors, axis=0))
+    print('real errors:', str.format('{0:.15f}', np.mean(real_errors, axis=0)[-1]))
     print('real errors STD:', np.std(real_errors, axis=0))
     print('-----------------------------------------------------------------------------------------')
 
