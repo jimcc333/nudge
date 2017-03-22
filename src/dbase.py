@@ -462,6 +462,15 @@ class DBase:
                                                                                                 adjusted_point])
             selected_point = adjusted_point
 
+        if method == 'gradient':
+            # Generate new mesh
+            grid_res = min([lib.furthest_point_dist for lib in self.flibs])     # furthest point is about 1/2 min dist
+            # linspace on one dimension, then use all combos of that to populate output N-dim array
+            
+            # Find gradient of selected point (i.e. at the coordinates of selected point)
+
+            # Find coordinates of next sample
+
         self.add_lib(selected_point, False)
 
     # Finds the coordinates of next point to sample
