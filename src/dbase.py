@@ -468,9 +468,9 @@ class DBase:
             dimension_points = int(1/grid_res+1)
             one_dim = [i*grid_res for i in range(dimension_points)]
             all_dims = [one_dim for i in range(self.dimensions)]
-            meshes = np.meshgrid(*all_dims)
-            gradients = copy.deepcopy(meshes[0])
-            # Find gradient of selected point (i.e. at the coordinates of selected point)
+            meshes = np.mgrid(*all_dims)
+            interpolated_matrix = copy.deepcopy(meshes[0])
+            # Find indices of the selected point
             selected_indexes = []
             for d in range(self.dimensions):
                 for val_i, val in enumerate(one_dim):
@@ -478,6 +478,15 @@ class DBase:
                         selected_indexes.append(val_i)
                         break
 
+            # Calculate the interpolated matrix
+            # Using a shortcut here to handle X.. if it works out will need fixing
+            for x in range(dimension_points):
+                for y in range(dimension_points):
+                    interpolated_matrix[x, y] = self.interpolate([meshes[1, x, y], meshes[0, x, y]])
+
+            # Calculate the gradient matrix
+            gradient_matrix = np.gradient(interpolated_matrix, dtype=np.float)
+            print(gradient_matrix[selected_indexes[0], selected_indexes[1]])
 
             # Find coordinates of next sample
 
