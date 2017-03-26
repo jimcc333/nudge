@@ -465,10 +465,13 @@ class DBase:
         if method == 'gradient':
             # Generate new mesh
             grid_res = min([lib.furthest_point_dist for lib in self.flibs])     # furthest point is about 1/2 min dist
-            # linspace on one dimension, then use all combos of that to populate output N-dim array
-            
+            dimension_points = int(1/grid_res+1)
+            one_dim = [i*grid_res for i in range(dimension_points)]
+            all_dims = [one_dim for i in range(self.dimensions)]
+            meshes = np.meshgrid(*all_dims)
+            gradients = copy.deepcopy(meshes[0])
             # Find gradient of selected point (i.e. at the coordinates of selected point)
-
+            
             # Find coordinates of next sample
 
         self.add_lib(selected_point, False)
