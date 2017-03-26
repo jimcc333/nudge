@@ -471,7 +471,14 @@ class DBase:
             meshes = np.meshgrid(*all_dims)
             gradients = copy.deepcopy(meshes[0])
             # Find gradient of selected point (i.e. at the coordinates of selected point)
-            
+            selected_indexes = []
+            for d in range(self.dimensions):
+                for val_i, val in enumerate(one_dim):
+                    if selected_point[d] > val:
+                        selected_indexes.append(val_i)
+                        break
+
+
             # Find coordinates of next sample
 
         self.add_lib(selected_point, False)
