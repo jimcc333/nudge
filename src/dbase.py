@@ -496,17 +496,15 @@ class DBase:
                     selected_point[d] = [selected_point[d] * gradients[d] * self.inputs['guide_increment'] ]
 
                 at_edge = False
-                for value in adjusted_point:
-                    if
-                value > 1:
-                value = 1
-                at_edge = True
-                if value < 0:
-                    value = 0
-                at_edge = True
+                for value in selected_point:
+                    if value > 1:
+                        value = 1
+                        at_edge = True
+                    if value < 0:
+                        value = 0
+                        at_edge = True
                 if at_edge:
                     closest_to_base = False
-                    break
                 # Find which sample the adjusted point is closest
                 closest_to_base = True if self.find_closest(selected_point) == max_rank_i else False
 
