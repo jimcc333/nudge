@@ -81,7 +81,7 @@
 #
 
 from dbase import DBase
-from repeat import *
+from srepeat import *
 
 
 def main(args):

@@ -13,7 +13,7 @@ setup(name='nudge',
       author_email='cem@cem-VirtualB',
       entry_points={
           'console_scripts': [
-              'nudge = src:main.main'
+              'nudge=src.main:main'
           ]
       }
 )

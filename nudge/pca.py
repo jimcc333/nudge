@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 class NudgePCA(object):
@@ -51,7 +52,7 @@ class NudgePCA(object):
         """
         retained_eig_vecs = []
         for i in range(len(self._eig_pairs)):
-            self._retained_eig_vecs.append(self._eig_pairs[i][1])
+            self._retained_eig_vecs.append(self._eig_pairs[i][1].reshape(len(self._eig_pairs), 1))
             if self._cum_frac_explained_var[i] >= retain_frac_var:
                 break
         pcW = np.hstack(retained_eig_vecs)
@@ -63,18 +64,31 @@ class NudgePCA(object):
         \f[
            y_{reduced} = W.T \cdot x
         \f]
+        @param data_in  Optional custom data to project onto principle axes.
+            Default is to project the original data onto principle axes.
+        @return <b>np_ndarray</b> transformed output data
         """
         if data_in is None:
             data_in = self._data
+        else:
+            assert(data_in.shape[1] == self._data.shape[1])
         pcW = self.pcw(retain_frac_var)
-        return np.dot(pcW.T, data_in)
+        return data_in.dot(pcW)
 
-    def plot_ranks(self):
+    def plot_ranks(self, fig_name='pca_default.png'):
         """!
         @brief Plots relative explained varience of each
         principle component.
         """
-        pass
+        plt.figure()
+        plt.bar(range(len(self._eig_pairs)),
+                self._frac_explained_var,
+                align='center',
+                label='relative explained varience')
+        plt.xlabel('Principal Components')
+        plt.ylabel('Explained Varience Ratio')
+        plt.savefig(fig_name)
+        plt.close()
 
     def _pca(self):
         """!
