@@ -3,10 +3,10 @@ import os
 import shutil
 import warnings
 
-from dbase import DBase
-from objects import PathNaming
-from objects import xsgenParams
-from library import Library
+from nudge.dbase import DBase
+from nudge.objects import PathNaming
+from nudge.objects import xsgenParams
+from nudge.library import Library
 
 
 class Tester(unittest.TestCase):

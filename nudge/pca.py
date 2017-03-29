@@ -19,6 +19,25 @@ class NudgePCA(object):
         self._pca()
 
     @property
+    def eig_vals(self):
+        """!
+        @brief Convinience accessor to eigen values
+        """
+        pass
+        return np.array([self._eig_pairs[i][0] \
+               for i in range(len(self._eig_pairs))])
+
+    @property
+    def eig_vecs(self):
+        """!
+        @brief Convinience accessor to eigen vectors.
+        The i_th column is an eigenvector corrosponding to
+        the i_th eigenvalue returned by self.eig_vals
+        """
+        return np.array([self._eig_pairs[i][1] \
+               for i in range(len(self._eig_pairs))]).T
+
+    @property
     def eig_pairs(self):
         """!
         @brief Read only eig_pairs attribute
@@ -52,7 +71,7 @@ class NudgePCA(object):
         """
         retained_eig_vecs = []
         for i in range(len(self._eig_pairs)):
-            self._retained_eig_vecs.append(self._eig_pairs[i][1].reshape(len(self._eig_pairs), 1))
+            retained_eig_vecs.append(self._eig_pairs[i][1].reshape(len(self._eig_pairs), 1))
             if self._cum_frac_explained_var[i] >= retain_frac_var:
                 break
         pcW = np.hstack(retained_eig_vecs)
@@ -106,8 +125,8 @@ class NudgePCA(object):
         std_cov = np.cov(std_mvdData.T, aweights=self._weights)
         eig_vals, eig_vecs = np.linalg.eig(std_cov)
         # Create sorted eigen-pairs
-        self.eig_pairs = [(np.abs(eig_vals[i]), eig_vecs[:, i]) for i in range(len(eig_vals))]
-        self.eig_pairs.sort(key=lambda x: x[0], reverse=True)
+        eig_pairs = [(np.abs(eig_vals[i]), eig_vecs[:, i]) for i in range(len(eig_vals))]
+        eig_pairs.sort(key=lambda x: x[0], reverse=True)
         eig_sum = np.sum(eig_vals)
         frac_explained_var = [(s / eig_sum) for s in sorted(eig_vals, reverse=True)]
         cum_frac_explained_var = np.cumsum(frac_explained_var)

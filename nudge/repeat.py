@@ -7,8 +7,9 @@ import numpy as np
 from math import floor
 import matplotlib.pyplot as plt
 
-from objects import PathNaming
-from dbase import DBase
+# Nudge imports
+from nudge.objects import PathNaming
+from nudge.dbase import DBase
 
 
 # Repeats databases from the same inputs and basecase
