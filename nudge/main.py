@@ -80,8 +80,8 @@
 #
 #
 
-from dbase import DBase
-from repeat import *
+from nudge.dbase import DBase
+from nudge.repeat import *
 
 
 def main(args):

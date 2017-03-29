@@ -27,7 +27,7 @@
 #
 #
 
-from library import Library
+from nudge.library import Library
 import random
 import numpy as np
 

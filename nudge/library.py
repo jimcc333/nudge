@@ -1,5 +1,7 @@
 import os
-from objects import xsgenParams
+
+# Nudge imports
+from nudge.objects import xsgenParams
 
 
 class Library:

@@ -1,9 +1,12 @@
-import main
+import nudge.main as main
 # Call this from console to run nudge
 
-if __name__ == '__main__':
+def run_nudge():
     import sys
     sys.exit(main.main(sys.argv))
+
+if __name__ == '__main__':
+    run_nudge()
 
 
 

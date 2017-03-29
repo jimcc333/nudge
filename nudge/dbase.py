@@ -11,9 +11,10 @@ from matplotlib.mlab import PCA as mlabPCA
 from scipy.spatial import distance
 from scipy.interpolate import griddata
 
-from library import Library
-from objects import xsgenParams, PathNaming
-from pxsgen import main
+# Nudge impots
+from nudge.library import Library
+from nudge.objects import xsgenParams, PathNaming
+from nudge.pxsgen import main
 
 """
 A class that handles all generated libraries
