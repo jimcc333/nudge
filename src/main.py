@@ -238,16 +238,11 @@ def main(args):
         return
 
     if args[1] == '-build':
-        try:
-            print('Building the database at ' + args[2] + ' as defined in input file')
-        except IndexError:
-            print('Please provide the path of the database')
-            return
 
-        database = DBase(args[2])
+        database = DBase('C:\\Users\\Cem\\Documents\\nudge\\mox50\\')
         database.build(print_progress=True, record_errors=False)
-        database.find_error(print_result=True)
-        database.plot(mark_last=True)
+
+        print('Complete!')
         return
 
     if args[1] == '-explore':
@@ -274,6 +269,12 @@ def main(args):
         database.exploitation()
         database.run_pxsgen(False)
         database.plot(mark_last=True)
+        return
+
+    if args[1] == '-m':
+        database = DBase('C:\\Users\\Cem\\Documents\\nudge\\mox50\\')
+        for lib in database.flibs:
+            lib.inputs.xsgen[]
         return
 
     if args[1] == '-errors':

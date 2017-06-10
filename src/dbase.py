@@ -56,7 +56,7 @@ class DBase:
             'scout_frac': 10,           # Weight of screening time allocation
             'explore_frac': 40,         # Weight of exploration time allocation
             'exploit_frac': 50,         # Weight of exploitation time allocation
-            'explore_mult': 400,        # Exploration method Monte Carlo multiplier
+            'explore_mult': 1000,        # Exploration method Monte Carlo multiplier
             'max_projection': 0.0001,   # Projection check (exploration) threshold
             'voronoi_mult': 400,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 1,           # The factor that multiplies error when finding rank
