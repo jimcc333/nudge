@@ -56,7 +56,7 @@ class DBase:
             'scout_frac': 10,           # Weight of screening time allocation
             'explore_frac': 40,         # Weight of exploration time allocation
             'exploit_frac': 50,         # Weight of exploitation time allocation
-            'explore_mult': 1000,        # Exploration method Monte Carlo multiplier
+            'explore_mult': 200,        # Exploration method Monte Carlo multiplier
             'max_projection': 0.0001,   # Projection check (exploration) threshold
             'voronoi_mult': 400,        # Voronoi method Monte Carlo multiplier
             'rank_factor': 1,           # The factor that multiplies error when finding rank
@@ -157,6 +157,7 @@ class DBase:
             os.mkdir(self.paths.database_path + self.paths.FR_Output_folder)
 
         self.update_coordinates()
+        self.print()
 
     # Once normalized coords are generated, pass here to add
     # TODO: outputting in correct units
@@ -275,7 +276,7 @@ class DBase:
             print('-- Exploration Step. Samples to add:', exploration_to_add)
         for i in range(exploration_to_add):
             self.exploration(False)
-            self.run_pxsgen(False)
+            #self.run_pxsgen(False)
             if record_errors:
                 if print_progress:
                     print('  Estimating errors')
@@ -289,7 +290,7 @@ class DBase:
         if print_progress:
             print('\r--- Completed in', round(explore_time - initial_time, 2),
                   'seconds                                                                             ', end='')
-
+        return
         # Perform exploitation
         if print_progress:
             print('\n_____________________________________')
@@ -808,7 +809,7 @@ class DBase:
     # Prints information about database
     def print(self):
         print('Database ', self.paths.database_path)
-        # print(' Screening ips:', len(self.slibs), ' Full ips:', len(self.flibs), '  Dimensions:', self.dimensions)
+        print(' Screening ips:', len(self.slibs), ' Full ips:', len(self.flibs), '  Dimensions:', self.dimensions)
 
     # Randomly selects and adds the next point
     def random_selection(self, count=1, screening=False, print_progress=False):

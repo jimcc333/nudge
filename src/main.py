@@ -132,7 +132,7 @@ def main(args):
 
         return
 
-    if '-m' in args:
+    if '-md' in args:
 
         path = 'C:\\Users\\Cem\\Documents\\nudge\\3D\\'
         database = DBase(path)
@@ -239,7 +239,7 @@ def main(args):
 
     if args[1] == '-build':
 
-        database = DBase('C:\\Users\\Cem\\Documents\\nudge\\mox50\\')
+        database = DBase('C:\\Users\\Cem\\Documents\\nudge\\moxexplore\\')
         database.build(print_progress=True, record_errors=False)
 
         print('Complete!')
@@ -272,9 +272,31 @@ def main(args):
         return
 
     if args[1] == '-m':
+        counter = 0
         database = DBase('C:\\Users\\Cem\\Documents\\nudge\\mox50\\')
+        print('Read database')
         for lib in database.flibs:
-            lib.inputs.xsgen[]
+            inputs = []
+            inputs.append(0.00004343 + lib.inputs.xsgen['fuel_cell_radius'] * 2.17148E-05)
+            inputs.append(0.00003729 + lib.inputs.xsgen['void_cell_radius'] * 0.000018644)
+            inputs.append(0.00081248 + lib.inputs.xsgen['clad_cell_radius'] * 0.00040624)
+            inputs.append(0.00038604 + lib.inputs.xsgen['unit_cell_height'] * 0.00019302)
+            inputs.append(0.00013993 + lib.inputs.xsgen['fuel_density'] * 0.000069964)
+            inputs.append(0.00010561 + lib.inputs.xsgen['clad_density'] * 0.000052804)
+            total = sum(inputs)
+            inputs.append(0.0232930 - total)
+            ipfile = database.base_file
+            ipfile = ipfile.replace('aa1', str(inputs[0]))
+            ipfile = ipfile.replace('aa2', str(inputs[1]))
+            ipfile = ipfile.replace('aa3', str(inputs[2]))
+            ipfile = ipfile.replace('aa4', str(inputs[3]))
+            ipfile = ipfile.replace('aa5', str(inputs[4]))
+            ipfile = ipfile.replace('aa6', str(inputs[5]))
+            ipfile = ipfile.replace('aa7', str(inputs[6]))
+            with open('C:\\Users\\Cem\\Documents\\nudge\\mox50\\inputs\\' + str(counter) + '.py', 'w') as openfile:
+                openfile.write(ipfile)
+            openfile.close()
+            counter += 1
         return
 
     if args[1] == '-errors':

@@ -119,7 +119,7 @@ class Library:
                                                                           'line and close bracket (}) at a new line.'
                         raise RuntimeError(error_message)
                     if '}' not in items[0]:
-                        self.inputs.initial_heavy_metal[int(items[0])] = float(items[1])
+                        continue    # self.inputs.initial_heavy_metal[int(items[0])] = float(items[1])
                     else:
                         # End of initial heavy metal
                         break
