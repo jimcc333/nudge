@@ -1,10 +1,12 @@
 # NUDGE: NUclear Database GEneration software
-This software package takes a black-box model and algorithmically selects inputs to run and populate in a database. The created database is intended to be used to train an arbitrary machine learning model. NUDGE tries to select inputs to maximize the information obtained about the underlying blackbox model.
+This software package takes a costly black-box model and automatically creates a metamodel of it. This metamodel consists of a database of outputs from the costly model and an algorithm that uses this database to estimate outputs. The created database is also intended to be used to train an arbitrary machine learning model. NUDGE tries to select inputs to maximize the information obtained about the underlying blackbox model and hence is agnostic to the model that uses the database it creates.
 
 ## Running NUDGE
 To run nudge, run nudge.py in the nudge/ directory from terminal:
 
 >$ python /src/nudge.py -h
+
+(You will need numpy, scipy, and matplotlib for full functionality.)
 
 ##
 
@@ -17,8 +19,41 @@ To run nudge, run nudge.py in the nudge/ directory from terminal:
 
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  GNU General Public License for more details.
+
+## Objective
+The goal is to create a database that is used to estimate outputs of the costly simulation. For example, a costly simulation could take two inputs, fuel radius (r) and enrichment (x). Each time inputs are entered and the simulation starts, it takes a very long time (hours up to days) for the output to be calculated. (Hence *costly* simulation.) Five cases can be generated as shown in an example database below.
+
+![Alt text](info/example_database.jpg)
+
+Fuel radius is varied between 1 cm and 2 cm, while enrichment is varied between 3% and 5%. All four of the combinations of the extremes of these values are recorded in the database as well as the "middle" case (these *samples* are named *libraries* to keep it generic: the outputs can have many dimensions of data). Now when a previously unknown input, such as r=1.5 cm and x=4%, is required, a model that trained on this database can estimate the results. The objective of this software is to intelligently select the inputs for the data to include in the database, trying to maximize the information obtained by each additional sample.
+
+## Workflow:
+
+![Alt text](info/workflow.jpg)
+
+The software first screens the inputs and attempts to reduce the dimensionality of the model. Next, during the exploration step the output space is explored ignoring the outputs. Finally, during the exploitation step, all the available information is utilized to select next samples to include in the database.
+
+### 1 Screening
+
+![Alt text](info/screening_workflow.jpg)
+
+  - Screening is a short step used to reduce the dimensionality of the model if possible
+  - Uses the outputs of incomplete (but still useful) runs
+  - Runs basecase as screening run
+  - Estimates total time and adjusts accordingly
+  - Uses Monte-Carlo inv-norml distance point sampling
+  - Uses Multi-d domain cropping
+  
+### 2 Exploration
+  - Run basecase, space-filling points
+  
+### 3 Exploitation
+  - Find highest scored points and inputs near them
+  - Run new points
+  - Estimate max error
+  - Repeat until stop criteria met
 
 ## Naming and standards:
 The database folder should contain the following. The default names can be changed from the objects.py file.
@@ -36,32 +71,6 @@ The database folder should contain the following. The default names can be chang
 - Varied inputs: Names of inputs that libraries get interpolated on
 - Coordinates: the normalized ([0,1]) input array with only the varied inputs, ordered alphabetically
 - Voronoi cell: The hyper-dimensional "volume" made by points closest to target point
-
-
-## Workflow:
-1 Start UI and read command line arguments
-
-2 Initialize database
-
-  - If there are inputs, read them; or create the input folders
-  
-  - Attempt to read the output of an input if available
-  
-3 Screening
-  - Run basecase as screening run
-  - Estimate total time, ask if ok to proceed (improve estimate in the background)
-  - Monte-Carlo inv-norml dist point sampling
-  - Multi-d domain cropping
-  - Scout topography map
-  
-4 Exploration
-  - Run basecase, space-filling points
-  
-5 Exploitation
-  - Find highest scored points and inputs near them
-  - Run new points
-  - Estimate max error
-  - Repeat until stop criteria met
 
 ## Notes:
 - Folder structure and naming chosen to be simple and intuitive. This enables users to copy-paste their existing libraries and easily allow NUDGE to use it in a given database
